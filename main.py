@@ -483,11 +483,6 @@ if __name__ == "__main__":
 
     #check_params(parameters)
 
-    # rnd_seed = parameters.get('RND_SEED', None)
-    # if rnd_seed != None:
-    #     seed(rnd_seed)
-
-
     check_params(parameters)
     new_eval_sets=parameters.get('NEW_EVAL_ON_SETS', None)
     if new_eval_sets != None:
