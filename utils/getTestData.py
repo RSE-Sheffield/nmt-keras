@@ -11,7 +11,7 @@ def downloadAndExtractFiles(cachePath,*args):
         fileName = os.path.basename(os.path.normpath(url))
         checkPath = cachePath +  fileName
         if os.path.exists(checkPath):
-            print(checkPath + ' already exists')
+            print(checkPath + ' already downloaded')
         else :
             print('\n Downloading ' + fileName + ' from ' + 'url')
             wget.download(url, cachePath)
@@ -54,3 +54,12 @@ for f in os.listdir( cachePath ):
             lines = [l for i, l in enumerate(lines) if i <= totalLines-1]
             with open(file_out, "w") as f1:
                 f1.writelines(lines)
+
+    if f.endswith(".source"):
+        filename, file_extension = os.path.splitext(exampleDir + f)
+        print('Renaming ' + f + ' to ' + filename + '.src')
+        os.rename(exampleDir + f, filename + '.src')
+    elif f.endswith(".target"):
+        filename, file_extension = os.path.splitext(exampleDir + f)
+        print('Renaming ' + f + ' to ' + filename + '.target')
+        os.rename(exampleDir + f, filename + '.mt')
