@@ -5,7 +5,7 @@ def load_parameters():
     """
 
     # Input data params
-    TASK_NAME = 'qe-2016'                           # Task name
+    TASK_NAME = 'wmt15'                             # Task name
     DATASET_NAME = TASK_NAME                        # Dataset name
     SRC_LAN = 'src'                                  # Language of the source text
     TRG_LAN = 'mt'                                  # Language of the target text
@@ -29,7 +29,7 @@ def load_parameters():
     # Evaluation params
     METRICS = ['qe_metrics']                            # Metric used for evaluating the model
     #KERAS_METRICS = ['pearson_corr', 'mae', 'rmse']
-    EVAL_ON_SETS = ['val', 'test']                        # Possible values: 'train', 'val' and 'test' (external evaluator)
+    EVAL_ON_SETS = ['val']                              # Possible values: 'train', 'val' and 'test' (external evaluator)
     NO_REF = False
     #EVAL_ON_SETS_KERAS = ['val']                       #  Possible values: 'train', 'val' and 'test' (Keras' evaluator). Untested.
     EVAL_ON_SETS_KERAS = []
