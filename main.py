@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
-
 from __future__ import print_function
+
+from numpy.random import seed
+seed(1)
+
+import random
+random.seed(1)
+del random
 
 import argparse
 import ast
@@ -11,7 +17,6 @@ import sys
 
 from timeit import default_timer as timer
 
-from numpy.random import seed
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 
@@ -200,7 +205,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
 
 
     nmt_model.trainNet(dataset, training_params)
-    
+
     if weights_dict is not None:
         for layer in nmt_model.model.layers:
             weights_dict[layer.name]= layer.get_weights()
@@ -234,7 +239,7 @@ def apply_NMT_model(params, load_dataset=None):
     #vocab_y = dataset.vocabulary[params['INPUTS_IDS_DATASET'][1]]['idx2words']
     params['INPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['INPUTS_IDS_DATASET'][0]]
     params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len['target_text']
-    
+
     # Load model
     #nmt_model = loadModel(params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
     nmt_model = TranslationModel(params,
@@ -250,7 +255,7 @@ def apply_NMT_model(params, load_dataset=None):
     nmt_model.setParams(params)
     nmt_model.setOptimizer()
 
-    
+
     inputMapping = dict()
     for i, id_in in enumerate(params['INPUTS_IDS_DATASET']):
         pos_source = dataset.ids_inputs.index(id_in)
@@ -278,14 +283,14 @@ def apply_NMT_model(params, load_dataset=None):
         #vocab = dataset.vocabulary[params['OUTPUTS_IDS_DATASET'][0]]['idx2words']
         #vocab = dataset.vocabulary[params['INPUTS_IDS_DATASET'][1]]['idx2words']
         extra_vars[s] = dict()
-        if not params.get('NO_REF', False): 
+        if not params.get('NO_REF', False):
             extra_vars[s]['references'] = dataset.extra_variables[s][params['OUTPUTS_IDS_DATASET'][0]]
         #input_text_id = None
         #vocab_src = None
         input_text_id = params['INPUTS_IDS_DATASET'][0]
         vocab_x = dataset.vocabulary[input_text_id]['idx2words']
         vocab_y = dataset.vocabulary[params['INPUTS_IDS_DATASET'][1]]['idx2words']
-        
+
         if params['BEAM_SEARCH']:
             extra_vars['beam_size'] = params.get('BEAM_SIZE', 6)
             extra_vars['state_below_index'] = params.get('BEAM_SEARCH_COND_INPUT', -1)
@@ -478,17 +483,12 @@ if __name__ == "__main__":
 
     #check_params(parameters)
 
-    rnd_seed = parameters.get('RND_SEED', None)
-    if rnd_seed != None:
-        seed(rnd_seed)
-    
-    
     check_params(parameters)
     new_eval_sets=parameters.get('NEW_EVAL_ON_SETS', None)
     if new_eval_sets != None:
         set_ar = parameters['NEW_EVAL_ON_SETS'].split(',')
         parameters['EVAL_ON_SETS'] = set_ar
-    
+
     if parameters['MODE'] == 'training':
 
         if parameters['MULTI_TASK']:
@@ -501,7 +501,7 @@ if __name__ == "__main__":
             for i in range(total_epochs):
 
                 for output in parameters['OUTPUTS_IDS_DATASET_FULL']:
-                    
+
                     trainable_est = True
                     trainable_pred = True
 
