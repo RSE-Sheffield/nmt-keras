@@ -1,8 +1,6 @@
 import os
 import tarfile
-
-# https://pypi.org/project/wget/
-import wget
+import urllib.request
 
 # Download and extract the files
 
@@ -14,7 +12,10 @@ def downloadAndExtractFiles(cachePath,*args):
             print(checkPath + ' already downloaded')
         else :
             print('\n Downloading ' + fileName + ' from ' + 'url')
-            wget.download(url, cachePath)
+            download_to = os.path.join(cachePath, fileName)
+            with urllib.request.urlopen(url) as f:
+                with open(download_to, "wb") as out:
+                    out.write(f.read())
     print('\n')
 
 baseCacheDir = 'cache/'
