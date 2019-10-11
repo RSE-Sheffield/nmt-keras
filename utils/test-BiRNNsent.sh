@@ -16,10 +16,8 @@ PCC=$(awk -F, 'NR==1 {next};$3>M {M=$3};END {print M}' trained_models/${task_nam
 
 echo "PCC test value was $PCC tested against $TESTVAL"
 
-if [ "$PCC" = "$TESTVAL" ]; then
+if echo $PCC $TESTVAL | awk '{exit ($1-$2)^2>1E-12}'; then
   echo "QE test passed (sentence level BiRNN with Theano on $task_name test dataset)"
-  exit 0
 else
   echo "QE test failed (sentence level BiRNN with Theano on $task_name test dataset)"
-  exit 1
 fi
