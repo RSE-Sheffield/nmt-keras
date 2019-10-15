@@ -16,9 +16,9 @@ else
   exit 1
 fi
 
-# python utils/getTestData.py
-#
-# PYTHONHASHSEED=0 python main.py || true > log-${model_name}-test.txt
+python utils/getTestData.py
+
+PYTHONHASHSEED=0 python main.py || true > log-${model_name}-test.txt
 
 PCC=$(awk -F, 'NR==1 {next};$3>M {M=$3};END {print M}' trained_models/${task_name}_srcmt_${model_type}/val.qe_metrics)
 
