@@ -5,6 +5,9 @@ matrix:
         - python: 3.7
           dist: xenial
           env: KERAS_BACKEND=theano
+        - python: 3.7
+          dist: xenial
+          env: KERAS_BACKEND=tensorflow
 
 # command to install dependencies
 install:
