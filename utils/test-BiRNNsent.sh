@@ -1,7 +1,7 @@
 set -e
 
 conf=config-dqTest-sentQEbRNN.py
-task_name=wmt15
+task_name=testData
 model_type=EncSent
 model_name=${task_name}_srcmt_${model_type}
 store_path=test_models/${model_name}/
@@ -9,15 +9,7 @@ patience=5
 level=sentence
 metric=pearson
 
-# if [ $KERAS_BACKEND = "theano" ] ; then
-#   TESTVAL=0.1910756629756321 #PCC test value for sentence level, theano, BiRNN
-# elif [ $KERAS_BACKEND = "tensorflow" ] ; then
-#   TESTVAL=0.16354782921305733 #PCC test value for sentence level, theano, BiRNN
-# else
-#   echo "Keras backend environment variable incorrectly set"
-#   exit 1
-# fi
-
+# look in utils/testVals.csv for the correct value to compare deepquest test run against
 TESTVAL=$(awk -v backend=$KERAS_BACKEND -v level=$level -v task_name=$task_name -v metric=$metric -F,\
  'NR==1 {next};$1==backend && $2==level && $3==task_name && $4==metric {M=$5};END {print M}' utils/testVals.csv )
 
