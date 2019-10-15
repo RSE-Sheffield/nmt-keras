@@ -21,9 +21,9 @@ metric=pearson
 TESTVAL=$(awk -v backend=$KERAS_BACKEND -v level=$level -v task_name=$task_name -v metric=$metric -F,\
  'NR==1 {next};$1==backend && $2==level && $3==task_name && $4==metric {M=$5};END {print M}' utils/testVals.csv )
 
-# python utils/getTestData.py
-#
-# PYTHONHASHSEED=0 python main.py || true > log-${model_name}-test.txt
+python utils/getTestData.py
+
+PYTHONHASHSEED=0 python main.py || true > log-${model_name}-test.txt
 
 PCC=$(awk -F, 'NR==1 {next};$3>M {M=$3};END {print M}' trained_models/${task_name}_srcmt_${model_type}/val.qe_metrics)
 
