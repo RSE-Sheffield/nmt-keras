@@ -1,0 +1,3 @@
+backend,level,dataset,metric,value
+theano,sentence,testData,pearson,0.1910756629756321
+tensorflow,sentence,testData,pearson,0.16354782921305733

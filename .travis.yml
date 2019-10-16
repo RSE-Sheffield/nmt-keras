@@ -5,6 +5,9 @@ matrix:
         - python: 3.7
           dist: xenial
           env: KERAS_BACKEND=theano
+        - python: 3.7
+          dist: xenial
+          env: KERAS_BACKEND=tensorflow
 
 # command to install dependencies
 install:
@@ -14,7 +17,7 @@ install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
+  # - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
 
@@ -37,9 +40,6 @@ install:
 
   # Install Theano-1.0.4 (for compatibility with numpy>=1.16
   - conda install -c conda-forge theano
-
-  # Install test script dependencies
-  - pip install wget
 
 # command to run tests
 script:
