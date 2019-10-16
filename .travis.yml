@@ -41,9 +41,6 @@ install:
   # Install Theano-1.0.4 (for compatibility with numpy>=1.16
   - conda install -c conda-forge theano
 
-  # Install test script dependencies
-  - pip install wget
-
 # command to run tests
 script:
   - utils/test-BiRNNsent.sh
