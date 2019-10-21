@@ -1,5 +1,6 @@
 set -e
 
+conf=config-dqTest-sentQEbRNN.py
 task_name=testData-sent
 model_type=EncSent
 model_name=${task_name}_srcmt_${model_type}
@@ -11,6 +12,9 @@ metric=pearson
 # look in utils/testVals.csv for the correct value to compare deepquest test run against
 TESTVAL=$(awk -v backend=$KERAS_BACKEND -v level=$level -v task_name=$task_name -v metric=$metric -F,\
  'NR==1 {next};$1==backend && $2==level && $3==task_name && $4==metric {M=$5};END {print M}' utils/testVals.csv )
+
+ rm -rf config.*
+ ln -s utils/$conf ./config.py
 
 python utils/getTestData_BiRNNsent.py
 
