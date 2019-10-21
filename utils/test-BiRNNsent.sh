@@ -13,7 +13,7 @@ metric=pearson
 TESTVAL=$(awk -v backend=$KERAS_BACKEND -v level=$level -v task_name=$task_name -v metric=$metric -F,\
  'NR==1 {next};$1==backend && $2==level && $3==task_name && $4==metric {M=$5};END {print M}' utils/testVals.csv )
 
-python utils/getTestData.py
+python utils/getTestData_BiRNNsent.py
 
 PYTHONHASHSEED=0 python main.py || true > log-${model_name}-test.txt
 
