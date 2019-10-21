@@ -19,13 +19,13 @@ def downloadAndExtractFiles(cachePath,*args):
     print('\n')
 
 baseCacheDir = 'cache/'
-task = 'testData/'
+task = 'testData-word/'
 rawtask = 'raw-'+task
 
-train = 'http://www.quest.dcs.shef.ac.uk/wmt15_files/task1_en-es_training.tar.gz'
-dev = 'http://www.quest.dcs.shef.ac.uk/wmt15_files/task1_en-es_dev.tar.gz'
-test = 'http://www.quest.dcs.shef.ac.uk/wmt15_files/task1_en-es_test.tar.gz'
-label = 'http://www.quest.dcs.shef.ac.uk/wmt15_files/gold/Task1_gold.tar.gz'
+train = 'http://www.quest.dcs.shef.ac.uk/wmt15_files/task2_en-es_training.tar.gz'
+dev = 'http://www.quest.dcs.shef.ac.uk/wmt15_files/task2_en-es_dev.tar.gz'
+test = 'http://www.quest.dcs.shef.ac.uk/wmt15_files/task2_en-es_test.tar.gz'
+label = 'http://www.quest.dcs.shef.ac.uk/wmt15_files/gold/Task2_gold.tar.gz'
 
 os.makedirs(baseCacheDir, exist_ok=True)
 cachePath = baseCacheDir + rawtask
@@ -40,19 +40,19 @@ for file in os.listdir(cachePath):
         tar.extractall(path=cachePath)
         tar.close()
 
-# make the test data
+## make the test data
 exampleDir = 'examples/'+task
 os.makedirs(exampleDir, exist_ok=True)
 
 totalLines = 500 # total number of lines to take from example data
 for f in os.listdir( cachePath ):
-    if f.endswith(".hter") or f.endswith(".pe") or f.endswith(".source") or f.endswith(".target"):
+    if f.endswith(".tags") or f.endswith(".pe") or f.endswith(".source") or f.endswith(".target"):
         file_in = cachePath+f
         file_out = exampleDir+f
         print('Copying first ' + str(totalLines) + ' lines of ' + file_in + ' to ' + file_out)
         with open(file_in) as file:
             lines = file.readlines()
-            lines = [l for i, l in enumerate(lines) if i <= totalLines-1]
+            lines = [l for i, l in enumerate(lines) if i < totalLines]
             with open(file_out, "w") as f1:
                 f1.writelines(lines)
 
