@@ -1,7 +1,7 @@
 set -e
 
 conf=config-dqTest-sentQEbRNN.py
-task_name=testData
+task_name=testData-sent
 model_type=EncSent
 model_name=${task_name}_srcmt_${model_type}
 store_path=test_models/${model_name}/
