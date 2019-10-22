@@ -18,7 +18,7 @@ TESTVAL=$(awk -v backend=$KERAS_BACKEND -v level=$level -v task_name=$task_name 
 
 python utils/getTestData_BiRNNsent.py
 
-PYTHONHASHSEED=0 python main.py TASK_NAME=$task_name DATASET_NAME=$task_name DATA_ROOT_PATH=examples/${task_name} SRC_LAN=src TRG_LAN=mt MODEL_TYPE=$model_type MODEL_NAME=$model_name PATIENCE=$patience SAVE_EACH_EVALUATION=True RND_SEED=$rnd_seed || true > log-${model_name}-test.txt
+PYTHONHASHSEED=0 python main.py TASK_NAME=$task_name DATASET_NAME=$task_name DATA_ROOT_PATH=examples/${task_name} SRC_LAN=src TRG_LAN=mt MODEL_TYPE=$model_type MODEL_NAME=$model_name PATIENCE=$patience SAVE_EACH_EVALUATION=True || true > log-${model_name}-test.txt
 
 PCC=$(awk -F, 'NR==1 {next};$3>M {M=$3};END {print M}' trained_models/${task_name}_srcmt_${model_type}/val.qe_metrics)
 
