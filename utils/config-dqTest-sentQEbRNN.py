@@ -5,7 +5,7 @@ def load_parameters():
     """
 
     # Input data params
-    TASK_NAME = 'testData'                           # Task name
+    TASK_NAME = 'testData-sent'                           # Task name
     DATASET_NAME = TASK_NAME                        # Dataset name
     SRC_LAN = 'src'                                  # Language of the source text
     TRG_LAN = 'mt'                                  # Language of the target text
