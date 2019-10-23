@@ -1,37 +1,59 @@
-from quest.models.model import QEModel
-from quest.models.utils import 
+# -*- coding: utf-8 -*-
+#
+# birnn_word.py
+#
+# Copyright (C) 2019 Frederic Blain (feedoo) <f.blain@sheffield.ac.uk>
+#
+# Licensed under the "THE BEER-WARE LICENSE" (Revision 42):
+# Fred (feedoo) Blain wrote this file. As long as you retain this notice you
+# can do whatever you want with this stuff. If we meet some day, and you think
+# this stuff is worth it, you can buy me a tomato juice or coffee in return
+#
+
+"""
+#TODO: add a description of the model here.
+#================================
+# POSTECH-inspired Predictor model
+#================================
+#
+## Inputs:
+# 1. Sentences in src language (shape: (mini_batch_size, words))
+# 2. One-position left-shifted reference sentences to represent the right context (shape: (mini_batch_size, words))
+# 3. One-position rigth-shifted reference sentences to represent the left context (shape: (mini_batch_size, words))
+#
+## Output:
+# 1. Machine-translated sentences (shape: (mini_batch_size, output_vocabulary_size))
+#
+## References
+# - Hyun Kim, Hun-Young Jung, Hongseok Kwon, Jong-Hyeok Lee, and Seung-Hoon Na. 2017a. Predictor- estimator: Neural quality estimation based on target word prediction for machine translation. ACM Trans. Asian Low-Resour. Lang. Inf. Process., 17(1):3:1-3:22, September.
+"""
+
+from nmt_keras.models.model import *
 
 
 class Predictor(QEModel):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, params, model_type='Predictor',
+            verbose=1, structure_path=None, weights_path=None,
+            model_name=None, vocabularies=None, store_path=None,
+            set_optimizer=True, clear_dirs=True):
 
-        pass
+        # define here attributes that are model specific
 
-    def build():
+        # and init from the QEModel class
+        super().__init__(params, model_type)
+
+        self.build(params)
+
+
+    def build(self):
         """
         Build the Predictor model and return a "Model" object.
         #TODO: add reference
         """
-        pass
 
-    #================================
-    # POSTECH-inspired Predictor model
-    #================================
-    #
-    ## Inputs:
-    # 1. Sentences in src language (shape: (mini_batch_size, words))
-    # 2. One-position left-shifted reference sentences to represent the right context (shape: (mini_batch_size, words))
-    # 3. One-position rigth-shifted reference sentences to represent the left context (shape: (mini_batch_size, words))
-    #
-    ## Output:
-    # 1. Machine-translated sentences (shape: (mini_batch_size, output_vocabulary_size))
-    #
-    ## References
-    # - Hyun Kim, Hun-Young Jung, Hongseok Kwon, Jong-Hyeok Lee, and Seung-Hoon Na. 2017a. Predictor- estimator: Neural quality estimation based on target word prediction for machine translation. ACM Trans. Asian Low-Resour. Lang. Inf. Process., 17(1):3:1-3:22, September.
+        params = self.params
 
-    def Predictor(self, params):
         # 1. Source text input
         src_text = Input(name=self.ids_inputs[0], batch_shape=tuple([None, None]), dtype='int32')
 
@@ -403,5 +425,6 @@ class Predictor(QEModel):
         softout = shared_FC_soft(softoutQE)
 
         self.model = Model(inputs=[src_text, next_words, next_words_bkw], outputs=[softout])
+
         if params['DOUBLE_STOCHASTIC_ATTENTION_REG'] > 0.:
             self.model.add_loss(alpha_regularizer)
