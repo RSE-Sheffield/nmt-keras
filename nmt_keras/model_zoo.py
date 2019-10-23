@@ -1425,9 +1425,3 @@ class MyZeroesLayer(Layer):
             mask= None
         return mask
 
-def mask_aware_mean_output_shape(input_shape):
-    shape = list(input_shape)
-    assert len(shape) == 3
-    return (shape[0], shape[2])
-
-
