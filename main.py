@@ -20,7 +20,6 @@ from config import load_parameters
 from data_engine.prepare_data import build_dataset, update_dataset_from_file
 from nmt_keras import check_params
 from nmt_keras.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
-from nmt_keras.model_zoo import TranslationModel
 from nmt_keras.training import train_model
 from utils.utils import update_parameters
 
@@ -104,11 +103,20 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
     params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len['target_text']
 
     # Build model
-    if params['RELOAD'] == 0:  # build new model
-        nmt_model = TranslationModel(params, model_type=params['MODEL_TYPE'], verbose=params['VERBOSE'],
-                                     model_name=params['MODEL_NAME'], vocabularies=dataset.vocabulary,
-                                     store_path=params['STORE_PATH'], trainable_pred=trainable_pred, trainable_est=trainable_est,
-                                     clear_dirs=True, weights_path=weights_path)
+    try:
+        # mf = QEModelFactory()
+        # qe_model = QEModelFactory(params['MODEL_TYPE'], 'sentence'))
+        #FIXME: change 'nmt_keras' for 'quest'
+        model_obj = getattr(importlib.import_module("nmt_keras.models.{}".format(params['MODEL_TYPE'].lower())))
+
+        qe_model = model_obj(params,
+                model_type=params['MODEL_TYPE'],
+                verbose=params['VERBOSE'],
+                model_name=params['MODEL_NAME'],
+                vocabularies=dataset.vocabulary,
+                store_path=params['STORE_PATH'],
+                clear_dirs=True,
+                weights_path=weights_path)
 
         # Define the inputs and outputs mapping from our Dataset instance to our model
         inputMapping = dict()
@@ -116,53 +124,40 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             pos_source = dataset.ids_inputs.index(id_in)
             id_dest = nmt_model.ids_inputs[i]
             inputMapping[id_dest] = pos_source
-        nmt_model.setInputsMapping(inputMapping)
+        qe_model.setInputsMapping(inputMapping)
 
         outputMapping = dict()
         for i, id_out in enumerate(params['OUTPUTS_IDS_DATASET']):
             pos_target = dataset.ids_outputs.index(id_out)
             id_dest = nmt_model.ids_outputs[i]
             outputMapping[id_dest] = pos_target
-        nmt_model.setOutputsMapping(outputMapping)
+        qe_model.setOutputsMapping(outputMapping)
 
-    else:  # resume from previously trained model
-        nmt_model = TranslationModel(params,
-                                     model_type=params['MODEL_TYPE'],
-                                     verbose=params['VERBOSE'],
-                                     model_name=params['MODEL_NAME'],
-                                     vocabularies=dataset.vocabulary,
-                                     store_path=params['STORE_PATH'],
-                                     set_optimizer=False,
-                                     trainable_pred=trainable_pred, trainable_est=trainable_est,
-                                     weights_path=weights_path)
+        if not params['RELOAD']:
+            # if we don't reload, it means
+            # we build a new model that needs
+            # an optimizer
+            qe_model.setOptimizer()
+        else:
+            # otherwise we just reload the weights
+            # from the files containing the model
+            qe_model = updateModel(nmt_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
+            qe_model.setParams(params)
+            qe_model.setOptimizer()
+            params['EPOCH_OFFSET'] = params['RELOAD'] if params['RELOAD_EPOCH'] else \
+                int(params['RELOAD'] * params['BATCH_SIZE'] / dataset.len_train)
 
-        # Define the inputs and outputs mapping from our Dataset instance to our model
-        inputMapping = dict()
-        for i, id_in in enumerate(params['INPUTS_IDS_DATASET']):
-            pos_source = dataset.ids_inputs.index(id_in)
-            id_dest = nmt_model.ids_inputs[i]
-            inputMapping[id_dest] = pos_source
-        nmt_model.setInputsMapping(inputMapping)
+    except AttributeError as error:
+        Logging.log_exception(error)
 
-        outputMapping = dict()
-        for i, id_out in enumerate(params['OUTPUTS_IDS_DATASET']):
-            pos_target = dataset.ids_outputs.index(id_out)
-            id_dest = nmt_model.ids_outputs[i]
-            outputMapping[id_dest] = pos_target
-
-        nmt_model.setOutputsMapping(outputMapping)
-        nmt_model = updateModel(nmt_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
-        nmt_model.setParams(params)
-        nmt_model.setOptimizer()
-        params['EPOCH_OFFSET'] = params['RELOAD'] if params['RELOAD_EPOCH'] else \
-            int(params['RELOAD'] * params['BATCH_SIZE'] / dataset.len_train)
+    except Exception as exception:
+        Logging.log_exception(exception, False)
 
     # Store configuration as pkl
     dict2pkl(params, params['STORE_PATH'] + '/config')
 
     # Callbacks
     callbacks = buildCallbacks(params, nmt_model, dataset)
-
 
     # Training
     total_start_time = timer()
@@ -194,15 +189,15 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                        'each_n_epochs': params.get('EVAL_EACH', 1),
                        'start_eval_on_epoch': params.get('START_EVAL_ON_EPOCH', 0)}
     if weights_dict is not None:
-        for layer in nmt_model.model.layers:
+        for layer in qe_model.model.layers:
             if layer.name in weights_dict:
                 layer.set_weights(weights_dict[layer.name])
 
 
-    nmt_model.trainNet(dataset, training_params)
+    qe_model.trainNet(dataset, training_params)
     
     if weights_dict is not None:
-        for layer in nmt_model.model.layers:
+        for layer in qe_model.model.layers:
             weights_dict[layer.name]= layer.get_weights()
 
     total_end_time = timer()
