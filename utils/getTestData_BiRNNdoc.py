@@ -63,14 +63,14 @@ for f in os.listdir( cachePath ):
         print('Renaming ' + f + ' to test.src')
         os.rename(exampleDir + f, exampleDir + 'test.src')
     elif "target" in f and f.endswith(".training"):
-        print('Renaming ' + f + ' to training.mt')
-        os.rename(exampleDir + f, exampleDir + 'training.mt')
+        print('Renaming ' + f + ' to train.mt')
+        os.rename(exampleDir + f, exampleDir + 'train.mt')
     elif "target" in f and f.endswith(".test"):
         print('Renaming ' + f + ' to test.mt')
         os.rename(exampleDir + f, exampleDir + 'test.mt')
     elif "training" in f and f.endswith(".meteor") and not "de-en" in f:
-        print('Renaming ' + f + ' to training.meteor')
-        os.rename(exampleDir + f, exampleDir + 'training.meteor')
+        print('Renaming ' + f + ' to train.meteor')
+        os.rename(exampleDir + f, exampleDir + 'train.meteor')
     elif "test" in f and f.endswith(".meteor") and not "de-en" in f:
         print('Renaming ' + f + ' to test.meteor')
         os.rename(exampleDir + f, exampleDir + 'test.meteor')
