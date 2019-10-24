@@ -16,21 +16,61 @@ def downloadAndExtractFiles(cachePath,*args):
             with urllib.request.urlopen(url) as f:
                 with open(download_to, "wb") as out:
                     out.write(f.read())
-    print('\n')
+
+def processDocData(cachePath,extractDir,dataDir,numDocs,split):
+    src_file_out = dataDir + split + '.src'
+    with open(src_file_out, "w") as writefile:
+        writefile.write("")
+    trg_file_out = dataDir + split + '.mt'
+    with open(trg_file_out, "w") as writefile:
+        writefile.write("")
+    if split != 'test':
+        score_file_out = dataDir + split + '.mqm'
+        with open(score_file_out, "w") as writefile:
+            writefile.write("")
+
+    i = 0
+    while i < numDocs:
+        docDir = cachePath + extractDir + '/doc' + '{:0>4}'.format(i)
+
+        file_in = docDir + '/' + 'source.segments'
+        with open(file_in) as file:
+            lines = file.read()
+        with open(src_file_out, "a") as writefile:
+            print('Writing from ' + file_in + ' to ' + src_file_out)
+            writefile.write(lines)
+            writefile.write("#doc#\n")
+
+        file_in = docDir + '/' + 'mt.segments'
+        with open(file_in) as file:
+            lines = file.read()
+        with open(trg_file_out, "a") as writefile:
+            print('Writing from ' + file_in + ' to ' + trg_file_out)
+            writefile.write(lines)
+            writefile.write("#doc#\n")
+
+        if split != 'test':
+            file_in = docDir + '/' + 'document_mqm'
+            with open(file_in) as file:
+                lines = file.read()
+            with open(score_file_out, "a") as writefile:
+                print('Writing from ' + file_in + ' to ' + score_file_out)
+                writefile.write(lines)
+
+        i += 1
 
 baseCacheDir = 'cache/'
 task = 'testData-doc/'
 rawtask = 'raw-'+task
 
 traindev = 'https://www.quest.dcs.shef.ac.uk/wmt18_files_qe/doc_level_training.tar.gz'
-test = ''
-label = ''
+test = 'https://www.quest.dcs.shef.ac.uk/wmt18_files_qe/doc_level_test.tar.gz'
 
 os.makedirs(baseCacheDir, exist_ok=True)
 cachePath = baseCacheDir + rawtask
 os.makedirs(cachePath, exist_ok=True)
 
-downloadAndExtractFiles(cachePath,traindev,test,label)
+downloadAndExtractFiles(cachePath,traindev,test)
 
 for file in os.listdir(cachePath):
     if file.endswith(".tar.gz"):
@@ -38,38 +78,11 @@ for file in os.listdir(cachePath):
         print('Extracting: ' + file + ' to ' + cachePath)
         tar.extractall(path=cachePath)
         tar.close()
+        # os.remove(file)
+        # print('Deleting: ' + file)
 
-# make the test data
-dataDir = 'examples/'+task
+dataDir = 'examples/' + task
 os.makedirs(dataDir, exist_ok=True)
-
-totalLines = 800 # total number of lines to take from example data
-for f in os.listdir( cachePath ):
-    if f.endswith(".training") or f.endswith(".test") or (f.endswith(".meteor") and not f.startswith("de-en")):
-        file_in = cachePath+f
-        file_out = dataDir+f
-        print('Copying first ' + str(totalLines) + ' lines of ' + file_in + ' to ' + file_out)
-        with open(file_in) as file:
-            lines = file.readlines()
-            lines = [l for i, l in enumerate(lines) if i < totalLines]
-            with open(file_out, "w") as f1:
-                f1.writelines(lines)
-
-    if "source" in f and f.endswith(".training"):
-        print('Renaming ' + f + ' to train.src')
-        os.rename(dataDir + f, dataDir + 'train.src')
-    elif "source" in f and f.endswith(".test"):
-        print('Renaming ' + f + ' to test.src')
-        os.rename(dataDir + f, dataDir + 'test.src')
-    elif "target" in f and f.endswith(".training"):
-        print('Renaming ' + f + ' to train.mt')
-        os.rename(dataDir + f, dataDir + 'train.mt')
-    elif "target" in f and f.endswith(".test"):
-        print('Renaming ' + f + ' to test.mt')
-        os.rename(dataDir + f, dataDir + 'test.mt')
-    elif "training" in f and f.endswith(".meteor") and not "de-en" in f:
-        print('Renaming ' + f + ' to train.meteor')
-        os.rename(dataDir + f, dataDir + 'train.meteor')
-    elif "test" in f and f.endswith(".meteor") and not "de-en" in f:
-        print('Renaming ' + f + ' to test.meteor')
-        os.rename(dataDir + f, dataDir + 'test.meteor')
+processDocData(cachePath,'task4_en-fr_training',dataDir,5,'train')
+processDocData(cachePath,'task4_en-fr_dev',dataDir,5,'dev')
+processDocData(cachePath,'doc_level_test/task4_en-fr_test',dataDir,5,'test')
