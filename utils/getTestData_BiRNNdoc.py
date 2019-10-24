@@ -22,16 +22,15 @@ baseCacheDir = 'cache/'
 task = 'testData-doc/'
 rawtask = 'raw-'+task
 
-train = 'http://www.quest.dcs.shef.ac.uk/wmt15_files/task3_en-de_training.tar.gz'
-dev = ''
-test = 'http://www.quest.dcs.shef.ac.uk/wmt15_files/task3_en-de_test.tar.gz'
-label = 'http://www.quest.dcs.shef.ac.uk/wmt15_files/gold/Task3_gold.tar.gz'
+traindev = 'https://www.quest.dcs.shef.ac.uk/wmt18_files_qe/doc_level_training.tar.gz'
+test = ''
+label = ''
 
 os.makedirs(baseCacheDir, exist_ok=True)
 cachePath = baseCacheDir + rawtask
 os.makedirs(cachePath, exist_ok=True)
 
-downloadAndExtractFiles(cachePath,train,dev,test,label)
+downloadAndExtractFiles(cachePath,traindev,test,label)
 
 for file in os.listdir(cachePath):
     if file.endswith(".tar.gz"):
@@ -41,14 +40,14 @@ for file in os.listdir(cachePath):
         tar.close()
 
 # make the test data
-exampleDir = 'examples/'+task
-os.makedirs(exampleDir, exist_ok=True)
+dataDir = 'examples/'+task
+os.makedirs(dataDir, exist_ok=True)
 
 totalLines = 800 # total number of lines to take from example data
 for f in os.listdir( cachePath ):
     if f.endswith(".training") or f.endswith(".test") or (f.endswith(".meteor") and not f.startswith("de-en")):
         file_in = cachePath+f
-        file_out = exampleDir+f
+        file_out = dataDir+f
         print('Copying first ' + str(totalLines) + ' lines of ' + file_in + ' to ' + file_out)
         with open(file_in) as file:
             lines = file.readlines()
@@ -58,19 +57,19 @@ for f in os.listdir( cachePath ):
 
     if "source" in f and f.endswith(".training"):
         print('Renaming ' + f + ' to train.src')
-        os.rename(exampleDir + f, exampleDir + 'train.src')
+        os.rename(dataDir + f, dataDir + 'train.src')
     elif "source" in f and f.endswith(".test"):
         print('Renaming ' + f + ' to test.src')
-        os.rename(exampleDir + f, exampleDir + 'test.src')
+        os.rename(dataDir + f, dataDir + 'test.src')
     elif "target" in f and f.endswith(".training"):
         print('Renaming ' + f + ' to train.mt')
-        os.rename(exampleDir + f, exampleDir + 'train.mt')
+        os.rename(dataDir + f, dataDir + 'train.mt')
     elif "target" in f and f.endswith(".test"):
         print('Renaming ' + f + ' to test.mt')
-        os.rename(exampleDir + f, exampleDir + 'test.mt')
+        os.rename(dataDir + f, dataDir + 'test.mt')
     elif "training" in f and f.endswith(".meteor") and not "de-en" in f:
         print('Renaming ' + f + ' to train.meteor')
-        os.rename(exampleDir + f, exampleDir + 'train.meteor')
+        os.rename(dataDir + f, dataDir + 'train.meteor')
     elif "test" in f and f.endswith(".meteor") and not "de-en" in f:
         print('Renaming ' + f + ' to test.meteor')
-        os.rename(exampleDir + f, exampleDir + 'test.meteor')
+        os.rename(dataDir + f, dataDir + 'test.meteor')

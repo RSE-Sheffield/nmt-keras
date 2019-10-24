@@ -41,14 +41,14 @@ for file in os.listdir(cachePath):
         tar.close()
 
 ## make the test data
-exampleDir = 'examples/'+task
-os.makedirs(exampleDir, exist_ok=True)
+dataDir = 'examples/'+task
+os.makedirs(dataDir, exist_ok=True)
 
 totalLines = 500 # total number of lines to take from example data
 for f in os.listdir( cachePath ):
     if f.endswith(".tags") or f.endswith(".pe") or f.endswith(".source") or f.endswith(".target"):
         file_in = cachePath+f
-        file_out = exampleDir+f
+        file_out = dataDir+f
         print('Copying first ' + str(totalLines) + ' lines of ' + file_in + ' to ' + file_out)
         with open(file_in) as file:
             lines = file.readlines()
@@ -57,10 +57,10 @@ for f in os.listdir( cachePath ):
                 f1.writelines(lines)
 
     if f.endswith(".source"):
-        filename, file_extension = os.path.splitext(exampleDir + f)
+        filename, file_extension = os.path.splitext(dataDir + f)
         print('Renaming ' + f + ' to ' + filename + '.src')
-        os.rename(exampleDir + f, filename + '.src')
+        os.rename(dataDir + f, filename + '.src')
     elif f.endswith(".target"):
-        filename, file_extension = os.path.splitext(exampleDir + f)
+        filename, file_extension = os.path.splitext(dataDir + f)
         print('Renaming ' + f + ' to ' + filename + '.target')
-        os.rename(exampleDir + f, filename + '.mt')
+        os.rename(dataDir + f, filename + '.mt')
