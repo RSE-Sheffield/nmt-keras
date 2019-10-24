@@ -1,7 +1,7 @@
 set -e
 
 conf=config-dqTest-sentQEbRNN.py
-task_name=testData
+task_name=testData-sent
 model_type=EncSent
 model_name=${task_name}_srcmt_${model_type}
 store_path=test_models/${model_name}/
@@ -13,9 +13,12 @@ metric=pearson
 TESTVAL=$(awk -v backend=$KERAS_BACKEND -v level=$level -v task_name=$task_name -v metric=$metric -F,\
  'NR==1 {next};$1==backend && $2==level && $3==task_name && $4==metric {M=$5};END {print M}' utils/testVals.csv )
 
-python utils/getTestData.py
+ rm -rf config.*
+ ln -s utils/$conf ./config.py
 
-PYTHONHASHSEED=0 python main.py || true > log-${model_name}-test.txt
+python utils/getTestData_BiRNNsent.py
+
+PYTHONHASHSEED=0 python main.py TASK_NAME=$task_name DATASET_NAME=$task_name DATA_ROOT_PATH=examples/${task_name} SRC_LAN=src TRG_LAN=mt MODEL_TYPE=$model_type MODEL_NAME=$model_name PATIENCE=$patience SAVE_EACH_EVALUATION=True || true > log-${model_name}-test.txt
 
 PCC=$(awk -F, 'NR==1 {next};$3>M {M=$3};END {print M}' trained_models/${task_name}_srcmt_${model_type}/val.qe_metrics)
 

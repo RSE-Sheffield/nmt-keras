@@ -19,7 +19,7 @@ def downloadAndExtractFiles(cachePath,*args):
     print('\n')
 
 baseCacheDir = 'cache/'
-task = 'testData/'
+task = 'testData-sent/'
 rawtask = 'raw-'+task
 
 train = 'http://www.quest.dcs.shef.ac.uk/wmt15_files/task1_en-es_training.tar.gz'
