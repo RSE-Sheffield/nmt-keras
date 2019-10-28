@@ -81,7 +81,8 @@ class BIRNN(QEModel):
                 embeddings_initializer=params['INIT_FUNCTION'],
                 trainable=self.trainable,
                 mask_zero=True,
-                name='src_word_embedding')(src_words)
+                name='src_word_embedding'
+                )(src_words)
 
         src_embedding = Regularize(src_embedding, params,
                 trainable=self.trainable, name='src_state')
@@ -109,10 +110,15 @@ class BIRNN(QEModel):
                 embeddings_initializer=params['INIT_FUNCTION'],
                 trainable=self.trainable,
                 mask_zero=True,
-                name='target_word_embedding')(trg_words)
+                name='target_word_embedding'
+                )(trg_words)
 
-        trg_embedding = Regularize(trg_embedding, params,
-                trainable=self.trainable, name='trg_state')
+        trg_embedding = Regularize(
+                trg_embedding,
+                params,
+                trainable=self.trainable,
+                name='trg_state'
+                )
 
         trg_annotations = Bidirectional(
                 eval(params['ENCODER_RNN_TYPE'])(params['ENCODER_HIDDEN_SIZE'],
@@ -136,7 +142,8 @@ class BIRNN(QEModel):
         ## Concatenation of the two (src, trg) sentence-level representations
         annotations = concatenate(
                 [src_annotations, trg_annotations],
-                name='annot_seq_concat')
+                name='annot_seq_concat'
+                )
 
         if self.task_level == "sent":
             # apply attention over words at the sentence-level
@@ -148,9 +155,10 @@ class BIRNN(QEModel):
             annotations = attention_3d_block(annotations, params, 'sent')
 
             # reshape back to 3d input to group sent vectors per doc
-            genreshape_out = GeneralReshape((None,
-                params['SECOND_DIM_SIZE'], params['ENCODER_HIDDEN_SIZE'] * 4),
-                params)
+            genreshape_out = GeneralReshape(
+                    (None, params['SECOND_DIM_SIZE'], params['ENCODER_HIDDEN_SIZE'] * 4),
+                    params
+                    )
             annotations = genreshape_out(annotations)
 
             #bi-RNN over doc sentences
@@ -159,31 +167,36 @@ class BIRNN(QEModel):
                     params['DOC_DECODER_HIDDEN_SIZE'],
                     return_sequences=True,
                     return_state=True,
-                    name='dec_doc_frw')(annotations)
+                    name='dec_doc_frw'
+                    )(annotations)
 
             dec_doc_bkw, dec_doc_last_state_bkw = GRU(
                     params['DOC_DECODER_HIDDEN_SIZE'],
                     return_sequences=True,
                     return_state=True,
                     go_backwards=True,
-                    name='dec_doc_bkw')(annotations)
+                    name='dec_doc_bkw'
+                    )(annotations)
 
             #TODO: check why this block is useles....
             dec_doc_bkw = Reverse(
                     dec_doc_bkw._keras_shape[2],
                     axes=1,
-                    name='dec_reverse_doc_bkw')(dec_doc_bkw)
+                    name='dec_reverse_doc_bkw'
+                    )(dec_doc_bkw)
 
             dec_doc_seq_concat = concatenate(
                     [dec_doc_frw, dec_doc_bkw],
                     trainable=self.trainable_est,
-                    name='dec_doc_seq_concat')
+                    name='dec_doc_seq_concat'
+                    )
             #TODO: end of block
 
             # we take the last bi-RNN state as doc summary
             dec_doc_last_state_concat = concatenate(
                     [dec_doc_last_state_frw, dec_doc_last_state_bkw],
-                    name='dec_doc_last_state_concat')
+                    name='dec_doc_last_state_concat'
+                    )
 
 
 
@@ -194,8 +207,12 @@ class BIRNN(QEModel):
 
         if self.task_level == "word":
             output_qe_layer = TimeDistributed(
-                    Dense(params['WORD_QE_CLASSES'], activation=out_activation),
-                    name=self.ids_outputs[0])(annotations)
+                    Dense(
+                        params['WORD_QE_CLASSES'],
+                        activation=out_activation
+                        ),
+                    name=self.ids_outputs[0]
+                    )(annotations)
 
         elif self.task_level == "phrase":
             raise NotImplementedError
