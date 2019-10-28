@@ -11,6 +11,31 @@
 # this stuff is worth it, you can buy me a tomato juice or coffee in return
 #
 
-# List of officially supported QE models
-__all__ = ["birnn", "predictor", "estimator"]
+
+
+## LIST HERE THE QE MODELS THAT ARE AVAILABLE
+## /!\ keep the name of the model in lowercase
+
+QE_MODELS = {
+'encword':          'birnn_word',
+'encsent':          'birnn_sent',
+'encdoc':           'birnn_doc',
+'encdocatt':        'birnn_doc_att',
+'predictor':        'predictor',
+'estimatorword':    'estimator_word',
+'estimatorsent':    'estimator_sent',
+'estimatordoc':     'estimator_doc',
+}
+
+
+import importlib
+
+# QE MODEL FACTORY-like
+def get(model_name, params):
+    try:
+        qe_model = getattr(importlib.import_module('nmt_keras.models.{}'.format(QE_MODELS[model_name.lower()])), model_name)
+        return qe_model(params)
+
+    except ValueError as e:
+        print("/!\ {}".format(e))
 

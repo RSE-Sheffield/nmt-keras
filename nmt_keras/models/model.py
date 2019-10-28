@@ -16,8 +16,7 @@ import sys
 import logging
 
 from abc import ABCMeta, abstractmethod
-
-from nmt_keras.models.utils import *
+from .utils import *
 
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -47,7 +46,6 @@ class QEModel(Model_Wrapper, metaclass=ABCMeta):
     """
 
     # list of QE task/granularities supported by a model (e.g. "word", "phrase", "sent", "doc")
-    _task_levels = []
 
     def __init__(self, params, model_type='QEModel', verbose=1, structure_path=None, weights_path=None,
                  model_name=None, vocabularies=None, store_path=None, set_optimizer=True, clear_dirs=True, trainable=True):
@@ -88,9 +86,6 @@ class QEModel(Model_Wrapper, metaclass=ABCMeta):
         # Sets the model name and prepares the folders for storing the models
         self.setName(model_name, models_path=store_path, clear_dirs=clear_dirs)
         self.trainable = trainable
-
-        # self.task_level = params['TASK'] # word, phrase, sent, doc
-        self.setTask()
 
         self.use_CuDNN = 'CuDNN' if K.backend() == 'tensorflow' and params.get('USE_CUDNN', True) else ''
 

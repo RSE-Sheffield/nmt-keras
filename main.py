@@ -23,6 +23,8 @@ from nmt_keras.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 from nmt_keras.training import train_model
 from utils.utils import update_parameters
 
+import .nmt_keras.models as modFactory
+
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 
 logger = logging.getLogger(__name__)
@@ -107,16 +109,18 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
         # mf = QEModelFactory()
         # qe_model = QEModelFactory(params['MODEL_TYPE'], 'sentence'))
         #FIXME: change 'nmt_keras' for 'quest'
-        model_obj = getattr(importlib.import_module("nmt_keras.models.{}".format(params['MODEL_TYPE'].lower())))
+        # model_obj = getattr(importlib.import_module("nmt_keras.models.{}".format(params['MODEL_TYPE'].lower())))
 
-        qe_model = model_obj(params,
-                model_type=params['MODEL_TYPE'],
-                verbose=params['VERBOSE'],
-                model_name=params['MODEL_NAME'],
-                vocabularies=dataset.vocabulary,
-                store_path=params['STORE_PATH'],
-                clear_dirs=True,
-                weights_path=weights_path)
+        # qe_model = model_obj(params,
+        #         model_type=params['MODEL_TYPE'],
+        #         verbose=params['VERBOSE'],
+        #         model_name=params['MODEL_NAME'],
+        #         vocabularies=dataset.vocabulary,
+        #         store_path=params['STORE_PATH'],
+        #         clear_dirs=True,
+        #         weights_path=weights_path)
+        # model_obj = getattr(importlib.import_module("nmt_keras.models.{}".format(params['MODEL_TYPE'].lower())))
+        qe_model = modFactory.get(params['MODEL_TYPE'], params)
 
         # Define the inputs and outputs mapping from our Dataset instance to our model
         inputMapping = dict()
