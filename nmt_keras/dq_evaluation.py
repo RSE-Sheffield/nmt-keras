@@ -9,6 +9,7 @@ from keras_wrapper.extra.evaluation import get_coco_score
 from keras_wrapper.extra.evaluation import select
 
 
+
 def qe_metrics(pred_list, verbose, extra_vars, split, ds, set, no_ref=False):
     """
     :param pred_list: dictionary of hypothesis sentences
@@ -30,9 +31,9 @@ def qe_metrics(pred_list, verbose, extra_vars, split, ds, set, no_ref=False):
         final_scores = get_coco_score(pred_list[0], verbose, extra_vars, split)
 
     elif set=='sent_qe':
-        
+
         sent_pred=[]
-     
+
         if len(pred_list[0]) > 1:
             sent_pred = pred_list[0]
         else:
@@ -45,14 +46,14 @@ def qe_metrics(pred_list, verbose, extra_vars, split, ds, set, no_ref=False):
             final_scores = eval_sent_qe(ref, sent_pred, 'Sent')
 
     elif set=='doc_qe':
-        
-        ref = eval("ds.Y_"+split+"['doc_qe']")        
+
+        ref = eval("ds.Y_"+split+"['doc_qe']")
         final_scores = eval_sent_qe(ref, pred_list[0], 'Doc')
 
 
     elif set=='word_qe':
         ref = eval("ds.Y_"+split+"['word_qe']")
-        final_scores = eval_word_qe(ref, pred_list[0], ds.vocabulary['word_qe'], 'Word')
+        final_scores = eval_word_qe(ref, pred_list, ds.vocabulary['word_qe'], 'Word')
 
     elif set=='phrase_qe':
         ref = eval("ds.Y_"+split+"['phrase_qe']")
@@ -75,15 +76,11 @@ def qe_metrics(pred_list, verbose, extra_vars, split, ds, set, no_ref=False):
 
 
 def eval_word_qe(gt_list, pred_list, vocab, qe_type):
-    
+
     from sklearn.metrics import precision_recall_fscore_support
     from collections import defaultdict
-    #print(len(pred_list))
-    #print(pred_list)
-    y_init = []
 
-    for list in pred_list:
-        y_init.extend(list)
+    y_init = pred_list
 
     precision_eval, recall_eval, f1_eval = 0.0, 0.0, 0.0
     prec_list = []
@@ -112,7 +109,7 @@ def eval_word_qe(gt_list, pred_list, vocab, qe_type):
 
         y_pred = np.array(y_pred)
         ref_list = np.array(ref_list)
-        
+
         precision, recall, f1, _ = precision_recall_fscore_support(ref_list, y_pred, average=None)
         f1_list.append(np.prod(f1))
         prec_list.append(precision)
@@ -127,14 +124,12 @@ def eval_word_qe(gt_list, pred_list, vocab, qe_type):
         logging.info('F-score %s' % f1)
         logging.info('F-score multi %s' % np.prod(f1))
         #logging.info(' '.join(y_pred))
-  
 
     f1_list = np.array(f1_list)
     prec_list = np.array(prec_list)
-    recall_list = np.array(recall_list)    
+    recall_list = np.array(recall_list)
 
     max_f1 = np.argmax(f1_list)
-
 
     return {'precision': prec_list[max_f1],
             'recall': recall_list[max_f1],
@@ -144,7 +139,7 @@ def eval_word_qe(gt_list, pred_list, vocab, qe_type):
 
 
 def eval_phrase_qe(gt_list, pred_list, vocab, qe_type):
-    
+
     from sklearn.metrics import precision_recall_fscore_support
     from collections import defaultdict
     #print(len(pred_list))
