@@ -52,8 +52,12 @@ def qe_metrics(pred_list, verbose, extra_vars, split, ds, set, no_ref=False):
 
 
     elif set=='word_qe':
-        ref = eval("ds.Y_"+split+"['word_qe']")
-        final_scores = eval_word_qe(ref, pred_list, ds.vocabulary['word_qe'], 'Word')
+        target_text = eval("ds.X_"+split+"['target_text']")
+        if no_ref:
+            final_scores = eval_word_qe(target_text, [], pred_list, ds.vocabulary['word_qe'], 'Word')
+        else:
+            ref = eval("ds.Y_"+split+"['word_qe']")
+            final_scores = eval_word_qe(target_text, ref, pred_list, ds.vocabulary['word_qe'], 'Word')
 
     elif set=='phrase_qe':
         ref = eval("ds.Y_"+split+"['phrase_qe']")
@@ -75,7 +79,7 @@ def qe_metrics(pred_list, verbose, extra_vars, split, ds, set, no_ref=False):
     return final_scores
 
 
-def eval_word_qe(gt_list, pred_list, vocab, qe_type):
+def eval_word_qe(target_text, gt_list, pred_list, vocab, qe_type):
 
     from sklearn.metrics import precision_recall_fscore_support
     from collections import defaultdict
@@ -89,54 +93,75 @@ def eval_word_qe(gt_list, pred_list, vocab, qe_type):
     res_list = {}
     thresholds = np.arange(0, 1, 0.1)
 
-    for p in thresholds:
+    if len(gt_list) > 0:
+        for p in thresholds:
 
-        y_pred = []
-        ref_list = []
+            y_pred = []
+            ref_list = []
 
-        for i in range(len(gt_list)):
+            for i in range(len(gt_list)):
 
-            line_ar = gt_list[i].split(' ')
-            ref_list.extend(line_ar)
+                line_ar = gt_list[i].split(' ')
+                ref_list.extend(line_ar)
 
-            for j in range(len(line_ar)):
+                for j in range(len(line_ar)):
 
-                pred_word = y_init[i][j]
-                if pred_word[vocab['words2idx']['OK']] >= p:
-                    y_pred.append('OK')
-                else:
-                    y_pred.append('BAD')
+                    pred_word = y_init[i][j]
+                    if pred_word[vocab['words2idx']['OK']] >= p:
+                        y_pred.append('OK')
+                    else:
+                        y_pred.append('BAD')
 
-        y_pred = np.array(y_pred)
-        ref_list = np.array(ref_list)
+            y_pred = np.array(y_pred)
+            ref_list = np.array(ref_list)
 
-        precision, recall, f1, _ = precision_recall_fscore_support(ref_list, y_pred, average=None)
-        f1_list.append(np.prod(f1))
-        prec_list.append(precision)
-        recall_list.append(recall)
+            precision, recall, f1, _ = precision_recall_fscore_support(ref_list, y_pred, average=None)
+            f1_list.append(np.prod(f1))
+            prec_list.append(precision)
+            recall_list.append(recall)
 
-        res_list[p] = y_pred
+            res_list[p] = y_pred
 
-        logging.info('**'+qe_type+'QE**')
-        logging.info('Threshold %.4f' % p)
-        logging.info('Precision %s' % precision)
-        logging.info('Recall %s' % recall)
-        logging.info('F-score %s' % f1)
-        logging.info('F-score multi %s' % np.prod(f1))
-        #logging.info(' '.join(y_pred))
+            logging.info('**'+qe_type+'QE**')
+            logging.info('Threshold %.4f' % p)
+            logging.info('Precision %s' % precision)
+            logging.info('Recall %s' % recall)
+            logging.info('F-score %s' % f1)
+            logging.info('F-score multi %s' % np.prod(f1))
+            #logging.info(' '.join(y_pred))
 
-    f1_list = np.array(f1_list)
-    prec_list = np.array(prec_list)
-    recall_list = np.array(recall_list)
+        f1_list = np.array(f1_list)
+        prec_list = np.array(prec_list)
+        recall_list = np.array(recall_list)
 
-    max_f1 = np.argmax(f1_list)
+        max_f1 = np.argmax(f1_list)
 
-    return {'precision': prec_list[max_f1],
-            'recall': recall_list[max_f1],
-            'f1_prod': f1_list[max_f1],
-            'threshold': thresholds[max_f1],
-            'pred_categorical': res_list}
+        return {'precision': prec_list[max_f1],
+                'recall': recall_list[max_f1],
+                'f1_prod': f1_list[max_f1],
+                'threshold': thresholds[max_f1],
+                'pred_categorical': res_list}
 
+    else: # there is no gold labels
+        for p in thresholds:
+            # predictions from the wordQE model
+            y_pred = []
+            for i in range(len(target_text)):
+                # we use the length of the target sent to retrieve the number
+                # of labels that we need to produce, otherwise padding to 70...
+                mt_sent = target_text[i].split(' ')
+                # logging.info('y_init[i]: %s' % y_init[i])
+                for j in range(len(mt_sent)):
+                    pred_word = y_init[i][j]
+                    if pred_word[vocab['words2idx']['OK']] >= p:
+                        y_pred.append('OK')
+                    else:
+                        y_pred.append('BAD')
+            # logging.info('y_pred: %s' % y_pred)
+            y_pred = np.array(y_pred)
+            res_list[p] = y_pred
+
+        return {'pred_categorical': res_list}
 
 def eval_phrase_qe(gt_list, pred_list, vocab, qe_type):
 
@@ -221,7 +246,7 @@ def eval_phrase_qe(gt_list, pred_list, vocab, qe_type):
 
     f1_list = np.array(f1_list)
     prec_list = np.array(prec_list)
-    recall_list = np.array(recall_list)    
+    recall_list = np.array(recall_list)
 
     max_f1 = np.argmax(f1_list)
 
