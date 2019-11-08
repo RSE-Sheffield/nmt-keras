@@ -209,10 +209,6 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
         base_path = params['DATA_ROOT_PATH']
         name = params['DATASET_NAME'] + '_' + params['SRC_LAN'] + params['TRG_LAN']
 
-        doc_size=params.get('SECOND_DIM_SIZE', 0)
-
-        assert doc_size == 0, "doc_size not implemented yet"
-
         ds = Dataset(name, base_path, silence=silence)
         ds.vocabulary = vocabulary
         ds.vocabulary_len = vocabulary_len
@@ -365,8 +361,8 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
         data_type_trg = data_type_src
 
         if 'EstimatorDoc' in params['MODEL_TYPE'] or 'EncDoc' in params['MODEL_TYPE']:
-            data_type_src = 'doc'
-            data_type_trg = 'doc'
+            data_type_src = 'text'
+            data_type_trg = 'text'
        
 
         # here we set to doc meaning just the 3d input
