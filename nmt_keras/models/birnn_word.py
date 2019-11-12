@@ -26,7 +26,7 @@ class EncWord(QEModel):
         # define here attributes that are model specific
 
         # and init from the QEModel class
-        super().__init__(params)
+        super().__init__(params,model_type=model_type)
 
 
     def build(self):
