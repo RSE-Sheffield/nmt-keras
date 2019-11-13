@@ -45,10 +45,12 @@ class QEModel(Model_Wrapper, metaclass=ABCMeta):
     :param bool clear_dirs: Clean model directories or not.
     """
 
-    # list of QE task/granularities supported by a model (e.g. "word", "phrase", "sent", "doc")
+    def __init__(self, params, model_type='QEModel',
+            structure_path=None, weights_path=None, model_name=None,
+            vocabularies=None, store_path=None, set_optimizer=True,
+            clear_dirs=True, verbose=1, trainable=True
+            ):
 
-    def __init__(self, params, model_type='QEModel', verbose=1, structure_path=None, weights_path=None,
-                 model_name=None, vocabularies=None, store_path=None, set_optimizer=True, clear_dirs=True, trainable=True):
         """
         QEModel object constructor.
 
@@ -63,31 +65,40 @@ class QEModel(Model_Wrapper, metaclass=ABCMeta):
         :param vocabularies: vocabularies used for word embedding
         :param store_path: path to the folder where the temporal model packups will be stored
         :param set_optimizer: Compile optimizer or not.
-        :param clear_dirs: Clean model directories or not.
 
         :param trainable_est: Is estimator trainable?
         :param trainable_pred: Is predictor trainable?
-
         """
+
         # inheritance kept that way for compatilibity with Py2.7
-        super(QEModel, self).__init__(model_type=model_type, model_name=model_name,
-                silence=verbose == 0, models_path=store_path, inheritance=True)
+        super(QEModel, self).__init__(model_type=params.get('MODEL_TYPE', 'QEModel'),
+            model_name=params.get('MODEL_NAME', None),
+            silence=params.get('VERBOSE', 0) == 0,
+            models_path=params.get('STORE_PATH', None),
+            inheritance=True
+            )
 
-        self.__toprint = ['_model_type', 'name', 'model_path', 'verbose']
-
-        self.verbose = verbose
-        self._model_type = model_type
+        # mandatory config values before building a ModelWrapper object
         self.params = params
-        self.vocabularies = vocabularies
+        # self._model_type = params['MODEL_TYPE']
+        self.vocabularies = params.get('VOCABULARY', vocabularies)
+        self.name = params.get('MODEL_NAME', None)
+        self.models_path = params.get('STORE_PATH', store_path)
+
+        self.verbose = params.get('VERBOSE', verbose)
+
         self.ids_inputs = params['INPUTS_IDS_MODEL']
         self.ids_outputs = params['OUTPUTS_IDS_MODEL']
-        #TODO: is 'return_alphas' useful?
+        #TODO: is 'return_alphas' useful for our QEModel, or simply used for MT?
         self.return_alphas = params['COVERAGE_PENALTY'] or params['POS_UNK']
-        # Sets the model name and prepares the folders for storing the models
-        self.setName(model_name=params['MODEL_NAME'], models_path=params['STORE_PATH'], clear_dirs=False)
-        self.trainable = trainable
 
+        # Sets the model name and prepares the folders for storing the models
+        # clear_dirs: Clean model directories or not (default: False).
+        self.setName(self.name, models_path=self.models_path, clear_dirs=False)
+        self.trainable = trainable
         self.use_CuDNN = 'CuDNN' if K.backend() == 'tensorflow' and params.get('USE_CUDNN', True) else ''
+        # self.__toprint = ['_model_type', 'name', 'model_path', 'verbose']
+        self.__toprint = ['name', 'net_type', 'model_path', 'vocabularies', 'verbose']
 
         # Prepare source word embedding
         if params['SRC_PRETRAINED_VECTORS'] is not None:
@@ -124,7 +135,7 @@ class QEModel(Model_Wrapper, metaclass=ABCMeta):
             self.trg_embedding_weights = None
             self.trg_embedding_weights_trainable = params.get('TRAINABLE_DECODER', True)
 
-        # # Prepare model
+        # # # Prepare model
         # if structure_path:
         #     # Load a .json model
         #     if self.verbose > 0:
@@ -138,8 +149,6 @@ class QEModel(Model_Wrapper, metaclass=ABCMeta):
         #         eval('self.' + model_type + '(params)')
         #     else:
         #         raise Exception('Translation_Model model_type "' + model_type + '" is not implemented.')
-        #
-        #
 
         self.build()
 

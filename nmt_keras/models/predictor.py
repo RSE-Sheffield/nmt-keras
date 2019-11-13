@@ -34,11 +34,7 @@ from .utils import *
 
 class Predictor(QEModel):
 
-    def __init__(self, params, model_type='Predictor',
-            verbose=1, structure_path=None, weights_path=None,
-            model_name=None, vocabularies=None, store_path=None,
-            set_optimizer=True, clear_dirs=True):
-
+    def __init__(self, params):
         # define here attributes that are model specific
 
         # and init from the QEModel class
