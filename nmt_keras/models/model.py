@@ -84,7 +84,7 @@ class QEModel(Model_Wrapper, metaclass=ABCMeta):
         #TODO: is 'return_alphas' useful?
         self.return_alphas = params['COVERAGE_PENALTY'] or params['POS_UNK']
         # Sets the model name and prepares the folders for storing the models
-        self.setName(model_name, models_path=store_path, clear_dirs=clear_dirs)
+        self.setName(model_name=params['MODEL_NAME'], models_path=params['STORE_PATH'], clear_dirs=False)
         self.trainable = trainable
 
         self.use_CuDNN = 'CuDNN' if K.backend() == 'tensorflow' and params.get('USE_CUDNN', True) else ''
