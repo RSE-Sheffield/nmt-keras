@@ -26,6 +26,8 @@ echo "PCC test value was $PCC tested against $TESTVAL"
 
 if echo $PCC $TESTVAL | awk '{exit ($1-$2)^2>1E-12}'; then
   echo "QE test passed (sentence level BiRNN with $KERAS_BACKEND on $task_name test dataset)"
+  exit 0
 else
   echo "QE test failed (sentence level BiRNN with $KERAS_BACKEND on $task_name test dataset)"
+  exit 1
 fi
