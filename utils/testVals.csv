@@ -1,5 +1,5 @@
 backend,level,dataset,metric,value
-theano,sentence,testData-sent,pearson,0.1910756629756321
-tensorflow,sentence,testData-sent,pearson,0.16354782921305733
+theano,sentence,testData-sent,pearson,0.17946171830618374
+tensorflow,sentence,testData-sent,pearson,0.18309480272019577
 theano,document,testData-doc,pearson,0.7243370113216334
 tensorflow,document,testData-doc,pearson,0.7323550350999823
