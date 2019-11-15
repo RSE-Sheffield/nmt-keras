@@ -6,8 +6,10 @@ python:
 env:
     - KERAS_BACKEND=theano TEST_MODE=sentence
     - KERAS_BACKEND=theano TEST_MODE=document
+    - KERAS_BACKEND=theano TEST_MODE=word
     - KERAS_BACKEND=tensorflow TEST_MODE=sentence
     - KERAS_BACKEND=tensorflow TEST_MODE=document
+    - KERAS_BACKEND=tensorflow TEST_MODE=word
 
 # command to install dependencies
 install:
