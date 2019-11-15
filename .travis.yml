@@ -1,13 +1,13 @@
 sudo: required
+dist: xenial
 language: python
-matrix:
-    include:
-        - python: 3.7
-          dist: xenial
-          env: KERAS_BACKEND=theano
-        - python: 3.7
-          dist: xenial
-          env: KERAS_BACKEND=tensorflow
+python:
+  - '3.7'
+env:
+    - KERAS_BACKEND=theano TEST_MODE=sentence
+    - KERAS_BACKEND=theano TEST_MODE=document
+    - KERAS_BACKEND=tensorflow TEST_MODE=sentence
+    - KERAS_BACKEND=tensorflow TEST_MODE=document
 
 # command to install dependencies
 install:
@@ -43,4 +43,4 @@ install:
 
 # command to run tests
 script:
-  - utils/test-BiRNNsent.sh
+  - utils/test-master.sh

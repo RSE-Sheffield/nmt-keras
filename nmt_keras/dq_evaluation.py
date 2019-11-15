@@ -48,7 +48,7 @@ def qe_metrics(pred_list, verbose, extra_vars, split, ds, set, no_ref=False):
     elif set=='doc_qe':
 
         ref = eval("ds.Y_"+split+"['doc_qe']")
-        final_scores = eval_sent_qe(ref, pred_list[0], 'Doc')
+        final_scores = eval_sent_qe(ref, pred_list, 'Doc')
 
 
     elif set=='word_qe':
