@@ -1,3 +1,5 @@
+#!/bin/sh
+
 set -e
 
 conf=config-dqTest-docQEbRNN.py

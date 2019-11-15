@@ -1,3 +1,5 @@
+#!/bin/sh
+
 set -e
 
 if [[ "$TEST_MODE" == "sentence" ]]; then
