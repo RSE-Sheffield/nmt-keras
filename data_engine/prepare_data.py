@@ -600,7 +600,7 @@ def keep_n_captions(ds, repeat, n=1, set_names=None):
                     for i in range(0, n_samples, repeat):
                         for j in range(n):
                             new_X.append(X[id_in][i + j])
-                    setattr(ds, 'X_' + s + '[' + id_in + ']', new_X)
+                    getattr(ds, 'X ' + s)[id_in] = new_X
                 except Exception:
                     pass
             else:

@@ -13,8 +13,12 @@ from keras_wrapper.dataset import loadDataset, saveDataset
 from keras_wrapper.extra.callbacks import *
 from nmt_keras.model_zoo import TranslationModel
 from utils.utils import update_parameters
+from keras.utils import CustomObjectScope
 
 from numpy.random import seed
+
+import nmt_keras.models as modFactory
+import nmt_keras.dq_evaluation
 
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 logger = logging.getLogger(__name__)
@@ -42,32 +46,17 @@ def apply_NMT_model(params, args):
     :param params: Dictionary of network hyperparameters.
     :return: None
     """
-
     params['PRED_VOCAB'] = args.dataset
-    dataset_voc = loadDataset(params['PRED_VOCAB'])
-    dataset = build_dataset(params, dataset_voc.vocabulary, dataset_voc.vocabulary_len)
-
+    dataset = loadDataset(params['PRED_VOCAB'])
+    # dataset = build_dataset(params, dataset_voc.vocabulary, dataset_voc.vocabulary_len)
+    if 'test' in params['EVAL_ON_SETS'] and len(dataset.ids_inputs) != len(dataset.types_inputs['test']):
+        dataset.ids_inputs = dataset.ids_inputs[1:4]
+    
     params['INPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['INPUTS_IDS_DATASET'][0]]
     params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len['target_text']
 
     # Load model
-
     nmt_model = loadModel(args.model, -1, full_path=True)
-
-    """
-    nmt_model = TranslationModel(params,
-                                     model_type=params['MODEL_TYPE'],
-                                     verbose=params['VERBOSE'],
-                                     model_name=params['MODEL_NAME'],
-                                     set_optimizer=False,
-                                     vocabularies=dataset.vocabulary,
-                                     store_path=params['STORE_PATH'],
-                                     trainable_pred=True, trainable_est=True,
-                                     weights_path=None)
-    nmt_model = updateModel(nmt_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
-    nmt_model.setParams(params)
-    nmt_model.setOptimizer()
-    """
 
     inputMapping = dict()
     for i, id_in in enumerate(params['INPUTS_IDS_DATASET']):
@@ -95,10 +84,8 @@ def apply_NMT_model(params, args):
                       'tokenize_references': params['TOKENIZE_REFERENCES']}
         extra_vars[s] = dict()
         # True when we should score against a reference
-        reference_score = not params.get('NO_REF', False)
 
-        extra_vars[s]['reference_score'] = reference_score
-        if reference_score: 
+        if not params.get('NO_REF', False): 
             extra_vars[s]['references'] = dataset.extra_variables[s][params['OUTPUTS_IDS_DATASET'][0]]
 
         input_text_id = params['INPUTS_IDS_DATASET'][0]
@@ -130,7 +117,6 @@ def apply_NMT_model(params, args):
                                                                          verbose=params['VERBOSE'])
 
         callback_metric.evaluate(params['RELOAD'], counter_name='epoch' if params['EVAL_EACH_EPOCHS'] else 'update')
-
 
 def zzzbuildCallbacks(params, model, dataset):
     """
@@ -290,9 +276,9 @@ if __name__ == "__main__":
         seed(rnd_seed)
     
     logging.info('Running sampling.')
-    parameters['DATA_ROOT_PATH'] = "examples/wmt15/"
-    parameters["SRC_LAN"] = "source"
-    parameters["TRG_LAN"] = "target"
+    # parameters['DATA_ROOT_PATH'] = "examples/wmt15/"
+    # parameters["SRC_LAN"] = "source"
+    # parameters["TRG_LAN"] = "target"
     # parameters["MODEL_NAME"] =  "trained_models/wmt15_sourcetarget_EncSent/epoch_2"
 
     # NMT Keras expects model path to appear without the .h5
@@ -306,7 +292,8 @@ if __name__ == "__main__":
     assert file_name.startswith("epoch_")
     parameters["RELOAD"] = file_name.replace("epoch_", "")
 
-    from nmt_keras import model_zoo
+    # from nmt_keras import model_zoo
     from keras.utils import CustomObjectScope
-    with CustomObjectScope(vars(model_zoo)):
+    import nmt_keras.models.utils as layers #includes all layers and everything defined in nmt_keras.utils
+    with CustomObjectScope(vars(layers)):
         apply_NMT_model(parameters, args)
