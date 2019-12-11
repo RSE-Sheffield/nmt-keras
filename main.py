@@ -466,6 +466,6 @@ if __name__ == "__main__":
 
 
     elif parameters['MODE'] == 'sampling':
-        logger.error('Depecrated function. For sampling from a trained model, please run sample_ensemble.py.')
+        logger.error('Depecrated function. For sampling from a trained model, please run predict.py.')
         exit(2)
     logger.info('Done!')
