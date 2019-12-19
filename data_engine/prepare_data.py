@@ -294,8 +294,8 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
 
         val_test_list = params.get('EVAL_ON_SETS', ['val'])
         no_ref = params.get('NO_REF', False)
-        if no_ref:
-            val_test_list = []
+        # if no_ref:
+        #     val_test_list = []
         for split in val_test_list:
             if params['TEXT_FILES'].get(split) is not None:
                 if params['MODEL_TYPE'] == 'Predictor':
