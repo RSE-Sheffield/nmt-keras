@@ -26,7 +26,7 @@ def load_parameters():
     WORD_QE_CLASSES = 5
     SECOND_DIM_SIZE = 43
     OUT_ACTIVATION='sigmoid'
-    PRED_SCORE = 'mqm'
+    PRED_SCORE = 'hter'
 
     # Evaluation params
     METRICS = ['qe_metrics']                            # Metric used for evaluating the model
