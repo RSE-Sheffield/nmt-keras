@@ -37,10 +37,11 @@ else
   rm -rf config.*
   ln -s utils/$conf_predict ./config.py
   EPOCH=$(awk -F, '/pearson/ {M=-1;next};$3>M {M=$3;E=$1};END {print E}' trained_models/${task_name}_srcmt_${model_type}/val.qe_metrics)
-  python predict.py --dataset datasets/Dataset_${task_name}_srcmt.pkl --model trained_models/${model_name}/epoch_${EPOCH}.h5 --save_path saved_predictions/prediction_${task_name}/ 2>&1 | grep Pearson > predict_pearson.txt
-  PCC=$(grep -Po "\d\.\d{4}" predict_pearson.txt)
+  python predict.py --dataset datasets/Dataset_${task_name}_srcmt.pkl --model trained_models/${model_name}/epoch_${EPOCH}.h5 --save_path saved_predictions/prediction_${task_name}/
+  PCC=$(awk -F, '/pearson/ {M=-1;next};$3>M {M=$3};END {print M}' saved_predictions/prediction_${task_name}/test.qe_metrics)
   TESTVAL=$(awk -v backend=$KERAS_BACKEND -v level=${level}Predict -v task_name=$task_name -v metric=$metric -F,\
    'NR==1 {next};$1==backend && $2==level && $3==task_name && $4==metric {M=$5};END {print M}' utils/testVals.csv )
+  echo "PCC test value was $PCC tested against $TESTVAL"
   if echo $PCC $TESTVAL | awk '{exit ($1-$2)^2<1E-12}'; then
      PREDICT_RESULT="failed"
      echo "QE prediction $PREDICT_RESULT ($level  level BiRNN with $KERAS_BACKEND on $task_name test dataset)"

@@ -99,16 +99,18 @@ def apply_NMT_model(params, args):
             out_type = 'real'
 
         if not params.get('NO_REF', False):
-            dataset.setRawOutput(path_list, set_name=s, type='file-name', id='raw_'+id_out, overwrite_split=False,
-                        add_additional=False)
-            dataset.setOutput(path_list, set_name=s, type=out_type, id=id_out, repeat_set=1, overwrite_split=False,
-                    add_additional=False, sample_weights=False, label_smoothing=0.,
-                    tokenization='tokenize_none', max_text_len=0, offset=0, fill='end', min_occ=0,  # 'text'
-                    pad_on_batch=True, words_so_far=False, build_vocabulary=False, max_words=0,  # 'text'
-                    bpe_codes=None, separator='@@', use_unk_class=False,  # 'text'
-                    associated_id_in=None, num_poolings=None,  # '3DLabel' or '3DSemanticLabel'
-                    sparse=False,  # 'binary'
-                    )
+            if not dataset.loaded_raw_test[1] and s=='test':
+                dataset.setRawOutput(path_list, set_name=s, type='file-name', id='raw_'+id_out, overwrite_split=False,
+                            add_additional=False)
+            if not dataset.loaded_test[1] and s=='test':
+                dataset.setOutput(path_list, set_name=s, type=out_type, id=id_out, repeat_set=1, overwrite_split=False,
+                        add_additional=False, sample_weights=False, label_smoothing=0.,
+                        tokenization='tokenize_none', max_text_len=0, offset=0, fill='end', min_occ=0,  # 'text'
+                        pad_on_batch=True, words_so_far=False, build_vocabulary=False, max_words=0,  # 'text'
+                        bpe_codes=None, separator='@@', use_unk_class=False,  # 'text'
+                        associated_id_in=None, num_poolings=None,  # '3DLabel' or '3DSemanticLabel'
+                        sparse=False,  # 'binary'
+                        )
             keep_n_captions(dataset, repeat=1, n=1, set_names=params['EVAL_ON_SETS'])
 
         input_text_id = params['INPUTS_IDS_DATASET'][0]

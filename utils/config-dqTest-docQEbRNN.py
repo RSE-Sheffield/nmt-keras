@@ -26,7 +26,7 @@ def load_parameters():
     WORD_QE_CLASSES = 5
     SECOND_DIM_SIZE = 43
     OUT_ACTIVATION='sigmoid'
-    PRED_SCORE = 'mqm'
+    PRED_SCORE = 'hter'
 
     # Evaluation params
     METRICS = ['qe_metrics']                            # Metric used for evaluating the model
@@ -172,7 +172,7 @@ def load_parameters():
 
     # Model parameters
     # Perictor+Estimator
-    MODEL_TYPE = 'EncDoc'                 # Model to train. See model_zoo() for the supported architectures
+    MODEL_TYPE = 'EncSent'                 # Model to train. See model_zoo() for the supported architectures
 
     # only Predictor
     #MODEL_TYPE = 'Predictor'
@@ -248,14 +248,14 @@ def load_parameters():
 
     # Results plot and models storing parameters
     EXTRA_NAME = ''                               # This will be appended to the end of the model name
-    MODEL_NAME = TASK_NAME + '_' + SRC_LAN + TRG_LAN + '_' + MODEL_TYPE + \
-                 '_src_emb_' + str(SOURCE_TEXT_EMBEDDING_SIZE) + \
-                 '_bidir_' + str(BIDIRECTIONAL_ENCODER) + \
-                 '_enc_' + ENCODER_RNN_TYPE + '_' + str(ENCODER_HIDDEN_SIZE) + \
-                 '_dec_' + DECODER_RNN_TYPE + '_' + str(DECODER_HIDDEN_SIZE) + \
-                 '_deepout_' + '_'.join([layer[0] for layer in DEEP_OUTPUT_LAYERS]) + \
-                 '_trg_emb_' + str(TARGET_TEXT_EMBEDDING_SIZE) + \
-                 '_' + OPTIMIZER + '_' + str(LR)
+    MODEL_NAME = TASK_NAME + '_' + SRC_LAN + TRG_LAN + '_' + MODEL_TYPE #+ \
+                 # '_src_emb_' + str(SOURCE_TEXT_EMBEDDING_SIZE) + \
+                 # '_bidir_' + str(BIDIRECTIONAL_ENCODER) + \
+                 # '_enc_' + ENCODER_RNN_TYPE + '_' + str(ENCODER_HIDDEN_SIZE) + \
+                 # '_dec_' + DECODER_RNN_TYPE + '_' + str(DECODER_HIDDEN_SIZE) + \
+                 # '_deepout_' + '_'.join([layer[0] for layer in DEEP_OUTPUT_LAYERS]) + \
+                 # '_trg_emb_' + str(TARGET_TEXT_EMBEDDING_SIZE) + \
+                 # '_' + OPTIMIZER + '_' + str(LR)
 
     MODEL_NAME += EXTRA_NAME
 

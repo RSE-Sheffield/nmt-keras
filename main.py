@@ -23,7 +23,7 @@ from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from config import load_parameters
 from dq_utils.datatools import preprocessDoc
 
-from data_engine.prepare_data import build_dataset, update_dataset_from_file
+from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 from nmt_keras import check_params
 from nmt_keras.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 from nmt_keras.training import train_model
@@ -102,11 +102,13 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                 #dataset_voc.vocabulary_len['target_text'] = dataset_voc.vocabulary_len['target']
                 dataset = build_dataset(params, dataset_voc.vocabulary, dataset_voc.vocabulary_len)
             else:
-                if 'doc_qe' in params['OUTPUTS_IDS_MODEL'] or 'EncDoc' in params['MODEL_TYPE']:
+                if 'doc_qe' in params['OUTPUTS_IDS_MODEL']:
                     params = preprocessDoc(params)
                 elif 'EstimatorDoc' in params['MODEL_TYPE']:
                     raise Exception('Translation_Model model_type "' + params['MODEL_TYPE'] + '" is not implemented.')
                 dataset = build_dataset(params)
+                if params['NO_REF']:
+                    keep_n_captions(dataset, repeat=1, n=1, set_names=params['EVAL_ON_SETS'])
         else:
             dataset = loadDataset(load_dataset)
 
