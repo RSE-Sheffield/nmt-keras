@@ -10,4 +10,4 @@ tensorflow,sentencePredict,testData-sent,pearson,0.1832040730294446
 theano,wordPredict,testData-word,f1_prod,0.2542359200398694
 tensorflow,wordPredict,testData-word,f1_prod,0.25517028216931437
 theano,documentPredict,testData-doc,pearson,-0.07597833480261358
-tensorflow,documentPredict,testData-doc,pearson,
+tensorflow,documentPredict,testData-doc,pearson,-0.13590145362014813
