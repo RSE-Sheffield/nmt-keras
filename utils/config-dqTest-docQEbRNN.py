@@ -25,13 +25,13 @@ def load_parameters():
     OUTPUTS_IDS_MODEL = ['doc_qe']
     WORD_QE_CLASSES = 5
     SECOND_DIM_SIZE = 43
-    OUT_ACTIVATION='sigmoid'
+    OUT_ACTIVATION='relu'
     PRED_SCORE = 'hter'
 
     # Evaluation params
     METRICS = ['qe_metrics']                            # Metric used for evaluating the model
     #KERAS_METRICS = ['pearson_corr', 'mae', 'rmse']
-    EVAL_ON_SETS = ['val', 'test']                        # Possible values: 'train', 'val' and 'test' (external evaluator)
+    EVAL_ON_SETS = ['val']                        # Possible values: 'train', 'val' and 'test' (external evaluator)
     NO_REF = False
     #EVAL_ON_SETS_KERAS = ['val']                       #  Possible values: 'train', 'val' and 'test' (Keras' evaluator). Untested.
     EVAL_ON_SETS_KERAS = []

@@ -25,7 +25,7 @@ def load_parameters():
     OUTPUTS_IDS_MODEL = ['doc_qe']
     WORD_QE_CLASSES = 5
     SECOND_DIM_SIZE = 43
-    OUT_ACTIVATION='sigmoid'
+    OUT_ACTIVATION='relu'
     PRED_SCORE = 'hter'
 
     # Evaluation params
