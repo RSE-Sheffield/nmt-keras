@@ -294,7 +294,7 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
 
         val_test_list = params.get('EVAL_ON_SETS', ['val'])
         no_ref = params.get('NO_REF', False)
-        # if no_ref:
+        # if no_ref:                              # removed as this seems to cause a bug in training ig no_ref=true
         #     val_test_list = []
         for split in val_test_list:
             if params['TEXT_FILES'].get(split) is not None:
@@ -356,14 +356,14 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
         max_trg_in_len=params.get('MAX_TRG_INPUT_TEXT_LEN', None)
         if max_trg_in_len == None:
             params['MAX_TRG_INPUT_TEXT_LEN'] = params['MAX_INPUT_TEXT_LEN']
-    
+
         data_type_src = params.get('INPUTS_TYPES_DATASET', ['text', 'text'])[0]
         data_type_trg = data_type_src
 
         if 'EstimatorDoc' in params['MODEL_TYPE'] or 'EncDoc' in params['MODEL_TYPE']:
             data_type_src = 'text'
             data_type_trg = 'text'
-       
+
 
         # here we set to doc meaning just the 3d input
         if params['MODEL_TYPE'] == 'EstimatorPhrase' or params['MODEL_TYPE'] == 'EncPhraseAtt':
@@ -376,7 +376,7 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
 
         #if params['MODEL_TYPE'] != 'Predictor':
         #    ext = 'mt'
-        
+
         for split in ['train', 'val', 'test']:
             if params['TEXT_FILES'].get(split) is not None:
                 if split == 'train':

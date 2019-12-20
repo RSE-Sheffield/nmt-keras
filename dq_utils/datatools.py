@@ -5,6 +5,10 @@ def preprocessDoc(params):
     """
     Preprocesses document level data for compatability with keras_wrapper by concatenating document sentences and padding.
 
+    the param['TEXT_FILES'] dict will be updated so that the file location corresponding to each split is updated to point to the preprocessed files.
+
+    the params dict() contains other keys that are used by this function.
+
     :return: params with text file names ('TEXT_FILES') modified to point to the preprocessed files.
     """
 
