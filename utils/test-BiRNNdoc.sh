@@ -42,7 +42,7 @@ else
   TESTVAL=$(awk -v backend=$KERAS_BACKEND -v level=${level}Predict -v task_name=$task_name -v metric=$metric -F,\
    'NR==1 {next};$1==backend && $2==level && $3==task_name && $4==metric {M=$5};END {print M}' utils/testVals.csv )
   echo "PCC test value was $PCC tested against $TESTVAL"
-  if echo $PCC $TESTVAL | awk '{exit ($1-$2)^2<1E-12}'; then
+  if echo $PCC $TESTVAL | awk '{exit ($1-$2)^2<1E-10}'; then
      PREDICT_RESULT="failed"
      echo "QE prediction $PREDICT_RESULT ($level  level BiRNN with $KERAS_BACKEND on $task_name test dataset)"
      exit 1
