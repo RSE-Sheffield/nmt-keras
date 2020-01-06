@@ -5,7 +5,7 @@ def load_parameters():
     """
 
     # Input data params
-    TASK_NAME = 'testData-doc'                           # Task name
+    TASK_NAME = 'testData-word'                           # Task name
     DATASET_NAME = TASK_NAME                        # Dataset name
     SRC_LAN = 'src'                                  # Language of the source text
     TRG_LAN = 'mt'                                  # Language of the target text
@@ -18,20 +18,18 @@ def load_parameters():
 
     # Dataset class parameters
     INPUTS_IDS_DATASET = ['source_text', 'target_text']     # Corresponding inputs of the dataset
-    #OUTPUTS_IDS_DATASET_FULL = ['target_text', 'word_qe', 'sent_hter']                   # Corresponding outputs of the dataset
-    OUTPUTS_IDS_DATASET = ['doc_qe']
+    #OUTPUTS_IDS_DATASET_FULL = ['target_text', 'word_qe', 'sent_qe']                   # Corresponding outputs of the dataset
+    OUTPUTS_IDS_DATASET = ['word_qe']
     INPUTS_IDS_MODEL = ['source_text', 'target_text']       # Corresponding inputs of the built model
-    #OUTPUTS_IDS_MODEL_FULL = ['target_text','word_qe', 'sent_hter']                     # Corresponding outputs of the built model
-    OUTPUTS_IDS_MODEL = ['doc_qe']
+    #OUTPUTS_IDS_MODEL_FULL = ['target_text','word_qe', 'sent_qe']                     # Corresponding outputs of the built model
+    OUTPUTS_IDS_MODEL = ['word_qe']
     WORD_QE_CLASSES = 5
-    SECOND_DIM_SIZE = 43
-    OUT_ACTIVATION='relu'
-    PRED_SCORE = 'hter'
+    PRED_SCORE='tags'
 
     # Evaluation params
     METRICS = ['qe_metrics']                            # Metric used for evaluating the model
     #KERAS_METRICS = ['pearson_corr', 'mae', 'rmse']
-    EVAL_ON_SETS = ['val']                        # Possible values: 'train', 'val' and 'test' (external evaluator)
+    EVAL_ON_SETS = ['test']                        # Possible values: 'train', 'val' and 'test' (external evaluator)
     NO_REF = False
     #EVAL_ON_SETS_KERAS = ['val']                       #  Possible values: 'train', 'val' and 'test' (Keras' evaluator). Untested.
     EVAL_ON_SETS_KERAS = []
@@ -39,7 +37,8 @@ def load_parameters():
     EVAL_EACH_EPOCHS = True                       # Select whether evaluate between N epochs or N updates
     EVAL_EACH = 1                                 # Sets the evaluation frequency (epochs or updates)
 
-    #PRED_VOCAB = 'vocabs-coling/Dataset_predictor-en-es-euro-newscom-small_enes.pkl'
+    # PRED_VOCAB = 'euro-en-de-model-latest/Dataset_euro-en-de_ende.pkl'
+    PRED_WEIGHTS='trained_models/testData-word_srcmt_EncWord/epoch_8.h5'
     MULTI_TASK = False
 
     # Search parameters
@@ -115,13 +114,13 @@ def load_parameters():
                                                   # otherwise it will be truncated to these most frequent words.
     MIN_OCCURRENCES_INPUT_VOCAB = 0               # Minimum number of occurrences allowed for the words in the input vocabulary.
                                                   # Set to 0 for using them all.
-    MAX_INPUT_TEXT_LEN = 70                       # Maximum length of the input sequence
+    MAX_INPUT_TEXT_LEN = 100                       # Maximum length of the input sequence
 
     # Output text parameters
     OUTPUT_VOCABULARY_SIZE = 30000                    # Size of the input vocabulary. Set to 0 for using all,
                                                   # otherwise it will be truncated to these most frequent words.
     MIN_OCCURRENCES_OUTPUT_VOCAB = 0              # Minimum number of occurrences allowed for the words in the output vocabulary.
-    MAX_OUTPUT_TEXT_LEN = 70                      # Maximum length of the output sequence
+    MAX_OUTPUT_TEXT_LEN = 100                      # Maximum length of the output sequence
                                                   # set to 0 if we want to use the whole answer as a single class
     MAX_OUTPUT_TEXT_LEN_TEST = MAX_OUTPUT_TEXT_LEN * 3  # Maximum length of the output sequence during test time
 
@@ -153,7 +152,7 @@ def load_parameters():
     EPOCH_PER_EST_WORD = 10
     #BATCH_SIZE = 2                               # Size of each minibatch
     #to use on real data
-    BATCH_SIZE = 5
+    BATCH_SIZE = 50
 
     HOMOGENEOUS_BATCHES = False                   # Use batches with homogeneous output lengths (Dangerous!!)
     JOINT_BATCHES = 4                             # When using homogeneous batches, get this number of batches to sort
@@ -168,11 +167,11 @@ def load_parameters():
                                                   # number of evaluations
 
     # was used for NMT
-    STOP_METRIC = 'pearson'                        # Metric for the stop
+    STOP_METRIC = 'f1_prod'                        # Metric for the stop
 
     # Model parameters
     # Perictor+Estimator
-    MODEL_TYPE = 'EncSent'                 # Model to train. See model_zoo() for the supported architectures
+    MODEL_TYPE = 'EncWord'                 # Model to train. See model_zoo() for the supported architectures
 
     # only Predictor
     #MODEL_TYPE = 'Predictor'
@@ -214,7 +213,6 @@ def load_parameters():
 
     #QE vector config
     QE_VECTOR_SIZE = 75
-    DOC_DECODER_HIDDEN_SIZE = 50
 
     # Fully-Connected layers for initializing the first RNN state
     #       Here we should only specify the activation function of each layer
@@ -248,28 +246,28 @@ def load_parameters():
 
     # Results plot and models storing parameters
     EXTRA_NAME = ''                               # This will be appended to the end of the model name
-    MODEL_NAME = TASK_NAME + '_' + SRC_LAN + TRG_LAN + '_' + MODEL_TYPE #+ \
-                 # '_src_emb_' + str(SOURCE_TEXT_EMBEDDING_SIZE) + \
-                 # '_bidir_' + str(BIDIRECTIONAL_ENCODER) + \
-                 # '_enc_' + ENCODER_RNN_TYPE + '_' + str(ENCODER_HIDDEN_SIZE) + \
-                 # '_dec_' + DECODER_RNN_TYPE + '_' + str(DECODER_HIDDEN_SIZE) + \
-                 # '_deepout_' + '_'.join([layer[0] for layer in DEEP_OUTPUT_LAYERS]) + \
-                 # '_trg_emb_' + str(TARGET_TEXT_EMBEDDING_SIZE) + \
-                 # '_' + OPTIMIZER + '_' + str(LR)
+    MODEL_NAME = TASK_NAME + '_' + SRC_LAN + TRG_LAN + '_' + MODEL_TYPE + \
+                 '_src_emb_' + str(SOURCE_TEXT_EMBEDDING_SIZE) + \
+                 '_bidir_' + str(BIDIRECTIONAL_ENCODER) + \
+                 '_enc_' + ENCODER_RNN_TYPE + '_' + str(ENCODER_HIDDEN_SIZE) + \
+                 '_dec_' + DECODER_RNN_TYPE + '_' + str(DECODER_HIDDEN_SIZE) + \
+                 '_deepout_' + '_'.join([layer[0] for layer in DEEP_OUTPUT_LAYERS]) + \
+                 '_trg_emb_' + str(TARGET_TEXT_EMBEDDING_SIZE) + \
+                 '_' + OPTIMIZER + '_' + str(LR)
 
     MODEL_NAME += EXTRA_NAME
 
     STORE_PATH = 'trained_models/' + MODEL_NAME + '/'  # Models and evaluation results will be stored here
     DATASET_STORE_PATH = 'datasets/'                   # Dataset instance will be stored here
 
-    SAMPLING_SAVE_MODE = 'list'                        # 'list': Store in a text file, one sentence per line.
+    SAMPLING_SAVE_MODE = 'listoflists'                        # 'list': Store in a text file, one sentence per line.
     VERBOSE = 1                                        # Verbosity level
     RELOAD = 0                                         # If 0 start training from scratch, otherwise the model
                                                        # Saved on epoch 'RELOAD' will be used
     RELOAD_EPOCH = True                                # Select whether we reload epoch or update number
 
     REBUILD_DATASET = True                             # Build again or use stored instance
-    MODE = 'training'                                  # 'training' or 'sampling' (if 'sampling' then RELOAD must
+    MODE = 'sampling'                                  # 'training' or 'sampling' (if 'sampling' then RELOAD must
                                                        # be greater than 0 and EVAL_ON_SETS will be used)
 
     # Extra parameters for special trainings

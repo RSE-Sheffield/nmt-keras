@@ -5,7 +5,11 @@ def preprocessDoc(params):
     """
     Preprocesses document level data for compatability with keras_wrapper by concatenating document sentences and padding.
 
-    :return: Path to text file of preprocessed document data.
+    the param['TEXT_FILES'] dict will be updated so that the file location corresponding to each split is updated to point to the preprocessed files.
+
+    the params dict() contains other keys that are used by this function.
+
+    :return: params with text file names ('TEXT_FILES') modified to point to the preprocessed files.
     """
 
     doc_size = params['SECOND_DIM_SIZE']
@@ -13,6 +17,11 @@ def preprocessDoc(params):
     for split in ['train', 'val', 'test']:
         for ext in [params['SRC_LAN'], params['TRG_LAN'], params['PRED_SCORE']]:
             if ext == params['PRED_SCORE'] and split != 'test':
+                scores_file = params['DATA_ROOT_PATH'] + '/' + params['TEXT_FILES'][split] + ext
+                filename, file_extension = os.path.splitext(scores_file)
+                write_path = filename + '_docProcess' + file_extension
+                copyfile(scores_file, write_path)
+            elif ext == params['PRED_SCORE'] and split == 'test' and not params['NO_REF']:
                 scores_file = params['DATA_ROOT_PATH'] + '/' + params['TEXT_FILES'][split] + ext
                 filename, file_extension = os.path.splitext(scores_file)
                 write_path = filename + '_docProcess' + file_extension

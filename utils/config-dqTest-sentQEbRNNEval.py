@@ -5,7 +5,7 @@ def load_parameters():
     """
 
     # Input data params
-    TASK_NAME = 'testData-doc'                           # Task name
+    TASK_NAME = 'testData-sent'                           # Task name
     DATASET_NAME = TASK_NAME                        # Dataset name
     SRC_LAN = 'src'                                  # Language of the source text
     TRG_LAN = 'mt'                                  # Language of the target text
@@ -19,19 +19,17 @@ def load_parameters():
     # Dataset class parameters
     INPUTS_IDS_DATASET = ['source_text', 'target_text']     # Corresponding inputs of the dataset
     #OUTPUTS_IDS_DATASET_FULL = ['target_text', 'word_qe', 'sent_hter']                   # Corresponding outputs of the dataset
-    OUTPUTS_IDS_DATASET = ['doc_qe']
+    OUTPUTS_IDS_DATASET = ['sent_qe']
     INPUTS_IDS_MODEL = ['source_text', 'target_text']       # Corresponding inputs of the built model
     #OUTPUTS_IDS_MODEL_FULL = ['target_text','word_qe', 'sent_hter']                     # Corresponding outputs of the built model
-    OUTPUTS_IDS_MODEL = ['doc_qe']
+    OUTPUTS_IDS_MODEL = ['sent_qe']
     WORD_QE_CLASSES = 5
-    SECOND_DIM_SIZE = 43
-    OUT_ACTIVATION='relu'
-    PRED_SCORE = 'hter'
+    PRED_SCORE='hter'
 
     # Evaluation params
     METRICS = ['qe_metrics']                            # Metric used for evaluating the model
     #KERAS_METRICS = ['pearson_corr', 'mae', 'rmse']
-    EVAL_ON_SETS = ['val']                        # Possible values: 'train', 'val' and 'test' (external evaluator)
+    EVAL_ON_SETS = ['test']                        # Possible values: 'train', 'val' and 'test' (external evaluator)
     NO_REF = False
     #EVAL_ON_SETS_KERAS = ['val']                       #  Possible values: 'train', 'val' and 'test' (Keras' evaluator). Untested.
     EVAL_ON_SETS_KERAS = []
@@ -39,7 +37,9 @@ def load_parameters():
     EVAL_EACH_EPOCHS = True                       # Select whether evaluate between N epochs or N updates
     EVAL_EACH = 1                                 # Sets the evaluation frequency (epochs or updates)
 
-    #PRED_VOCAB = 'vocabs-coling/Dataset_predictor-en-es-euro-newscom-small_enes.pkl'
+    #PRED_VOCAB = '/Users/ive/Documents/nmt-keras/datasets/Dataset_EuTrans_esen.pkl'
+    #PRED_VOCAB = 'euro-en-de-model-latest/Dataset_euro-en-de_ende.pkl'
+    PRED_WEIGHTS='trained_models/EncSent_srcmt_qe-2017/epoch_14.h5'
     MULTI_TASK = False
 
     # Search parameters
@@ -153,7 +153,7 @@ def load_parameters():
     EPOCH_PER_EST_WORD = 10
     #BATCH_SIZE = 2                               # Size of each minibatch
     #to use on real data
-    BATCH_SIZE = 5
+    BATCH_SIZE = 50
 
     HOMOGENEOUS_BATCHES = False                   # Use batches with homogeneous output lengths (Dangerous!!)
     JOINT_BATCHES = 4                             # When using homogeneous batches, get this number of batches to sort
@@ -164,7 +164,7 @@ def load_parameters():
 
     # Early stop parameters
     EARLY_STOP = True                             # Turns on/off the early stop protocol
-    PATIENCE = 5                                 # We'll stop if the val STOP_METRIC does not improve after this
+    PATIENCE = 5                        # We'll stop if the val STOP_METRIC does not improve after this
                                                   # number of evaluations
 
     # was used for NMT
@@ -214,7 +214,6 @@ def load_parameters():
 
     #QE vector config
     QE_VECTOR_SIZE = 75
-    DOC_DECODER_HIDDEN_SIZE = 50
 
     # Fully-Connected layers for initializing the first RNN state
     #       Here we should only specify the activation function of each layer
@@ -248,28 +247,28 @@ def load_parameters():
 
     # Results plot and models storing parameters
     EXTRA_NAME = ''                               # This will be appended to the end of the model name
-    MODEL_NAME = TASK_NAME + '_' + SRC_LAN + TRG_LAN + '_' + MODEL_TYPE #+ \
-                 # '_src_emb_' + str(SOURCE_TEXT_EMBEDDING_SIZE) + \
-                 # '_bidir_' + str(BIDIRECTIONAL_ENCODER) + \
-                 # '_enc_' + ENCODER_RNN_TYPE + '_' + str(ENCODER_HIDDEN_SIZE) + \
-                 # '_dec_' + DECODER_RNN_TYPE + '_' + str(DECODER_HIDDEN_SIZE) + \
-                 # '_deepout_' + '_'.join([layer[0] for layer in DEEP_OUTPUT_LAYERS]) + \
-                 # '_trg_emb_' + str(TARGET_TEXT_EMBEDDING_SIZE) + \
-                 # '_' + OPTIMIZER + '_' + str(LR)
+    MODEL_NAME = TASK_NAME + '_' + SRC_LAN + TRG_LAN + '_' + MODEL_TYPE + \
+                 '_src_emb_' + str(SOURCE_TEXT_EMBEDDING_SIZE) + \
+                 '_bidir_' + str(BIDIRECTIONAL_ENCODER) + \
+                 '_enc_' + ENCODER_RNN_TYPE + '_' + str(ENCODER_HIDDEN_SIZE) + \
+                 '_dec_' + DECODER_RNN_TYPE + '_' + str(DECODER_HIDDEN_SIZE) + \
+                 '_deepout_' + '_'.join([layer[0] for layer in DEEP_OUTPUT_LAYERS]) + \
+                 '_trg_emb_' + str(TARGET_TEXT_EMBEDDING_SIZE) + \
+                 '_' + OPTIMIZER + '_' + str(LR)
 
     MODEL_NAME += EXTRA_NAME
 
     STORE_PATH = 'trained_models/' + MODEL_NAME + '/'  # Models and evaluation results will be stored here
     DATASET_STORE_PATH = 'datasets/'                   # Dataset instance will be stored here
 
-    SAMPLING_SAVE_MODE = 'list'                        # 'list': Store in a text file, one sentence per line.
+    SAMPLING_SAVE_MODE = 'listoflists'                        # 'list': Store in a text file, one sentence per line.
     VERBOSE = 1                                        # Verbosity level
     RELOAD = 0                                         # If 0 start training from scratch, otherwise the model
                                                        # Saved on epoch 'RELOAD' will be used
     RELOAD_EPOCH = True                                # Select whether we reload epoch or update number
 
     REBUILD_DATASET = True                             # Build again or use stored instance
-    MODE = 'training'                                  # 'training' or 'sampling' (if 'sampling' then RELOAD must
+    MODE = 'sampling'                                  # 'training' or 'sampling' (if 'sampling' then RELOAD must
                                                        # be greater than 0 and EVAL_ON_SETS will be used)
 
     # Extra parameters for special trainings

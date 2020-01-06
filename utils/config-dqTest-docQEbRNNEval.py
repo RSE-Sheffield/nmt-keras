@@ -31,7 +31,7 @@ def load_parameters():
     # Evaluation params
     METRICS = ['qe_metrics']                            # Metric used for evaluating the model
     #KERAS_METRICS = ['pearson_corr', 'mae', 'rmse']
-    EVAL_ON_SETS = ['val']                        # Possible values: 'train', 'val' and 'test' (external evaluator)
+    EVAL_ON_SETS = ['test']                        # Possible values: 'train', 'val' and 'test' (external evaluator)
     NO_REF = False
     #EVAL_ON_SETS_KERAS = ['val']                       #  Possible values: 'train', 'val' and 'test' (Keras' evaluator). Untested.
     EVAL_ON_SETS_KERAS = []
@@ -39,7 +39,9 @@ def load_parameters():
     EVAL_EACH_EPOCHS = True                       # Select whether evaluate between N epochs or N updates
     EVAL_EACH = 1                                 # Sets the evaluation frequency (epochs or updates)
 
-    #PRED_VOCAB = 'vocabs-coling/Dataset_predictor-en-es-euro-newscom-small_enes.pkl'
+    #PRED_VOCAB = '/Users/ive/Documents/nmt-keras/datasets/Dataset_EuTrans_esen.pkl'
+    #PRED_VOCAB = 'euro-en-de-model-latest/Dataset_euro-en-de_ende.pkl'
+    PRED_WEIGHTS='trained_models/testData-doc_srcmt_EncDoc/epoch_3.h5'
     MULTI_TASK = False
 
     # Search parameters
@@ -164,7 +166,7 @@ def load_parameters():
 
     # Early stop parameters
     EARLY_STOP = True                             # Turns on/off the early stop protocol
-    PATIENCE = 5                                 # We'll stop if the val STOP_METRIC does not improve after this
+    PATIENCE = 5                        # We'll stop if the val STOP_METRIC does not improve after this
                                                   # number of evaluations
 
     # was used for NMT
@@ -172,7 +174,7 @@ def load_parameters():
 
     # Model parameters
     # Perictor+Estimator
-    MODEL_TYPE = 'EncSent'                 # Model to train. See model_zoo() for the supported architectures
+    MODEL_TYPE = 'EncDoc'                 # Model to train. See model_zoo() for the supported architectures
 
     # only Predictor
     #MODEL_TYPE = 'Predictor'
@@ -248,7 +250,7 @@ def load_parameters():
 
     # Results plot and models storing parameters
     EXTRA_NAME = ''                               # This will be appended to the end of the model name
-    MODEL_NAME = TASK_NAME + '_' + SRC_LAN + TRG_LAN + '_' + MODEL_TYPE #+ \
+    MODEL_NAME = TASK_NAME + '_' + SRC_LAN + TRG_LAN + '_' + MODEL_TYPE
                  # '_src_emb_' + str(SOURCE_TEXT_EMBEDDING_SIZE) + \
                  # '_bidir_' + str(BIDIRECTIONAL_ENCODER) + \
                  # '_enc_' + ENCODER_RNN_TYPE + '_' + str(ENCODER_HIDDEN_SIZE) + \
@@ -262,14 +264,14 @@ def load_parameters():
     STORE_PATH = 'trained_models/' + MODEL_NAME + '/'  # Models and evaluation results will be stored here
     DATASET_STORE_PATH = 'datasets/'                   # Dataset instance will be stored here
 
-    SAMPLING_SAVE_MODE = 'list'                        # 'list': Store in a text file, one sentence per line.
+    SAMPLING_SAVE_MODE = 'listoflists'                        # 'list': Store in a text file, one sentence per line.
     VERBOSE = 1                                        # Verbosity level
     RELOAD = 0                                         # If 0 start training from scratch, otherwise the model
                                                        # Saved on epoch 'RELOAD' will be used
     RELOAD_EPOCH = True                                # Select whether we reload epoch or update number
 
     REBUILD_DATASET = True                             # Build again or use stored instance
-    MODE = 'training'                                  # 'training' or 'sampling' (if 'sampling' then RELOAD must
+    MODE = 'sampling'                                  # 'training' or 'sampling' (if 'sampling' then RELOAD must
                                                        # be greater than 0 and EVAL_ON_SETS will be used)
 
     # Extra parameters for special trainings

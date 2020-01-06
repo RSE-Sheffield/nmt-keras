@@ -23,7 +23,7 @@ from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from config import load_parameters
 from dq_utils.datatools import preprocessDoc
 
-from data_engine.prepare_data import build_dataset, update_dataset_from_file
+from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 from nmt_keras import check_params
 from nmt_keras.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 from nmt_keras.training import train_model
@@ -102,11 +102,13 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                 #dataset_voc.vocabulary_len['target_text'] = dataset_voc.vocabulary_len['target']
                 dataset = build_dataset(params, dataset_voc.vocabulary, dataset_voc.vocabulary_len)
             else:
-                if 'doc_qe' in params['OUTPUTS_IDS_MODEL'] or 'EncDoc' in params['MODEL_TYPE']:
+                if 'doc_qe' in params['OUTPUTS_IDS_MODEL']:
                     params = preprocessDoc(params)
                 elif 'EstimatorDoc' in params['MODEL_TYPE']:
                     raise Exception('Translation_Model model_type "' + params['MODEL_TYPE'] + '" is not implemented.')
                 dataset = build_dataset(params)
+                if params['NO_REF']:
+                    keep_n_captions(dataset, repeat=1, n=1, set_names=params['EVAL_ON_SETS'])
         else:
             dataset = loadDataset(load_dataset)
 
@@ -215,140 +217,6 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
     total_end_time = timer()
     time_difference = total_end_time - total_start_time
     logging.info('In total is {0:.2f}s = {1:.2f}m'.format(time_difference, time_difference / 60.0))
-
-
-def apply_NMT_model(params, load_dataset=None):
-    """
-    Sample from a previously trained model.
-
-    :param params: Dictionary of network hyperparameters.
-    :param load_dataset: Load dataset from file or build it from the parameters.
-    :return: None
-    """
-    pred_vocab = params.get('PRED_VOCAB', None)
-    if pred_vocab is not None:
-        dataset_voc = loadDataset(params['PRED_VOCAB'])
-        dataset = build_dataset(params, dataset_voc.vocabulary, dataset_voc.vocabulary_len)
-    else:
-        dataset = build_dataset(params)
-    # Load data
-    #if load_dataset is None:
-    #    dataset = build_dataset(params)
-    #else:
-    #    dataset = loadDataset(load_dataset)
-    #params['INPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['INPUTS_IDS_DATASET'][0]]
-    #params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['OUTPUTS_IDS_DATASET'][0]]
-    #vocab_y = dataset.vocabulary[params['INPUTS_IDS_DATASET'][1]]['idx2words']
-    params['INPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['INPUTS_IDS_DATASET'][0]]
-    params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len['target_text']
-
-    # Load model
-    #nmt_model = loadModel(params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
-    qe_model = TranslationModel(params,
-                                     model_type=params['MODEL_TYPE'],
-                                     verbose=params['VERBOSE'],
-                                     model_name=params['MODEL_NAME'],
-                                     set_optimizer=False,
-                                     vocabularies=dataset.vocabulary,
-                                     store_path=params['STORE_PATH'],
-                                     trainable_pred=True, trainable_est=True,
-                                     weights_path=None)
-    qe_model = updateModel(qe_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
-    qe_model.setParams(params)
-    qe_model.setOptimizer()
-
-
-    inputMapping = dict()
-    for i, id_in in enumerate(params['INPUTS_IDS_DATASET']):
-        pos_source = dataset.ids_inputs.index(id_in)
-        id_dest = qe_model.ids_inputs[i]
-        inputMapping[id_dest] = pos_source
-    qe_model.setInputsMapping(inputMapping)
-
-    outputMapping = dict()
-    for i, id_out in enumerate(params['OUTPUTS_IDS_DATASET']):
-        pos_target = dataset.ids_outputs.index(id_out)
-        id_dest = qe_model.ids_outputs[i]
-        outputMapping[id_dest] = pos_target
-    qe_model.setOutputsMapping(outputMapping)
-    qe_model.setOptimizer()
-
-    for s in params["EVAL_ON_SETS"]:
-        # Evaluate training
-        extra_vars = {'language': params.get('TRG_LAN', 'en'),
-                      'n_parallel_loaders': params['PARALLEL_LOADERS'],
-                      'tokenize_f': eval('dataset.' + params['TOKENIZATION_METHOD']),
-                      'detokenize_f': eval('dataset.' + params['DETOKENIZATION_METHOD']),
-                      'apply_detokenization': params['APPLY_DETOKENIZATION'],
-                      'tokenize_hypotheses': params['TOKENIZE_HYPOTHESES'],
-                      'tokenize_references': params['TOKENIZE_REFERENCES']}
-        #vocab = dataset.vocabulary[params['OUTPUTS_IDS_DATASET'][0]]['idx2words']
-        #vocab = dataset.vocabulary[params['INPUTS_IDS_DATASET'][1]]['idx2words']
-        extra_vars[s] = dict()
-        if not params.get('NO_REF', False):
-            extra_vars[s]['references'] = dataset.extra_variables[s][params['OUTPUTS_IDS_DATASET'][0]]
-        #input_text_id = None
-        #vocab_src = None
-        input_text_id = params['INPUTS_IDS_DATASET'][0]
-        vocab_x = dataset.vocabulary[input_text_id]['idx2words']
-        vocab_y = dataset.vocabulary[params['INPUTS_IDS_DATASET'][1]]['idx2words']
-
-        if params['BEAM_SEARCH']:
-            extra_vars['beam_size'] = params.get('BEAM_SIZE', 6)
-            extra_vars['state_below_index'] = params.get('BEAM_SEARCH_COND_INPUT', -1)
-            extra_vars['maxlen'] = params.get('MAX_OUTPUT_TEXT_LEN_TEST', 30)
-            extra_vars['optimized_search'] = params.get('OPTIMIZED_SEARCH', True)
-            extra_vars['model_inputs'] = params['INPUTS_IDS_MODEL']
-            extra_vars['model_outputs'] = params['OUTPUTS_IDS_MODEL']
-            extra_vars['dataset_inputs'] = params['INPUTS_IDS_DATASET']
-            extra_vars['dataset_outputs'] = params['OUTPUTS_IDS_DATASET']
-            extra_vars['normalize_probs'] = params.get('NORMALIZE_SAMPLING', False)
-            extra_vars['search_pruning'] = params.get('SEARCH_PRUNING', False)
-            extra_vars['alpha_factor'] = params.get('ALPHA_FACTOR', 1.0)
-            extra_vars['coverage_penalty'] = params.get('COVERAGE_PENALTY', False)
-            extra_vars['length_penalty'] = params.get('LENGTH_PENALTY', False)
-            extra_vars['length_norm_factor'] = params.get('LENGTH_NORM_FACTOR', 0.0)
-            extra_vars['coverage_norm_factor'] = params.get('COVERAGE_NORM_FACTOR', 0.0)
-            extra_vars['pos_unk'] = params['POS_UNK']
-            extra_vars['output_max_length_depending_on_x'] = params.get('MAXLEN_GIVEN_X', True)
-            extra_vars['output_max_length_depending_on_x_factor'] = params.get('MAXLEN_GIVEN_X_FACTOR', 3)
-            extra_vars['output_min_length_depending_on_x'] = params.get('MINLEN_GIVEN_X', True)
-            extra_vars['output_min_length_depending_on_x_factor'] = params.get('MINLEN_GIVEN_X_FACTOR', 2)
-
-            if params['POS_UNK']:
-                extra_vars['heuristic'] = params['HEURISTIC']
-                input_text_id = params['INPUTS_IDS_DATASET'][0]
-                vocab_src = dataset.vocabulary[input_text_id]['idx2words']
-                if params['HEURISTIC'] > 0:
-                    extra_vars['mapping'] = dataset.mapping
-
-        callback_metric = PrintPerformanceMetricOnEpochEndOrEachNUpdates(qe_model,
-                                                                         dataset,
-                                                                         gt_id=params['OUTPUTS_IDS_DATASET'][0],
-                                                                         metric_name=params['METRICS'],
-                                                                         set_name=params['EVAL_ON_SETS'],
-                                                                         batch_size=params['BATCH_SIZE'],
-                                                                         each_n_epochs=params['EVAL_EACH'],
-                                                                         extra_vars=extra_vars,
-                                                                         reload_epoch=params['RELOAD'],
-                                                                         is_text=True,
-                                                                         input_text_id=input_text_id,
-                                                                         save_path=qe_model.model_path,
-                                                                         index2word_y=vocab_y,
-                                                                         index2word_x=vocab_x,
-                                                                         sampling_type=params['SAMPLING'],
-                                                                         beam_search=params['BEAM_SEARCH'],
-                                                                         start_eval_on_epoch=params[
-                                                                             'START_EVAL_ON_EPOCH'],
-                                                                         write_samples=True,
-                                                                         write_type=params['SAMPLING_SAVE_MODE'],
-                                                                         eval_on_epochs=params['EVAL_EACH_EPOCHS'],
-                                                                         save_each_evaluation=False,
-                                                                         verbose=params['VERBOSE'],
-                                                                         no_ref=params['NO_REF'])
-
-        callback_metric.evaluate(params['RELOAD'], counter_name='epoch' if params['EVAL_EACH_EPOCHS'] else 'update')
-
 
 def buildCallbacks(params, model, dataset):
     """
@@ -600,6 +468,6 @@ if __name__ == "__main__":
 
 
     elif parameters['MODE'] == 'sampling':
-        logger.error('Depecrated function. For sampling from a trained model, please run sample_ensemble.py.')
+        logger.error('Depecrated function. For sampling from a trained model, please run predict.py.')
         exit(2)
     logger.info('Done!')
