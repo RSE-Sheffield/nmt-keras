@@ -327,7 +327,7 @@ def buildCallbacks(params, model, dataset):
     return callbacks
 
 
-if __name__ == "__main__":
+def main():
     args = parse_args()
     print(args)
     parameters = load_parameters()
@@ -471,3 +471,6 @@ if __name__ == "__main__":
         logger.error('Depecrated function. For sampling from a trained model, please run predict.py.')
         exit(2)
     logger.info('Done!')
+
+if __name__ == "__main__":
+    main()

@@ -87,7 +87,7 @@ def apply_NMT_model(params, args):
                       'apply_detokenization': params['APPLY_DETOKENIZATION'],
                       'tokenize_hypotheses': params['TOKENIZE_HYPOTHESES'],
                       'tokenize_references': params['TOKENIZE_REFERENCES']}
-        
+
         extra_vars[s] = dict()
         # True when we should score against a reference
 
@@ -232,7 +232,7 @@ def check_params(params):
                       'You should preprocess the word embeddings with the "utils/preprocess_*_word_vectors.py script.')
 
 
-if __name__ == "__main__":
+def main():
     args = parse_args()
     print(args)
     parameters = config.load_parameters()
@@ -262,7 +262,7 @@ if __name__ == "__main__":
     rnd_seed = parameters.get('RND_SEED', None)
     if rnd_seed != None:
         seed(rnd_seed)
-    
+
     logging.info('Running sampling.')
     # parameters['DATA_ROOT_PATH'] = "examples/wmt15/"
     # parameters["SRC_LAN"] = "source"
@@ -285,5 +285,8 @@ if __name__ == "__main__":
     import nmt_keras.models.utils as layers #includes all layers and everything defined in nmt_keras.utils
     with CustomObjectScope(vars(layers)):
         apply_NMT_model(parameters, args)
-    
+
     logging.info('Done.')
+
+if __name__ == "__main__":
+    main()
