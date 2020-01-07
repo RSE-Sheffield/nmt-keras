@@ -21,7 +21,7 @@ ln -s utils/$conf ./config.py
 
 python utils/getTestData_BiRNNdoc.py
 
-PYTHONHASHSEED=0 python main.py TASK_NAME=$task_name DATASET_NAME=$task_name DATA_ROOT_PATH=examples/${task_name} SRC_LAN=src TRG_LAN=mt MODEL_TYPE=$model_type MODEL_NAME=$model_name PATIENCE=$patience SAVE_EACH_EVALUATION=True || true > log-${model_name}-test.txt
+PYTHONHASHSEED=0 python train.py TASK_NAME=$task_name DATASET_NAME=$task_name DATA_ROOT_PATH=examples/${task_name} SRC_LAN=src TRG_LAN=mt MODEL_TYPE=$model_type MODEL_NAME=$model_name PATIENCE=$patience SAVE_EACH_EVALUATION=True || true > log-${model_name}-test.txt
 
 PCC=$(awk -F, '/pearson/ {M=-1;next};$3>M {M=$3};END {print M}' trained_models/${task_name}_srcmt_${model_type}/val.qe_metrics)
 
