@@ -16,11 +16,12 @@ import os
 import sys
 
 from timeit import default_timer as timer
+import yaml
 
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 
-from config import load_parameters
+# from config import load_parameters
 from dq_utils.datatools import preprocessDoc
 
 from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
@@ -38,9 +39,7 @@ logger = logging.getLogger(__name__)
 
 def parse_args():
     parser = argparse.ArgumentParser("Train QE models")
-    parser.add_argument("-c", "--config", required=False, help="Config pkl for loading the model configuration. "
-                                                               "If not specified, hyperparameters "
-                                                               "are read from config.py")
+    parser.add_argument("-c", "--config",   required=False, help="Config YAML or pkl for loading the model configuration. ")
     parser.add_argument("-ds", "--dataset", required=False, help="Dataset instance with data")
     parser.add_argument("changes", nargs="*", help="Changes to config. "
                                                    "Following the syntax Key=Value",
@@ -330,8 +329,18 @@ def buildCallbacks(params, model, dataset):
 def main():
     args = parse_args()
     print(args)
-    parameters = load_parameters()
-    if args.config is not None:
+    if args.config.endswith('.yml'):
+        with open(args.config.strip()) as file:
+            parameters = yaml.load(file, Loader=yaml.FullLoader)
+
+            #adding parameters that depend on others. Ultimately, remove this?
+            parameters['DATASET_NAME'] = parameters['TASK_NAME']
+            parameters['DATA_ROOT_PATH'] = 'examples/%s/' % parameters['DATASET_NAME']
+            parameters['MAPPING'] = parameters['DATA_ROOT_PATH'] + '/mapping.%s_%s.pkl' % (parameters['SRC_LAN'], parameters['TRG_LAN'])
+            parameters['BPE_CODES_PATH'] =  parameters['DATA_ROOT_PATH'] + '/training_codes.joint'
+            parameters['MODEL_NAME']: parameters['TASK_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
+            parameters['STORE_PATH']: 'trained_models/' + parameters['MODEL_NAME'] + '/'
+    elif args.config.endswith('.pkl'):
         parameters = update_parameters(parameters, pkl2dict(args.config))
     try:
         for arg in args.changes:
