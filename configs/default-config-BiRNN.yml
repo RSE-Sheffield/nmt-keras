@@ -7,9 +7,7 @@ TEXT_FILES:
   'test': 'test.'
 
 INPUTS_IDS_DATASET: ['source_text', 'target_text']     # Corresponding inputs of the dataset
-OUTPUTS_IDS_DATASET: ['sent_qe']
 INPUTS_IDS_MODEL: ['source_text', 'target_text']       # Corresponding inputs of the built model
-OUTPUTS_IDS_MODEL: ['sent_qe']
 WORD_QE_CLASSES: 5
 #OUTPUTS_IDS_DATASET_FULL: ['target_text', 'word_qe', 'sent_hter']   # Corresponding outputs of the dataset #UNUSED?
 #OUTPUTS_IDS_MODEL_FULL: ['target_text','word_qe', 'sent_hter']      # Corresponding outputs of the built model #UNUSED
@@ -20,7 +18,7 @@ EVAL_ON_SETS_KERAS: []
 START_EVAL_ON_EPOCH: 1                       # First epoch to start the model evaluation
 EVAL_EACH_EPOCHS: True                       # Select whether evaluate between N epochs or N updates
 EVAL_EACH: 1                                # Sets the evaluation frequency (epochs or updates)
-#KERAS_METRICS: ['pearson_corr', 'mae', 'rmse'] #UNUSED?  
+#KERAS_METRICS: ['pearson_corr', 'mae', 'rmse'] #UNUSED?
 
 MULTI_TASK: False
 
@@ -128,7 +126,6 @@ EPOCH_PER_UPDATE: 1
 EPOCH_PER_PRED: 5
 EPOCH_PER_EST_SENT: 10
 EPOCH_PER_EST_WORD: 10
-BATCH_SIZE: 50                               # Size of each minibatch
 
 HOMOGENEOUS_BATCHES: False                   # Use batches with homogeneous output lengths (Dangerous!!)
 JOINT_BATCHES: 4                             # When using homogeneous batches, get this number of batches to sort
@@ -178,7 +175,6 @@ SKIP_VECTORS_HIDDEN_SIZE: TARGET_TEXT_EMBEDDING_SIZE
 
 #QE vector config
 QE_VECTOR_SIZE: 75
-DOC_DECODER_HIDDEN_SIZE: 50
 
 # Fully-Connected layers for initializing the first RNN state
 #       Here we should only specify the activation function of each layer

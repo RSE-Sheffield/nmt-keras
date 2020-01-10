@@ -1,15 +1,15 @@
-MODE: 'training'                                   # 'training' or 'sampling' (if 'sampling' then RELOAD must
-                                                   # be greater than 0 and EVAL_ON_SETS will be used)
 # Input data params
 TASK_NAME: 'testData-sent'                         # Task name
 SRC_LAN: 'src'                                     # Language of the source text
 TRG_LAN: 'mt'                                      # Language of the target text
 # SRC_LAN or TRG_LAN are expected to be the file extensions of the data files
 
+OUTPUTS_IDS_DATASET: ['sent_qe']
+OUTPUTS_IDS_MODEL: ['sent_qe']
+
 # Dataset class parameters
-SECOND_DIM_SIZE: 43
-OUT_ACTIVATION: 'relu'                              #
 PRED_SCORE: 'hter'                                  # used as file extension of the score files
+OUT_ACTIVATION: 'sigmoid'                           #set as ‘relu’ function if predicted scores are in (0, +infinity), as a ‘sigmoid’ function for scores in (0,1) (for example, BLEU or HTER), or as a linear’ function for scores in (-infinity, +infinity).
 
 # Evaluation params
 METRICS: ['qe_metrics']                             # Metric used for evaluating the model
@@ -23,8 +23,8 @@ MAX_INPUT_TEXT_LEN: 70                              # Maximum length of the inpu
 MAX_OUTPUT_TEXT_LEN: 70                             # Maximum length of the output sequence
                                                     # set to 0 if we want to use the whole answer as a single class
 
-PATIENCE: 5                                         # We'll stop if the val STOP_METRIC does not improve after this
-                                                    # number of evaluations
+PATIENCE: 5                                         # We'll stop if the val STOP_METRIC does not improve after this number of evaluations
+BATCH_SIZE: 50                                      # Size of each minibatch
 
 STOP_METRIC: 'pearson'                              # Metric for the stop
 
