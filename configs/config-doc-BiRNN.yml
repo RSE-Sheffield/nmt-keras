@@ -4,13 +4,13 @@ SRC_LAN: 'src'                                     # Language of the source text
 TRG_LAN: 'mt'                                      # Language of the target text
 # SRC_LAN or TRG_LAN are expected to be the file extensions of the data files
 
-OUTPUTS_IDS_DATASET: ['sent_qe']
-OUTPUTS_IDS_MODEL: ['sent_qe']
+OUTPUTS_IDS_DATASET: ['doc_qe']
+OUTPUTS_IDS_MODEL: ['doc_qe']
 
 # Dataset class parameters
 SECOND_DIM_SIZE: 43
 PRED_SCORE: 'hter'                                  # used as file extension of the score files
-OUT_ACTIVATION: 'linear'                           #set as ‘relu’ function if predicted scores are in (0, +infinity), as a ‘sigmoid’ function for scores in (0,1) (for example, BLEU or HTER), or as a linear’ function for scores in (-infinity, +infinity).
+OUT_ACTIVATION: 'relu'                           #set as ‘relu’ function if predicted scores are in (0, +infinity), as a ‘sigmoid’ function for scores in (0,1) (for example, BLEU or HTER), or as a linear’ function for scores in (-infinity, +infinity).
 
 # Evaluation params
 METRICS: ['qe_metrics']                             # Metric used for evaluating the model

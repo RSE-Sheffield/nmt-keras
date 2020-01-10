@@ -345,8 +345,8 @@ def main():
         parameters['DATA_ROOT_PATH'] = 'examples/%s/' % parameters['DATASET_NAME']
         parameters['MAPPING'] = parameters['DATA_ROOT_PATH'] + '/mapping.%s_%s.pkl' % (parameters['SRC_LAN'], parameters['TRG_LAN'])
         parameters['BPE_CODES_PATH'] =  parameters['DATA_ROOT_PATH'] + '/training_codes.joint'
-        parameters['MODEL_NAME']: parameters['TASK_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
-        parameters['STORE_PATH']: 'trained_models/' + parameters['MODEL_NAME'] + '/'
+        parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
+        parameters['STORE_PATH'] = 'trained_models/' + parameters['MODEL_NAME'] + '/'
     elif args.config.endswith('.pkl'):
         parameters = update_parameters(parameters, pkl2dict(args.config))
     try:
