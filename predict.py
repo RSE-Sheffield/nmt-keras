@@ -6,6 +6,8 @@ import os
 import re
 import sys
 
+import pickle
+
 import config
 from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 from keras_wrapper.cnn_model import loadModel, updateModel
@@ -30,12 +32,10 @@ def parse_args():
         help="dataset file (.pkl) to use")
     parser.add_argument("--model", required=True,
         help="model file (.h5) to use")
-    parser.add_argument("-c", "--config", required=False, help="Config pkl for loading the model configuration. "
-                                                               "If not specified, hyperparameters "
-                                                               "are read from config.py")
-    parser.add_argument("--save_path", required=False,
-        help="Directory path to save predictions to. "
-             "If not specified, defaults to STORE_PATH")
+    parser.add_argument("--save_path", required=False, help="Directory path to save predictions to. "
+                                                                "If not specified, defaults to STORE_PATH")
+    parser.add_argument("-es", "--evalset", required=False, help="Set to evaluate on."
+                                                                "Defaults to 'test' if not specified.")
     parser.add_argument("changes", nargs="*", help="Changes to config. "
                                                    "Following the syntax Key=Value",
                         default="")
@@ -92,7 +92,7 @@ def apply_NMT_model(params, args):
         # True when we should score against a reference
 
         #add the test split reference to the dataset
-        path_list = params['DATA_ROOT_PATH'] + s  + '.' + params['PRED_SCORE']
+        path_list = os.path.join(params['DATA_ROOT_PATH'], s + '.' + params['PRED_SCORE'])
         if dataset.ids_outputs[0] == 'word_qe':
             out_type = 'text'
         else:
@@ -235,9 +235,11 @@ def check_params(params):
 def main():
     args = parse_args()
     print(args)
-    parameters = config.load_parameters()
-    if args.config is not None:
-        parameters = update_parameters(parameters, pkl2dict(args.config))
+    # parameters = config.load_parameters()
+    # if args.config is not None:
+    #     parameters = update_parameters(parameters, pkl2dict(args.config))
+    # Load the config parameters from the trained model pickle
+    parameters = pickle.load(open(os.path.join(os.path.split(args.model)[0],'config.pkl'), 'rb'))
     try:
         for arg in args.changes:
             try:
@@ -256,6 +258,11 @@ def main():
         print("Error processing arguments: {!r}".format(arg))
         exit(2)
 
+    if args.evalset is None:
+        parameters['EVAL_ON_SETS'] = ['test']
+    else:
+        parameters['EVAL_ON_SETS'] = [args.evalset]
+
     if args.save_path is None:
         args.save_path = parameters['STORE_PATH']
 
@@ -264,10 +271,6 @@ def main():
         seed(rnd_seed)
 
     logging.info('Running sampling.')
-    # parameters['DATA_ROOT_PATH'] = "examples/wmt15/"
-    # parameters["SRC_LAN"] = "source"
-    # parameters["TRG_LAN"] = "target"
-    # parameters["MODEL_NAME"] =  "trained_models/wmt15_sourcetarget_EncSent/epoch_2"
 
     # NMT Keras expects model path to appear without the .h5
     if args.model.endswith(".h5"):
