@@ -340,6 +340,7 @@ def main():
             parameters[key] = user_parameters[key]
         del user_parameters
         #adding parameters that are dependent on others
+        parameters['MODE'] = 'training'
         parameters['DATASET_NAME'] = parameters['TASK_NAME']
         parameters['DATA_ROOT_PATH'] = 'examples/%s/' % parameters['DATASET_NAME']
         parameters['MAPPING'] = parameters['DATA_ROOT_PATH'] + '/mapping.%s_%s.pkl' % (parameters['SRC_LAN'], parameters['TRG_LAN'])
@@ -366,13 +367,11 @@ def main():
         print ('Error processing arguments: (', k, ",", v, ")")
         exit(2)
 
-    #check_params(parameters)
-
     check_params(parameters)
-    new_eval_sets=parameters.get('NEW_EVAL_ON_SETS', None)
-    if new_eval_sets != None:
-        set_ar = parameters['NEW_EVAL_ON_SETS'].split(',')
-        parameters['EVAL_ON_SETS'] = set_ar
+    # new_eval_sets=parameters.get('NEW_EVAL_ON_SETS', None)
+    # if new_eval_sets != None:
+    #     set_ar = parameters['NEW_EVAL_ON_SETS'].split(',')
+    #     parameters['EVAL_ON_SETS'] = set_ar
 
     if parameters['MODE'] == 'training':
 
@@ -482,9 +481,6 @@ def main():
             train_model(parameters, args.dataset, trainable_est=True, trainable_pred=True, weights_path=parameters.get('PRED_WEIGHTS', None))
 
 
-    elif parameters['MODE'] == 'sampling':
-        logger.error('Depecrated function. For sampling from a trained model, please run predict.py.')
-        exit(2)
     logger.info('Done!')
 
 if __name__ == "__main__":
