@@ -1,0 +1,32 @@
+MODE: 'training'                                   # 'training' or 'sampling' (if 'sampling' then RELOAD must
+                                                   # be greater than 0 and EVAL_ON_SETS will be used)
+# Input data params
+TASK_NAME: 'testData-sent'                         # Task name
+SRC_LAN: 'src'                                     # Language of the source text
+TRG_LAN: 'mt'                                      # Language of the target text
+# SRC_LAN or TRG_LAN are expected to be the file extensions of the data files
+
+# Dataset class parameters
+SECOND_DIM_SIZE: 43
+OUT_ACTIVATION: 'relu'                              #
+PRED_SCORE: 'hter'                                  # used as file extension of the score files
+
+# Evaluation params
+METRICS: ['qe_metrics']                             # Metric used for evaluating the model
+EVAL_ON_SETS: ['val']                               # Possible values: 'train', 'val' and 'test' (external evaluator)
+NO_REF: False                                       # True if there is no reference data
+
+PRED_WEIGHTS: 'trained_models/testData-doc_srcmt_EncDoc/epoch_3.h5'
+
+MAX_INPUT_TEXT_LEN: 70                              # Maximum length of the input sequence
+
+MAX_OUTPUT_TEXT_LEN: 70                             # Maximum length of the output sequence
+                                                    # set to 0 if we want to use the whole answer as a single class
+
+PATIENCE: 5                                         # We'll stop if the val STOP_METRIC does not improve after this
+                                                    # number of evaluations
+
+STOP_METRIC: 'pearson'                              # Metric for the stop
+
+# Model parameters
+MODEL_TYPE: 'EncSent'                               # Model to train.

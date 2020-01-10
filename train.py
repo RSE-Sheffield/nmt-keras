@@ -329,17 +329,23 @@ def buildCallbacks(params, model, dataset):
 def main():
     args = parse_args()
     print(args)
+    # load the default config parameters
+    # load the user config and overwrite any defaults
     if args.config.endswith('.yml'):
-        with open(args.config.strip()) as file:
+        with open('configs/default-config-BiRNN.yml') as file: #FIXME make this a user option (maybe depend on model type and level?)
             parameters = yaml.load(file, Loader=yaml.FullLoader)
-
-            #adding parameters that depend on others. Ultimately, remove this?
-            parameters['DATASET_NAME'] = parameters['TASK_NAME']
-            parameters['DATA_ROOT_PATH'] = 'examples/%s/' % parameters['DATASET_NAME']
-            parameters['MAPPING'] = parameters['DATA_ROOT_PATH'] + '/mapping.%s_%s.pkl' % (parameters['SRC_LAN'], parameters['TRG_LAN'])
-            parameters['BPE_CODES_PATH'] =  parameters['DATA_ROOT_PATH'] + '/training_codes.joint'
-            parameters['MODEL_NAME']: parameters['TASK_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
-            parameters['STORE_PATH']: 'trained_models/' + parameters['MODEL_NAME'] + '/'
+        with open(args.config.strip()) as file:
+            user_parameters = yaml.load(file, Loader=yaml.FullLoader)
+        for key in user_parameters:
+            parameters[key] = user_parameters[key]
+        del user_parameters
+        #adding parameters that are dependent on others
+        parameters['DATASET_NAME'] = parameters['TASK_NAME']
+        parameters['DATA_ROOT_PATH'] = 'examples/%s/' % parameters['DATASET_NAME']
+        parameters['MAPPING'] = parameters['DATA_ROOT_PATH'] + '/mapping.%s_%s.pkl' % (parameters['SRC_LAN'], parameters['TRG_LAN'])
+        parameters['BPE_CODES_PATH'] =  parameters['DATA_ROOT_PATH'] + '/training_codes.joint'
+        parameters['MODEL_NAME']: parameters['TASK_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
+        parameters['STORE_PATH']: 'trained_models/' + parameters['MODEL_NAME'] + '/'
     elif args.config.endswith('.pkl'):
         parameters = update_parameters(parameters, pkl2dict(args.config))
     try:

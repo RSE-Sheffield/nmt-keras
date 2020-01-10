@@ -1,10 +1,4 @@
-MODE: 'training'                                  # 'training' or 'sampling' (if 'sampling' then RELOAD must
-                                                   # be greater than 0 and EVAL_ON_SETS will be used)
-# Input data params
-TASK_NAME: 'testData-sent'                           # Task name
-SRC_LAN: 'src'                                  # Language of the source text
-TRG_LAN: 'mt'                                  # Language of the target text
-# SRC_LAN or TRG_LAN are expected to be the file extensions of the data files
+# Default configuration parameters
 
 # Data files
 TEXT_FILES:
@@ -12,32 +6,22 @@ TEXT_FILES:
   'val': 'dev.'
   'test': 'test.'
 
-# Dataset class parameters
 INPUTS_IDS_DATASET: ['source_text', 'target_text']     # Corresponding inputs of the dataset
-#OUTPUTS_IDS_DATASET_FULL: ['target_text', 'word_qe', 'sent_hter']   # Corresponding outputs of the dataset #UNUSED?
 OUTPUTS_IDS_DATASET: ['sent_qe']
 INPUTS_IDS_MODEL: ['source_text', 'target_text']       # Corresponding inputs of the built model
-#OUTPUTS_IDS_MODEL_FULL: ['target_text','word_qe', 'sent_hter']      # Corresponding outputs of the built model #UNUSED
 OUTPUTS_IDS_MODEL: ['sent_qe']
 WORD_QE_CLASSES: 5
-SECOND_DIM_SIZE: 43
-OUT_ACTIVATION: 'relu'
-PRED_SCORE: 'hter'
+#OUTPUTS_IDS_DATASET_FULL: ['target_text', 'word_qe', 'sent_hter']   # Corresponding outputs of the dataset #UNUSED?
+#OUTPUTS_IDS_MODEL_FULL: ['target_text','word_qe', 'sent_hter']      # Corresponding outputs of the built model #UNUSED
 
-# Evaluation params
-METRICS: ['qe_metrics']                      # Metric used for evaluating the model
-#KERAS_METRICS: ['pearson_corr', 'mae', 'rmse'] #UNUSED?
-EVAL_ON_SETS: ['val']                       # Possible values: 'train', 'val' and 'test' (external evaluator)
-NO_REF: False                                # True if there is no reference data
+
 #EVAL_ON_SETS_KERAS: ['val']                 # Possible values: 'train', 'val' and 'test' (Keras' evaluator). Untested.
 EVAL_ON_SETS_KERAS: []
 START_EVAL_ON_EPOCH: 1                       # First epoch to start the model evaluation
 EVAL_EACH_EPOCHS: True                       # Select whether evaluate between N epochs or N updates
-EVAL_EACH: 1                                 # Sets the evaluation frequency (epochs or updates)
+EVAL_EACH: 1                                # Sets the evaluation frequency (epochs or updates)
+#KERAS_METRICS: ['pearson_corr', 'mae', 'rmse'] #UNUSED?  
 
-#PRED_VOCAB: '/Users/ive/Documents/nmt-keras/datasets/Dataset_EuTrans_esen.pkl'
-#PRED_VOCAB: 'euro-en-de-model-latest/Dataset_euro-en-de_ende.pkl'
-PRED_WEIGHTS: 'trained_models/testData-doc_srcmt_EncDoc/epoch_3.h5'
 MULTI_TASK: False
 
 # Search parameters
@@ -110,15 +94,13 @@ INPUT_VOCABULARY_SIZE: 30000                     # Size of the input vocabulary.
                                               # otherwise it will be truncated to these most frequent words.
 MIN_OCCURRENCES_INPUT_VOCAB: 0               # Minimum number of occurrences allowed for the words in the input vocabulary.
                                               # Set to 0 for using them all.
-MAX_INPUT_TEXT_LEN: 70                       # Maximum length of the input sequence
+
 
 # Output text parameters
 OUTPUT_VOCABULARY_SIZE: 30000                    # Size of the input vocabulary. Set to 0 for using all,
                                               # otherwise it will be truncated to these most frequent words.
 MIN_OCCURRENCES_OUTPUT_VOCAB: 0              # Minimum number of occurrences allowed for the words in the output vocabulary.
-MAX_OUTPUT_TEXT_LEN: 70                      # Maximum length of the output sequence
-                                              # set to 0 if we want to use the whole answer as a single class
-# MAX_OUTPUT_TEXT_LEN_TEST: MAX_OUTPUT_TEXT_LEN * 3  # Maximum length of the output sequence during test time #FIXME or unused?
+
 
 # Optimizer parameters (see model.compile() function)
 LOSS: ['mse']
@@ -157,18 +139,7 @@ SAVE_EACH_EVALUATION: True                   # Save each time we evaluate the mo
 
 # Early stop parameters
 EARLY_STOP: True                             # Turns on/off the early stop protocol
-PATIENCE: 5                        # We'll stop if the val STOP_METRIC does not improve after this
-                                              # number of evaluations
 
-# was used for NMT
-STOP_METRIC: 'pearson'                        # Metric for the stop
-
-# Model parameters
-# Perictor+Estimator
-MODEL_TYPE: 'EncSent'                 # Model to train. See model_zoo() for the supported architectures
-
-# only Predictor
-#MODEL_TYPE: 'Predictor'
 
 #parameters for Predictor
 ENCODER_RNN_TYPE: 'GRU'                     # Encoder's RNN unit type ('LSTM' and 'GRU' supported)
