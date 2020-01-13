@@ -21,7 +21,6 @@ import yaml
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 
-# from config import load_parameters
 from dq_utils.datatools import preprocessDoc
 
 from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
@@ -334,10 +333,9 @@ def main():
     if args.config.endswith('.yml'):
         with open('configs/default-config-BiRNN.yml') as file: #FIXME make this a user option (maybe depend on model type and level?)
             parameters = yaml.load(file, Loader=yaml.FullLoader)
-        with open(args.config.strip()) as file:
+        with open(args.config) as file:
             user_parameters = yaml.load(file, Loader=yaml.FullLoader)
-        for key in user_parameters:
-            parameters[key] = user_parameters[key]
+        parameters.update(user_parameters)
         del user_parameters
         #adding parameters that are dependent on others
         parameters['MODE'] = 'training'
@@ -355,7 +353,7 @@ def main():
                 k, v = arg.split('=')
             except ValueError:
                 print ('Overwritten arguments must have the form key=Value. \n Currently are: %s' % str(args.changes))
-                exit(1)
+                return 2
             if '_' in v:
                 parameters[k] = v
             else:
@@ -365,13 +363,9 @@ def main():
                     parameters[k] = v
     except ValueError:
         print ('Error processing arguments: (', k, ",", v, ")")
-        exit(2)
+        return 2
 
     check_params(parameters)
-    # new_eval_sets=parameters.get('NEW_EVAL_ON_SETS', None)
-    # if new_eval_sets != None:
-    #     set_ar = parameters['NEW_EVAL_ON_SETS'].split(',')
-    #     parameters['EVAL_ON_SETS'] = set_ar
 
     if parameters['MODE'] == 'training':
 
@@ -484,4 +478,4 @@ def main():
     logger.info('Done!')
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -34,8 +34,8 @@ def parse_args():
         help="model file (.h5) to use")
     parser.add_argument("--save_path", required=False, help="Directory path to save predictions to. "
                                                                 "If not specified, defaults to STORE_PATH")
-    parser.add_argument("-es", "--evalset", required=False, help="Set to evaluate on."
-                                                                "Defaults to 'test' if not specified.")
+    parser.add_argument("-es", "--evalset", required=False, help="Set to evaluate on. "
+                                                                "Defaults to 'test' if not specified. ")
     parser.add_argument("changes", nargs="*", help="Changes to config. "
                                                    "Following the syntax Key=Value",
                         default="")
