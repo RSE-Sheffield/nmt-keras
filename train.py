@@ -16,11 +16,11 @@ import os
 import sys
 
 from timeit import default_timer as timer
+import yaml
 
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 
-from config import load_parameters
 from dq_utils.datatools import preprocessDoc
 
 from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
@@ -38,9 +38,7 @@ logger = logging.getLogger(__name__)
 
 def parse_args():
     parser = argparse.ArgumentParser("Train QE models")
-    parser.add_argument("-c", "--config", required=False, help="Config pkl for loading the model configuration. "
-                                                               "If not specified, hyperparameters "
-                                                               "are read from config.py")
+    parser.add_argument("-c", "--config",   required=False, help="Config YAML or pkl for loading the model configuration. ")
     parser.add_argument("-ds", "--dataset", required=False, help="Dataset instance with data")
     parser.add_argument("changes", nargs="*", help="Changes to config. "
                                                    "Following the syntax Key=Value",
@@ -330,8 +328,24 @@ def buildCallbacks(params, model, dataset):
 def main():
     args = parse_args()
     print(args)
-    parameters = load_parameters()
-    if args.config is not None:
+    # load the default config parameters
+    # load the user config and overwrite any defaults
+    if args.config.endswith('.yml'):
+        with open('configs/default-config-BiRNN.yml') as file: #FIXME make this a user option (maybe depend on model type and level?)
+            parameters = yaml.load(file, Loader=yaml.FullLoader)
+        with open(args.config) as file:
+            user_parameters = yaml.load(file, Loader=yaml.FullLoader)
+        parameters.update(user_parameters)
+        del user_parameters
+        #adding parameters that are dependent on others
+        parameters['MODE'] = 'training'
+        parameters['DATASET_NAME'] = parameters['TASK_NAME']
+        parameters['DATA_ROOT_PATH'] = 'examples/%s/' % parameters['DATASET_NAME']
+        parameters['MAPPING'] = parameters['DATA_ROOT_PATH'] + '/mapping.%s_%s.pkl' % (parameters['SRC_LAN'], parameters['TRG_LAN'])
+        parameters['BPE_CODES_PATH'] =  parameters['DATA_ROOT_PATH'] + '/training_codes.joint'
+        parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
+        parameters['STORE_PATH'] = 'trained_models/' + parameters['MODEL_NAME'] + '/'
+    elif args.config.endswith('.pkl'):
         parameters = update_parameters(parameters, pkl2dict(args.config))
     try:
         for arg in args.changes:
@@ -339,7 +353,7 @@ def main():
                 k, v = arg.split('=')
             except ValueError:
                 print ('Overwritten arguments must have the form key=Value. \n Currently are: %s' % str(args.changes))
-                exit(1)
+                return 2
             if '_' in v:
                 parameters[k] = v
             else:
@@ -349,15 +363,9 @@ def main():
                     parameters[k] = v
     except ValueError:
         print ('Error processing arguments: (', k, ",", v, ")")
-        exit(2)
-
-    #check_params(parameters)
+        return 2
 
     check_params(parameters)
-    new_eval_sets=parameters.get('NEW_EVAL_ON_SETS', None)
-    if new_eval_sets != None:
-        set_ar = parameters['NEW_EVAL_ON_SETS'].split(',')
-        parameters['EVAL_ON_SETS'] = set_ar
 
     if parameters['MODE'] == 'training':
 
@@ -467,10 +475,7 @@ def main():
             train_model(parameters, args.dataset, trainable_est=True, trainable_pred=True, weights_path=parameters.get('PRED_WEIGHTS', None))
 
 
-    elif parameters['MODE'] == 'sampling':
-        logger.error('Depecrated function. For sampling from a trained model, please run predict.py.')
-        exit(2)
     logger.info('Done!')
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
