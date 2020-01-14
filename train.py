@@ -8,7 +8,6 @@ import random
 random.seed(1)
 del random
 
-import argparse
 import ast
 import glob
 import logging
@@ -34,17 +33,6 @@ import nmt_keras.models as modFactory
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 
 logger = logging.getLogger(__name__)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser("Train QE models")
-    parser.add_argument("-c", "--config",   required=False, help="Config YAML or pkl for loading the model configuration. ")
-    parser.add_argument("-ds", "--dataset", required=False, help="Dataset instance with data")
-    parser.add_argument("changes", nargs="*", help="Changes to config. "
-                                                   "Following the syntax Key=Value",
-                        default="")
-    return parser.parse_args()
-
 
 def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, trainable_est=True, weights_path=None):
     """
@@ -325,8 +313,7 @@ def buildCallbacks(params, model, dataset):
     return callbacks
 
 
-def main():
-    args = parse_args()
+def main(args):
     print(args)
     # load the default config parameters
     # load the user config and overwrite any defaults
@@ -478,4 +465,4 @@ def main():
     logger.info('Done!')
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(args))

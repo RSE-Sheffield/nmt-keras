@@ -1,6 +1,5 @@
 # This predict script doesn't work yet -- drj 2019-09
 
-import argparse
 import ast
 import os
 import re
@@ -8,7 +7,6 @@ import sys
 
 import pickle
 
-import config
 from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 from keras_wrapper.cnn_model import loadModel, updateModel
 from keras_wrapper.dataset import loadDataset, saveDataset
@@ -24,23 +22,6 @@ import nmt_keras.dq_evaluation as dq_evaluation
 
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 logger = logging.getLogger(__name__)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser("Train or sample NMT models")
-    parser.add_argument("--dataset", required=True,
-        help="dataset file (.pkl) to use")
-    parser.add_argument("--model", required=True,
-        help="model file (.h5) to use")
-    parser.add_argument("--save_path", required=False, help="Directory path to save predictions to. "
-                                                                "If not specified, defaults to STORE_PATH")
-    parser.add_argument("-es", "--evalset", required=False, help="Set to evaluate on. "
-                                                                "Defaults to 'test' if not specified. ")
-    parser.add_argument("changes", nargs="*", help="Changes to config. "
-                                                   "Following the syntax Key=Value",
-                        default="")
-    return parser.parse_args()
-
 
 def apply_NMT_model(params, args):
     """
@@ -232,8 +213,7 @@ def check_params(params):
                       'You should preprocess the word embeddings with the "utils/preprocess_*_word_vectors.py script.')
 
 
-def main():
-    args = parse_args()
+def main(args):
     print(args)
     # parameters = config.load_parameters()
     # if args.config is not None:

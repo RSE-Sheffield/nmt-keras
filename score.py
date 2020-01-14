@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import argparse
 import logging
 import sys
 import scipy.stats
@@ -10,11 +9,6 @@ logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', date
 logger = logging.getLogger(__name__)
 
 
-def parse_args():
-    parser = argparse.ArgumentParser("Compute a score for a set of predictions vs reference set. ")
-    parser.add_argument("files", nargs=2, help="Two text files containing predictions and references. ")
-    return parser.parse_args()
-
 def read_file_to_list(file_in,logger):
     logger.info('Reading %s ', file_in)
     data_list = []
@@ -23,8 +17,7 @@ def read_file_to_list(file_in,logger):
             data_list.append(float(line))
     return data_list
 
-def main():
-    args = parse_args()
+def main(args):
     assert len(args.files) == 2, "Number of files specified must equal 2. "
 
     data = []
@@ -43,4 +36,4 @@ def main():
     print('RMSE: %.3f' % rmse)
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(args))
