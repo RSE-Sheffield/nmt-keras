@@ -37,7 +37,7 @@ if __name__ == "__main__":
         help="model file (.h5) to use")
     predict_parser.add_argument("--save_path", required=False, help="Directory path to save predictions to. "
                                                                 "If not specified, defaults to STORE_PATH")
-    predict_parser.add_argument("-es", "--evalset", required=False, help="Set to evaluate on. "
+    predict_parser.add_argument("--evalset", required=False, help="Set to evaluate on. "
                                                                 "Defaults to 'test' if not specified. ")
     predict_parser.add_argument("changes", nargs="*", help="Changes to config. "
                                                    "Following the syntax Key=Value",
