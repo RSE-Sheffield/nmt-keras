@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-from numpy.random import seed
-seed(1)
-
-import random
-random.seed(1)
-del random
-
 import ast
 import glob
 import logging
@@ -19,15 +12,13 @@ import yaml
 
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
-
-from dq_utils.datatools import preprocessDoc
-
 from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 from nmt_keras import check_params
 from nmt_keras.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 from nmt_keras.training import train_model
 from utils.utils import update_parameters
 
+from dq_utils.datatools import preprocessDoc
 import nmt_keras.models as modFactory
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -463,6 +454,3 @@ def main(args):
 
 
     logger.info('Done!')
-
-if __name__ == "__main__":
-    sys.exit(main(args))

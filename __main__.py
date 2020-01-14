@@ -1,7 +1,7 @@
 import argparse
-import sys
 
 def train(args):
+    set_seed(args.seed)
     import train
     train.main(args)
 
@@ -13,6 +13,15 @@ def score(args):
     import score
     score.main(args)
 
+def set_seed(seed_value):
+    if seed_value is None:
+        return
+    print('Setting deepQuest seed to', seed_value)
+    import numpy.random
+    numpy.random.seed(seed_value)
+    import random
+    random.seed(seed_value)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("A framework for neural-based quality estimation for machine translation. ")
     subparsers = parser.add_subparsers(help='train '
@@ -23,7 +32,8 @@ if __name__ == "__main__":
     train_parser = subparsers.add_parser('train', help='Train QE models')
     train_parser.set_defaults(func=train)
     train_parser.add_argument("-c", "--config",   required=False, help="Config YAML or pkl for loading the model configuration. ")
-    train_parser.add_argument("-ds", "--dataset", required=False, help="Dataset instance with data")
+    train_parser.add_argument("-ds", "--dataset", required=False, help="Dataset instance with data. ")
+    train_parser.add_argument("-s", "--seed", type=int, default=None, required=False, help="Value to set seed for deterministic results. ")
     train_parser.add_argument("changes", nargs="*", help="Changes to config. "
                                                    "Following the syntax Key=Value",
                                                     default="")

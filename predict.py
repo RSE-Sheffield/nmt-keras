@@ -1,5 +1,6 @@
 # This predict script doesn't work yet -- drj 2019-09
 
+#Seed fixing must happen before anything else is loaded
 import ast
 import os
 import re
@@ -10,13 +11,11 @@ import pickle
 from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 from keras_wrapper.cnn_model import loadModel, updateModel
 from keras_wrapper.dataset import loadDataset, saveDataset
-from dq_utils.callbacks import *
 from nmt_keras.model_zoo import TranslationModel
 from utils.utils import update_parameters
 from keras.utils import CustomObjectScope
 
-from numpy.random import seed
-
+from dq_utils.callbacks import *
 import nmt_keras.models as modFactory
 import nmt_keras.dq_evaluation as dq_evaluation
 
@@ -246,10 +245,6 @@ def main(args):
     if args.save_path is None:
         args.save_path = parameters['STORE_PATH']
 
-    rnd_seed = parameters.get('RND_SEED', None)
-    if rnd_seed != None:
-        seed(rnd_seed)
-
     logging.info('Running sampling.')
 
     # NMT Keras expects model path to appear without the .h5
@@ -270,6 +265,3 @@ def main(args):
         apply_NMT_model(parameters, args)
 
     logging.info('Done.')
-
-if __name__ == "__main__":
-    main()
