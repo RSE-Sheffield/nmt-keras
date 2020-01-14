@@ -44,7 +44,7 @@ if __name__ == "__main__":
                                                    default="")
 
     # parser for scoring
-    score_parser = subparsers.add_parser('score', help='Compute a score for a set of predictions vs reference set. ')
+    score_parser = subparsers.add_parser('score', help='Evaluate a set of predictions with regard to a reference set. ')
     score_parser.set_defaults(func=score)
     score_parser.add_argument("files", nargs=2, help="Two text files containing predictions and references. ")
 
