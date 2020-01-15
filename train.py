@@ -314,7 +314,7 @@ def buildCallbacks(params, model, dataset):
 
 
 def main(args):
-    print(args)
+    logger.info(args)
     # load the default config parameters
     # load the user config and overwrite any defaults
     if args.config.endswith('.yml'):
@@ -351,6 +351,34 @@ def main(args):
     except ValueError:
         print ('Error processing arguments: (', k, ",", v, ")")
         return 2
+
+
+    # check if model already exists
+    if not os.path.exists(parameters['STORE_PATH']):
+        # write out initial parameters
+        os.makedirs(parameters['STORE_PATH'])
+        dict2pkl(parameters, parameters['STORE_PATH'] + 'config_init.pkl')
+    else:
+        logger.info('Model ' + parameters['STORE_PATH'] + 'already exists. ')
+        prev_config_init = parameters['STORE_PATH'] + 'config_init.pkl'
+        logger.info('Loading trained model config_init.pkl from ' + prev_config_init)
+        parameters_prev_trained_model = pkl2dict(prev_config_init)
+        if parameters != parameters_prev_trained_model:
+            for key in parameters_prev_trained_model:
+                if not key in parameters:
+                    logger.info('Previously trained model config does not contain ' + key)
+                elif parameters[key] != parameters_prev_trained_model[key]:
+                    logger.info('Previous model has ' + key + ': ' + str(parameters[key]) + ' but this model has ' + key + ': ' + str(parameters_prev_trained_model[key]))
+            for key in parameters:
+                if not key in parameters_prev_trained_model:
+                    logger.info('New model config does not contain ' + key)
+                elif parameters[key] != parameters_prev_trained_model[key]:
+                    logger.info('Previous model has ' + key + ': ' + str(parameters[key]) + ' but this model has ' + key + ': ' + str(parameters_prev_trained_model[key]))
+            raise Exception('Model parameters not equal, can not resume training. ')
+        else:
+            logger.info('Previously trained config and new config are the same, resuming training. ')
+            #FIXME need to work on resuming
+            raise NotImplementedError('Model resuming not implemented. ')
 
     check_params(parameters)
 
