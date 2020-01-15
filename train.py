@@ -311,7 +311,6 @@ def buildCallbacks(params, model, dataset):
         #     callbacks.append(callback_sampling)
     return callbacks
 
-
 def main(args):
     logger.info(args)
     # load the default config parameters
@@ -326,7 +325,7 @@ def main(args):
         #adding parameters that are dependent on others
         parameters['MODE'] = 'training'
         parameters['DATASET_NAME'] = parameters['TASK_NAME']
-        parameters['DATA_ROOT_PATH'] = parameters['DATA_DIR'] + '/' parameters['DATASET_NAME']
+        parameters['DATA_ROOT_PATH'] = parameters['DATA_DIR'] + '/' + parameters['DATASET_NAME']
         parameters['MAPPING'] = parameters['DATA_ROOT_PATH'] + '/mapping.%s_%s.pkl' % (parameters['SRC_LAN'], parameters['TRG_LAN'])
         parameters['BPE_CODES_PATH'] =  parameters['DATA_ROOT_PATH'] + '/training_codes.joint'
         parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
@@ -351,7 +350,6 @@ def main(args):
     except ValueError:
         print ('Error processing arguments: (', k, ",", v, ")")
         return 2
-
 
     # check if model already exists
     if not os.path.exists(parameters['STORE_PATH']):
@@ -384,7 +382,6 @@ def main(args):
 
     if parameters['MULTI_TASK']:
 
-
         total_epochs=parameters['MAX_EPOCH']
         epoch_per_update = parameters['EPOCH_PER_UPDATE']
 
@@ -395,7 +392,6 @@ def main(args):
 
                 trainable_est = True
                 trainable_pred = True
-
 
                 if i>0 and 'PRED_WEIGHTS' in parameters:
                     del parameters['PRED_WEIGHTS']
@@ -419,8 +415,6 @@ def main(args):
                     parameters['LOSS'] = 'mse'
                     if i==0:
                         trainable_pred = False
-
-
 
                 elif output == 'word_qe':
 
