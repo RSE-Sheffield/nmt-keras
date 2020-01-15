@@ -18,7 +18,6 @@ from timeit import default_timer as timer
 import yaml
 
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
-from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 
 from dq_utils.datatools import preprocessDoc
 
@@ -327,13 +326,14 @@ def main(args):
         #adding parameters that are dependent on others
         parameters['MODE'] = 'training'
         parameters['DATASET_NAME'] = parameters['TASK_NAME']
-        parameters['DATA_ROOT_PATH'] = 'examples/%s/' % parameters['DATASET_NAME']
+        parameters['DATA_ROOT_PATH'] = parameters['DATA_DIR'] + '/' parameters['DATASET_NAME']
         parameters['MAPPING'] = parameters['DATA_ROOT_PATH'] + '/mapping.%s_%s.pkl' % (parameters['SRC_LAN'], parameters['TRG_LAN'])
         parameters['BPE_CODES_PATH'] =  parameters['DATA_ROOT_PATH'] + '/training_codes.joint'
         parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
-        parameters['STORE_PATH'] = 'trained_models/' + parameters['MODEL_NAME'] + '/'
+        parameters['STORE_PATH'] = parameters['MODEL_DIRECTORY'] + parameters['MODEL_NAME'] + '/'
     elif args.config.endswith('.pkl'):
         parameters = update_parameters(parameters, pkl2dict(args.config))
+
     try:
         for arg in args.changes:
             try:

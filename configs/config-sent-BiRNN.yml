@@ -1,5 +1,6 @@
 # Input data params
 TASK_NAME: 'testData-sent'                         # Task name
+DATA_DIR: 'data/'                                  # Data directory
 SRC_LAN: 'src'                                     # Language of the source text
 TRG_LAN: 'mt'                                      # Language of the target text
 # SRC_LAN or TRG_LAN are expected to be the file extensions of the data files
@@ -15,8 +16,6 @@ OUT_ACTIVATION: 'sigmoid'                           #set as ‘relu’ function 
 METRICS: ['qe_metrics']                             # Metric used for evaluating the model
 EVAL_ON_SETS: ['val']                               # Possible values: 'train', 'val' and 'test' (external evaluator)
 NO_REF: False                                       # True if there is no reference data
-
-PRED_WEIGHTS: 'trained_models/testData-doc_srcmt_EncDoc/epoch_3.h5'
 
 MAX_INPUT_TEXT_LEN: 70                              # Maximum length of the input sequence
 
