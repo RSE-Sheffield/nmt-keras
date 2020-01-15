@@ -382,112 +382,110 @@ def main(args):
 
     check_params(parameters)
 
-    if parameters['MODE'] == 'training':
-
-        if parameters['MULTI_TASK']:
+    if parameters['MULTI_TASK']:
 
 
-            total_epochs=parameters['MAX_EPOCH']
-            epoch_per_update = parameters['EPOCH_PER_UPDATE']
+        total_epochs=parameters['MAX_EPOCH']
+        epoch_per_update = parameters['EPOCH_PER_UPDATE']
 
-            weights_dict = dict()
-            for i in range(total_epochs):
+        weights_dict = dict()
+        for i in range(total_epochs):
 
-                for output in parameters['OUTPUTS_IDS_DATASET_FULL']:
+            for output in parameters['OUTPUTS_IDS_DATASET_FULL']:
 
-                    trainable_est = True
-                    trainable_pred = True
+                trainable_est = True
+                trainable_pred = True
 
 
-                    if i>0 and 'PRED_WEIGHTS' in parameters:
-                        del parameters['PRED_WEIGHTS']
-                        #parameters['PRED_WEIGHTS'] = os.getcwd()+'/trained_models/'+parameters['MODEL_NAME']+'/epoch_'+str(parameters['EPOCH_PER_MODEL'])+'_weights.h5'
+                if i>0 and 'PRED_WEIGHTS' in parameters:
+                    del parameters['PRED_WEIGHTS']
+                    #parameters['PRED_WEIGHTS'] = os.getcwd()+'/trained_models/'+parameters['MODEL_NAME']+'/epoch_'+str(parameters['EPOCH_PER_MODEL'])+'_weights.h5'
 
-                    parameters['OUTPUTS_IDS_DATASET'] = [output]
-                    parameters['OUTPUTS_IDS_MODEL'] = [output]
+                parameters['OUTPUTS_IDS_DATASET'] = [output]
+                parameters['OUTPUTS_IDS_MODEL'] = [output]
 
-                    if output == 'target_text' and i>0:
+                if output == 'target_text' and i>0:
 
-                        parameters['MODEL_TYPE'] = 'Predictor'
-                        parameters['MODEL_NAME'] = 'Predictor'
-                        parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_PRED']
-                        parameters['LOSS'] = 'categorical_crossentropy'
+                    parameters['MODEL_TYPE'] = 'Predictor'
+                    parameters['MODEL_NAME'] = 'Predictor'
+                    parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_PRED']
+                    parameters['LOSS'] = 'categorical_crossentropy'
 
-                    elif output == 'sent_hter':
+                elif output == 'sent_hter':
 
-                        parameters['MODEL_TYPE'] = 'EstimatorSent'
-                        parameters['MODEL_NAME'] = 'EstimatorSent'
-                        parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_EST_SENT']
-                        parameters['LOSS'] = 'mse'
-                        if i==0:
-                            trainable_pred = False
+                    parameters['MODEL_TYPE'] = 'EstimatorSent'
+                    parameters['MODEL_NAME'] = 'EstimatorSent'
+                    parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_EST_SENT']
+                    parameters['LOSS'] = 'mse'
+                    if i==0:
+                        trainable_pred = False
 
 
 
-                    elif output == 'word_qe':
+                elif output == 'word_qe':
 
-                        parameters['MODEL_TYPE'] = 'EstimatorWord'
-                        parameters['MODEL_NAME'] = 'EstimatorWord'
-                        parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_EST_WORD']
-                        parameters['LOSS'] = 'categorical_crossentropy'
-                        if i==0:
-                            trainable_pred = False
+                    parameters['MODEL_TYPE'] = 'EstimatorWord'
+                    parameters['MODEL_NAME'] = 'EstimatorWord'
+                    parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_EST_WORD']
+                    parameters['LOSS'] = 'categorical_crossentropy'
+                    if i==0:
+                        trainable_pred = False
 
-                    else:
-                        continue
-                    parameters['STORE_PATH'] = 'trained_models/' + parameters['MODEL_NAME'] + '/'
+                else:
+                    continue
+                parameters['STORE_PATH'] = 'trained_models/' + parameters['MODEL_NAME'] + '/'
 
-                    for j in range(epoch_per_update):
+                for j in range(epoch_per_update):
 
-                        logging.info('Running training task for ' + parameters['MODEL_NAME'])
-                        parameters['MAX_EPOCH'] = parameters['EPOCH_PER_MODEL']
+                    logging.info('Running training task for ' + parameters['MODEL_NAME'])
+                    parameters['MAX_EPOCH'] = parameters['EPOCH_PER_MODEL']
 
-                        train_model(parameters, weights_dict, args.dataset, trainable_est=trainable_est, trainable_pred=trainable_pred, weights_path=parameters.get('PRED_WEIGHTS', None))
+                    train_model(parameters, weights_dict, args.dataset, trainable_est=trainable_est, trainable_pred=trainable_pred, weights_path=parameters.get('PRED_WEIGHTS', None))
 
-                        flag=True
+                    flag=True
 
-                # for j in epoch_per_update:
-                #
-                #     counter=parameters['EPOCH_PER_PRED_EST']
-                #
-                #     for i in range(parameters['EPOCH_PER_PRED_EST'] + parameters['EPOCH_PER_EST']):
-                #
-                #         # do a first pass using pretrained Predictor weights
-                #         if i==0:
-                #             logging.info('Running training task1.')
-                #             parameters['MAX_EPOCH']=parameters['EPOCH_PER_PRED_EST']
-                #
-                #             train_model(parameters, args.dataset, trainable=True, weights_path=parameters['PRED_WEIGHTS'])
-                #
-                #             # delete weights used for initialization
-                #             if 'PRED_WEIGHTS' in parameters:
-                #                 del parameters['PRED_WEIGHTS']
-                #
-                #             # parameters['REBUILD_DATASET'] = False
-                #
-                #         else:
-                #
-                #             # loop over whole stack and partial updates
-                #             if i % 2 == 0:
-                #
-                #                 logging.info('Running training Predictor+Estimator')
-                #                 parameters['MAX_EPOCH'] = counter + parameters['EPOCH_PER_PRED_EST']
-                #                 parameters['RELOAD'] = counter
-                #                 train_model(parameters, args.dataset, trainable=True)
-                #                 counter += parameters['EPOCH_PER_PRED_EST']
-                #
-                #             else:
-                #
-                #                 logging.info('Running training Estimator')
-                #                 parameters['MAX_EPOCH'] = counter + parameters['EPOCH_PER_EST']
-                #                 parameters['RELOAD'] = counter
-                #                 train_model(parameters, args.dataset, trainable=False)
-                #                 counter += parameters['EPOCH_PER_EST']
+            # for j in epoch_per_update:
+            #
+            #     counter=parameters['EPOCH_PER_PRED_EST']
+            #
+            #     for i in range(parameters['EPOCH_PER_PRED_EST'] + parameters['EPOCH_PER_EST']):
+            #
+            #         # do a first pass using pretrained Predictor weights
+            #         if i==0:
+            #             logging.info('Running training task1.')
+            #             parameters['MAX_EPOCH']=parameters['EPOCH_PER_PRED_EST']
+            #
+            #             train_model(parameters, args.dataset, trainable=True, weights_path=parameters['PRED_WEIGHTS'])
+            #
+            #             # delete weights used for initialization
+            #             if 'PRED_WEIGHTS' in parameters:
+            #                 del parameters['PRED_WEIGHTS']
+            #
+            #             # parameters['REBUILD_DATASET'] = False
+            #
+            #         else:
+            #
+            #             # loop over whole stack and partial updates
+            #             if i % 2 == 0:
+            #
+            #                 logging.info('Running training Predictor+Estimator')
+            #                 parameters['MAX_EPOCH'] = counter + parameters['EPOCH_PER_PRED_EST']
+            #                 parameters['RELOAD'] = counter
+            #                 train_model(parameters, args.dataset, trainable=True)
+            #                 counter += parameters['EPOCH_PER_PRED_EST']
+            #
+            #             else:
+            #
+            #                 logging.info('Running training Estimator')
+            #                 parameters['MAX_EPOCH'] = counter + parameters['EPOCH_PER_EST']
+            #                 parameters['RELOAD'] = counter
+            #                 train_model(parameters, args.dataset, trainable=False)
+            #                 counter += parameters['EPOCH_PER_EST']
 
-        else:
+    else:
 
-            logging.info('Running training task.')
-            train_model(parameters, args.dataset, trainable_est=True, trainable_pred=True, weights_path=parameters.get('PRED_WEIGHTS', None))
+        logging.info('Running training task.')
+        train_model(parameters, args.dataset, trainable_est=True, trainable_pred=True, weights_path=parameters.get('PRED_WEIGHTS', None))
 
 
     logger.info('Done!')
