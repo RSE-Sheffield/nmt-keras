@@ -12,6 +12,7 @@ WORD_QE_CLASSES: 5
 #OUTPUTS_IDS_DATASET_FULL: ['target_text', 'word_qe', 'sent_hter']   # Corresponding outputs of the dataset #UNUSED?
 #OUTPUTS_IDS_MODEL_FULL: ['target_text','word_qe', 'sent_hter']      # Corresponding outputs of the built model #UNUSED
 
+DATA_DIR: 'data/'                                  # Data directory
 MODEL_DIRECTORY: 'trained_models/'                # Trained models will be stored here
 DATASET_STORE_PATH: 'datasets/'                   # Dataset instance will be stored here
 
