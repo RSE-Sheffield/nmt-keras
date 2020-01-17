@@ -34,6 +34,3 @@ def main(args):
     print('Mean absolute error: %.3f' % mae)
     print('Pearsons correlation: %.3f' % pcc)
     print('RMSE: %.3f' % rmse)
-
-if __name__ == "__main__":
-    sys.exit(main(args))

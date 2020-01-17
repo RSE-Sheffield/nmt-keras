@@ -1,7 +1,7 @@
 import argparse
-import sys
 
 def train(args):
+    set_seed(args)
     import train
     train.main(args)
 
@@ -13,6 +13,44 @@ def score(args):
     import score
     score.main(args)
 
+def set_seed(args):
+    import ast
+    import yaml
+    if args.config.endswith('.yml'):
+        with open('configs/default-config-BiRNN.yml') as file: #FIXME make this a user option (maybe depend on model type and level?)
+            parameters = yaml.load(file, Loader=yaml.FullLoader)
+        with open(args.config) as file:
+            user_parameters = yaml.load(file, Loader=yaml.FullLoader)
+        parameters.update(user_parameters)
+        del user_parameters
+    elif args.config.endswith('.pkl'):
+        parameters = update_parameters(parameters, pkl2dict(args.config))
+    try:
+        for arg in args.changes:
+            try:
+                k, v = arg.split('=')
+            except ValueError:
+                print ('Overwritten arguments must have the form key=Value. \n Currently are: %s' % str(args.changes))
+                return 2
+            if '_' in v:
+                parameters[k] = v
+            else:
+                try:
+                    parameters[k] = ast.literal_eval(v)
+                except ValueError:
+                    parameters[k] = v
+    except ValueError:
+        print ('Error processing arguments: (', k, ",", v, ")")
+        return 2
+    if parameters['SEED']:
+        print('Setting deepQuest seed to', parameters['SEED'])
+        import numpy.random
+        numpy.random.seed(parameters['SEED'])
+        import random
+        random.seed(parameters['SEED'])
+    else:
+        return
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("A framework for neural-based quality estimation for machine translation. ")
     subparsers = parser.add_subparsers(help='train '
@@ -23,7 +61,7 @@ if __name__ == "__main__":
     train_parser = subparsers.add_parser('train', help='Train QE models')
     train_parser.set_defaults(func=train)
     train_parser.add_argument("-c", "--config",   required=False, help="Config YAML or pkl for loading the model configuration. ")
-    train_parser.add_argument("-ds", "--dataset", required=False, help="Dataset instance with data")
+    train_parser.add_argument("-ds", "--dataset", required=False, help="Dataset instance with data. ")
     train_parser.add_argument("changes", nargs="*", help="Changes to config. "
                                                    "Following the syntax Key=Value",
                                                     default="")
