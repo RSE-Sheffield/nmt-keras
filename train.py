@@ -18,7 +18,8 @@ from timeit import default_timer as timer
 import yaml
 
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
-from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
+from keras_wrapper.cnn_model import updateModel
+from keras.utils import CustomObjectScope
 
 from dq_utils.datatools import preprocessDoc
 
@@ -44,7 +45,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
     check_params(params)
 
     if params['RELOAD'] > 0:
-        logging.info('Resuming training.')
+        logger.info('Resuming training from epoch ' + str(params['RELOAD']))
         # Load data
         if load_dataset is None:
             if params['REBUILD_DATASET']:
@@ -143,7 +144,10 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
         else:
             # otherwise we just reload the weights
             # from the files containing the model
-            qe_model = updateModel(qe_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
+            from keras.utils import CustomObjectScope
+            import nmt_keras.models.utils as layers #includes all layers and everything defined in nmt_keras.utils
+            with CustomObjectScope(vars(layers)):
+                qe_model = updateModel(qe_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
             qe_model.setParams(params)
             qe_model.setOptimizer()
             params['EPOCH_OFFSET'] = params['RELOAD'] if params['RELOAD_EPOCH'] else \
@@ -312,9 +316,8 @@ def buildCallbacks(params, model, dataset):
         #     callbacks.append(callback_sampling)
     return callbacks
 
-
 def main(args):
-    print(args)
+    logger.info(args)
     # load the default config parameters
     # load the user config and overwrite any defaults
     if args.config.endswith('.yml'):
@@ -325,15 +328,15 @@ def main(args):
         parameters.update(user_parameters)
         del user_parameters
         #adding parameters that are dependent on others
-        parameters['MODE'] = 'training'
         parameters['DATASET_NAME'] = parameters['TASK_NAME']
-        parameters['DATA_ROOT_PATH'] = 'examples/%s/' % parameters['DATASET_NAME']
-        parameters['MAPPING'] = parameters['DATA_ROOT_PATH'] + '/mapping.%s_%s.pkl' % (parameters['SRC_LAN'], parameters['TRG_LAN'])
-        parameters['BPE_CODES_PATH'] =  parameters['DATA_ROOT_PATH'] + '/training_codes.joint'
+        parameters['DATA_ROOT_PATH'] = os.path.join(parameters['DATA_DIR'],parameters['DATASET_NAME'])
+        parameters['MAPPING'] = os.path.join(parameters['DATA_ROOT_PATH'], 'mapping.%s_%s.pkl' % (parameters['SRC_LAN'], parameters['TRG_LAN']))
+        parameters['BPE_CODES_PATH'] =  os.path.join(parameters['DATA_ROOT_PATH'], '/training_codes.joint')
         parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
-        parameters['STORE_PATH'] = 'trained_models/' + parameters['MODEL_NAME'] + '/'
+        parameters['STORE_PATH'] = os.path.join(parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
     elif args.config.endswith('.pkl'):
         parameters = update_parameters(parameters, pkl2dict(args.config))
+
     try:
         for arg in args.changes:
             try:
@@ -352,114 +355,145 @@ def main(args):
         print ('Error processing arguments: (', k, ",", v, ")")
         return 2
 
+    # check if model already exists
+    if not os.path.exists(parameters['STORE_PATH']):
+        # if model doesn't already exist
+        # write out initial parameters to pkl
+        os.makedirs(parameters['STORE_PATH'])
+        dict2pkl(parameters, os.path.join(parameters['STORE_PATH'], 'config_init.pkl'))
+    else:
+        # if model already exists check that only RELOAD or RELOAD_EPOCH differ
+        logger.info('Model ' + parameters['STORE_PATH'] + ' already exists. ')
+        prev_config_init = os.path.join(parameters['STORE_PATH'], 'config_init.pkl')
+        logger.info('Loading trained model config_init.pkl from ' + prev_config_init)
+        parameters_prev = pkl2dict(prev_config_init)
+        if parameters['RELOAD_EPOCH'] != True or parameters['RELOAD'] == 0:
+            logger.info('Specify RELOAD_EPOCH=True and RELOAD>0 in your config to resume training an existing model. ')
+            return
+        elif parameters != parameters_prev:
+            reload_keys = ['RELOAD', 'RELOAD_EPOCH']
+            stop_flag = False
+            for key in parameters_prev:
+                if key not in (parameters or reload_keys):
+                    logger.info('Previously trained model config does not contain ' + key)
+                    stop_flag = True
+                elif parameters[key] != parameters_prev[key] and key not in reload_keys:
+                    logger.info('Previous model has ' + key + ': ' + str(parameters[key]) + ' but this model has ' + key + ': ' + str(parameters_prev[key]))
+                    stop_flag = True
+            for key in parameters:
+                if key not in (parameters_prev or reload_keys):
+                    logger.info('New model config does not contain ' + key)
+                    stop_flag = True
+            if stop_flag == True:
+                raise Exception('Model parameters not equal, can not resume training. ')
+            else:
+                logger.info('Resuming training from epoch ' + str(parameters['RELOAD']))
+        else:
+            logger.info('Previously trained config and new config are the same, specify which epoch to resume training from. ')
+            return
+
     check_params(parameters)
 
-    if parameters['MODE'] == 'training':
+    if parameters['MULTI_TASK']:
 
-        if parameters['MULTI_TASK']:
+        total_epochs=parameters['MAX_EPOCH']
+        epoch_per_update = parameters['EPOCH_PER_UPDATE']
 
+        weights_dict = dict()
+        for i in range(total_epochs):
 
-            total_epochs=parameters['MAX_EPOCH']
-            epoch_per_update = parameters['EPOCH_PER_UPDATE']
+            for output in parameters['OUTPUTS_IDS_DATASET_FULL']:
 
-            weights_dict = dict()
-            for i in range(total_epochs):
+                trainable_est = True
+                trainable_pred = True
 
-                for output in parameters['OUTPUTS_IDS_DATASET_FULL']:
+                if i>0 and 'PRED_WEIGHTS' in parameters:
+                    del parameters['PRED_WEIGHTS']
+                    #parameters['PRED_WEIGHTS'] = os.getcwd()+'/trained_models/'+parameters['MODEL_NAME']+'/epoch_'+str(parameters['EPOCH_PER_MODEL'])+'_weights.h5'
 
-                    trainable_est = True
-                    trainable_pred = True
+                parameters['OUTPUTS_IDS_DATASET'] = [output]
+                parameters['OUTPUTS_IDS_MODEL'] = [output]
 
+                if output == 'target_text' and i>0:
 
-                    if i>0 and 'PRED_WEIGHTS' in parameters:
-                        del parameters['PRED_WEIGHTS']
-                        #parameters['PRED_WEIGHTS'] = os.getcwd()+'/trained_models/'+parameters['MODEL_NAME']+'/epoch_'+str(parameters['EPOCH_PER_MODEL'])+'_weights.h5'
+                    parameters['MODEL_TYPE'] = 'Predictor'
+                    parameters['MODEL_NAME'] = 'Predictor'
+                    parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_PRED']
+                    parameters['LOSS'] = 'categorical_crossentropy'
 
-                    parameters['OUTPUTS_IDS_DATASET'] = [output]
-                    parameters['OUTPUTS_IDS_MODEL'] = [output]
+                elif output == 'sent_hter':
 
-                    if output == 'target_text' and i>0:
+                    parameters['MODEL_TYPE'] = 'EstimatorSent'
+                    parameters['MODEL_NAME'] = 'EstimatorSent'
+                    parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_EST_SENT']
+                    parameters['LOSS'] = 'mse'
+                    if i==0:
+                        trainable_pred = False
 
-                        parameters['MODEL_TYPE'] = 'Predictor'
-                        parameters['MODEL_NAME'] = 'Predictor'
-                        parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_PRED']
-                        parameters['LOSS'] = 'categorical_crossentropy'
+                elif output == 'word_qe':
 
-                    elif output == 'sent_hter':
+                    parameters['MODEL_TYPE'] = 'EstimatorWord'
+                    parameters['MODEL_NAME'] = 'EstimatorWord'
+                    parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_EST_WORD']
+                    parameters['LOSS'] = 'categorical_crossentropy'
+                    if i==0:
+                        trainable_pred = False
 
-                        parameters['MODEL_TYPE'] = 'EstimatorSent'
-                        parameters['MODEL_NAME'] = 'EstimatorSent'
-                        parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_EST_SENT']
-                        parameters['LOSS'] = 'mse'
-                        if i==0:
-                            trainable_pred = False
+                else:
+                    continue
+                parameters['STORE_PATH'] = 'trained_models/' + parameters['MODEL_NAME'] + '/'
 
+                for j in range(epoch_per_update):
 
+                    logging.info('Running training task for ' + parameters['MODEL_NAME'])
+                    parameters['MAX_EPOCH'] = parameters['EPOCH_PER_MODEL']
 
-                    elif output == 'word_qe':
+                    train_model(parameters, weights_dict, args.dataset, trainable_est=trainable_est, trainable_pred=trainable_pred, weights_path=parameters.get('PRED_WEIGHTS', None))
 
-                        parameters['MODEL_TYPE'] = 'EstimatorWord'
-                        parameters['MODEL_NAME'] = 'EstimatorWord'
-                        parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_EST_WORD']
-                        parameters['LOSS'] = 'categorical_crossentropy'
-                        if i==0:
-                            trainable_pred = False
+                    flag=True
 
-                    else:
-                        continue
-                    parameters['STORE_PATH'] = 'trained_models/' + parameters['MODEL_NAME'] + '/'
+            # for j in epoch_per_update:
+            #
+            #     counter=parameters['EPOCH_PER_PRED_EST']
+            #
+            #     for i in range(parameters['EPOCH_PER_PRED_EST'] + parameters['EPOCH_PER_EST']):
+            #
+            #         # do a first pass using pretrained Predictor weights
+            #         if i==0:
+            #             logging.info('Running training task1.')
+            #             parameters['MAX_EPOCH']=parameters['EPOCH_PER_PRED_EST']
+            #
+            #             train_model(parameters, args.dataset, trainable=True, weights_path=parameters['PRED_WEIGHTS'])
+            #
+            #             # delete weights used for initialization
+            #             if 'PRED_WEIGHTS' in parameters:
+            #                 del parameters['PRED_WEIGHTS']
+            #
+            #             # parameters['REBUILD_DATASET'] = False
+            #
+            #         else:
+            #
+            #             # loop over whole stack and partial updates
+            #             if i % 2 == 0:
+            #
+            #                 logging.info('Running training Predictor+Estimator')
+            #                 parameters['MAX_EPOCH'] = counter + parameters['EPOCH_PER_PRED_EST']
+            #                 parameters['RELOAD'] = counter
+            #                 train_model(parameters, args.dataset, trainable=True)
+            #                 counter += parameters['EPOCH_PER_PRED_EST']
+            #
+            #             else:
+            #
+            #                 logging.info('Running training Estimator')
+            #                 parameters['MAX_EPOCH'] = counter + parameters['EPOCH_PER_EST']
+            #                 parameters['RELOAD'] = counter
+            #                 train_model(parameters, args.dataset, trainable=False)
+            #                 counter += parameters['EPOCH_PER_EST']
 
-                    for j in range(epoch_per_update):
+    else:
 
-                        logging.info('Running training task for ' + parameters['MODEL_NAME'])
-                        parameters['MAX_EPOCH'] = parameters['EPOCH_PER_MODEL']
-
-                        train_model(parameters, weights_dict, args.dataset, trainable_est=trainable_est, trainable_pred=trainable_pred, weights_path=parameters.get('PRED_WEIGHTS', None))
-
-                        flag=True
-
-                # for j in epoch_per_update:
-                #
-                #     counter=parameters['EPOCH_PER_PRED_EST']
-                #
-                #     for i in range(parameters['EPOCH_PER_PRED_EST'] + parameters['EPOCH_PER_EST']):
-                #
-                #         # do a first pass using pretrained Predictor weights
-                #         if i==0:
-                #             logging.info('Running training task1.')
-                #             parameters['MAX_EPOCH']=parameters['EPOCH_PER_PRED_EST']
-                #
-                #             train_model(parameters, args.dataset, trainable=True, weights_path=parameters['PRED_WEIGHTS'])
-                #
-                #             # delete weights used for initialization
-                #             if 'PRED_WEIGHTS' in parameters:
-                #                 del parameters['PRED_WEIGHTS']
-                #
-                #             # parameters['REBUILD_DATASET'] = False
-                #
-                #         else:
-                #
-                #             # loop over whole stack and partial updates
-                #             if i % 2 == 0:
-                #
-                #                 logging.info('Running training Predictor+Estimator')
-                #                 parameters['MAX_EPOCH'] = counter + parameters['EPOCH_PER_PRED_EST']
-                #                 parameters['RELOAD'] = counter
-                #                 train_model(parameters, args.dataset, trainable=True)
-                #                 counter += parameters['EPOCH_PER_PRED_EST']
-                #
-                #             else:
-                #
-                #                 logging.info('Running training Estimator')
-                #                 parameters['MAX_EPOCH'] = counter + parameters['EPOCH_PER_EST']
-                #                 parameters['RELOAD'] = counter
-                #                 train_model(parameters, args.dataset, trainable=False)
-                #                 counter += parameters['EPOCH_PER_EST']
-
-        else:
-
-            logging.info('Running training task.')
-            train_model(parameters, args.dataset, trainable_est=True, trainable_pred=True, weights_path=parameters.get('PRED_WEIGHTS', None))
+        logging.info('Running training task.')
+        train_model(parameters, args.dataset, trainable_est=True, trainable_pred=True, weights_path=parameters.get('PRED_WEIGHTS', None))
 
 
     logger.info('Done!')

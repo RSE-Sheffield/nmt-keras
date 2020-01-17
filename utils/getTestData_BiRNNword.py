@@ -41,7 +41,7 @@ for file in os.listdir(cachePath):
         tar.close()
 
 ## make the test data
-dataDir = 'examples/'+task
+dataDir = 'data/'+task
 os.makedirs(dataDir, exist_ok=True)
 
 totalLines = 500 # total number of lines to take from example data

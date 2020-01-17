@@ -12,6 +12,9 @@ WORD_QE_CLASSES: 5
 #OUTPUTS_IDS_DATASET_FULL: ['target_text', 'word_qe', 'sent_hter']   # Corresponding outputs of the dataset #UNUSED?
 #OUTPUTS_IDS_MODEL_FULL: ['target_text','word_qe', 'sent_hter']      # Corresponding outputs of the built model #UNUSED
 
+DATA_DIR: 'data/'                                  # Data directory
+MODEL_DIRECTORY: 'trained_models/'                # Trained models will be stored here
+DATASET_STORE_PATH: 'datasets/'                   # Dataset instance will be stored here
 
 #EVAL_ON_SETS_KERAS: ['val']                 # Possible values: 'train', 'val' and 'test' (Keras' evaluator). Untested.
 EVAL_ON_SETS_KERAS: []
@@ -205,8 +208,6 @@ USE_PRELU: False                             # use PReLU activations as regulari
 USE_L2: False                                # L2 normalization on the features
 
 DOUBLE_STOCHASTIC_ATTENTION_REG: 0.0         # Doubly stochastic attention (Eq. 14 from arXiv:1502.03044)
-
-DATASET_STORE_PATH: 'datasets/'                   # Dataset instance will be stored here
 
 SAMPLING_SAVE_MODE: 'listoflists'                        # 'list': Store in a text file, one sentence per line.
 VERBOSE: 1                                        # Verbosity level

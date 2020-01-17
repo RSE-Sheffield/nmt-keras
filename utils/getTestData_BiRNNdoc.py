@@ -72,7 +72,7 @@ for file in os.listdir(cachePath):
         # os.remove(file)
         # print('Deleting: ' + file)
 
-dataDir = 'examples/' + task
+dataDir = 'data/' + task
 os.makedirs(dataDir, exist_ok=True)
 
 trainSize = 100

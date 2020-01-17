@@ -8,7 +8,7 @@ import sys
 import pickle
 
 from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
-from keras_wrapper.cnn_model import loadModel, updateModel
+from keras_wrapper.cnn_model import loadModel
 from keras_wrapper.dataset import loadDataset, saveDataset
 from dq_utils.callbacks import *
 from nmt_keras.model_zoo import TranslationModel

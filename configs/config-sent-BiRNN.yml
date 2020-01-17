@@ -16,8 +16,6 @@ METRICS: ['qe_metrics']                             # Metric used for evaluating
 EVAL_ON_SETS: ['val']                               # Possible values: 'train', 'val' and 'test' (external evaluator)
 NO_REF: False                                       # True if there is no reference data
 
-PRED_WEIGHTS: 'trained_models/testData-doc_srcmt_EncDoc/epoch_3.h5'
-
 MAX_INPUT_TEXT_LEN: 70                              # Maximum length of the input sequence
 
 MAX_OUTPUT_TEXT_LEN: 70                             # Maximum length of the output sequence
