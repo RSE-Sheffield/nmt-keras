@@ -435,7 +435,6 @@ def main(args):
 
                 else:
                     continue
-                parameters['STORE_PATH'] = 'trained_models/' + parameters['MODEL_NAME'] + '/'
 
                 for j in range(epoch_per_update):
 
@@ -445,45 +444,6 @@ def main(args):
                     train_model(parameters, weights_dict, args.dataset, trainable_est=trainable_est, trainable_pred=trainable_pred, weights_path=parameters.get('PRED_WEIGHTS', None))
 
                     flag=True
-
-            # for j in epoch_per_update:
-            #
-            #     counter=parameters['EPOCH_PER_PRED_EST']
-            #
-            #     for i in range(parameters['EPOCH_PER_PRED_EST'] + parameters['EPOCH_PER_EST']):
-            #
-            #         # do a first pass using pretrained Predictor weights
-            #         if i==0:
-            #             logging.info('Running training task1.')
-            #             parameters['MAX_EPOCH']=parameters['EPOCH_PER_PRED_EST']
-            #
-            #             train_model(parameters, args.dataset, trainable=True, weights_path=parameters['PRED_WEIGHTS'])
-            #
-            #             # delete weights used for initialization
-            #             if 'PRED_WEIGHTS' in parameters:
-            #                 del parameters['PRED_WEIGHTS']
-            #
-            #             # parameters['REBUILD_DATASET'] = False
-            #
-            #         else:
-            #
-            #             # loop over whole stack and partial updates
-            #             if i % 2 == 0:
-            #
-            #                 logging.info('Running training Predictor+Estimator')
-            #                 parameters['MAX_EPOCH'] = counter + parameters['EPOCH_PER_PRED_EST']
-            #                 parameters['RELOAD'] = counter
-            #                 train_model(parameters, args.dataset, trainable=True)
-            #                 counter += parameters['EPOCH_PER_PRED_EST']
-            #
-            #             else:
-            #
-            #                 logging.info('Running training Estimator')
-            #                 parameters['MAX_EPOCH'] = counter + parameters['EPOCH_PER_EST']
-            #                 parameters['RELOAD'] = counter
-            #                 train_model(parameters, args.dataset, trainable=False)
-            #                 counter += parameters['EPOCH_PER_EST']
-
     else:
 
         logging.info('Running training task.')
