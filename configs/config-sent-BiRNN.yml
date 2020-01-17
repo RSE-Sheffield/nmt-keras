@@ -4,6 +4,8 @@ SRC_LAN: 'src'                                     # Language of the source text
 TRG_LAN: 'mt'                                      # Language of the target text
 # SRC_LAN or TRG_LAN are expected to be the file extensions of the data files
 
+SEED: 1                                            # Value to set seed for deterministic results. (omit for random results)
+
 OUTPUTS_IDS_DATASET: ['sent_qe']
 OUTPUTS_IDS_MODEL: ['sent_qe']
 

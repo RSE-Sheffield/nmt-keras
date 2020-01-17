@@ -16,7 +16,7 @@ TESTVAL=$(awk -v backend=$KERAS_BACKEND -v level=$level -v task_name=$task_name 
 
 python utils/getTestData_BiRNNword.py
 
-python __main__.py train -s 1 -c ${conf} TASK_NAME=$task_name DATASET_NAME=$task_name MODEL_TYPE=$model_type MODEL_NAME=$model_name || true > log-${model_name}-test.txt
+python __main__.py train -c ${conf} TASK_NAME=$task_name DATASET_NAME=$task_name MODEL_TYPE=$model_type MODEL_NAME=$model_name || true > log-${model_name}-test.txt
 
 PCC=$(awk -F, '/f1_prod/ {M=-1;next};$2>M {M=$2};END {print M}' trained_models/${task_name}_srcmt_${model_type}/val.qe_metrics)
 
