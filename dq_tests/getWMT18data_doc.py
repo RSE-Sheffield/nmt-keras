@@ -81,7 +81,7 @@ for file in os.listdir(cachePath):
         # os.remove(file)
         # print('Deleting: ' + file)
 
-dataDir = 'examples/' + task
+dataDir = 'data/' + task
 os.makedirs(dataDir, exist_ok=True)
 processDocData(cachePath,'task4_en-fr_training',dataDir,1000,'train')
 processDocData(cachePath,'task4_en-fr_dev',dataDir,200,'dev')

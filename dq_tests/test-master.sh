@@ -3,11 +3,11 @@
 set -e
 
 if [ "$TEST_MODE" = "sentence" ]; then
-  ./utils/test-BiRNNsent.sh
+  ./dq_tests/test-BiRNNsent.sh
 elif [ "$TEST_MODE" = "document" ]; then
-  ./utils/test-BiRNNdoc.sh
+  ./dq_tests/test-BiRNNdoc.sh
 elif [ "$TEST_MODE" = "word" ]; then
-  ./utils/test-BiRNNword.sh
+  ./dq_tests/test-BiRNNword.sh
 else
   exit 1
 fi
