@@ -1,6 +1,3 @@
-# This predict script doesn't work yet -- drj 2019-09
-
-#Seed fixing must happen before anything else is loaded
 import ast
 import os
 import re
@@ -11,8 +8,6 @@ import pickle
 from dq_utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 from keras_wrapper.cnn_model import loadModel
 from keras_wrapper.dataset import loadDataset
-from nmt_keras.model_zoo import TranslationModel
-from utils.utils import update_parameters
 from keras.utils import CustomObjectScope
 
 from dq_utils.callbacks import *
