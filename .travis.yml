@@ -1,16 +1,18 @@
 dist: xenial
 language: python
 python:
-  - '3.6'
+  # - '3.6'
   - '3.7'
   # - '3.8' # Tensorflow currently compatible up to 3.7
 install:
   - pip install -e .
   - pip install pytest pytest-cov
   - pip install codecov
+  - pip install --user sphinx sphinx-rtd-theme travis-sphinx
 script:
   - pytest --cov=./deepquest/ tests/BiRNNsent.py
   - pytest --cov=./deepquest/ tests/BiRNNdoc.py
   - pytest --cov=./deepquest/ tests/BiRNNword.py
+  - travis-sphinx build
 after_success:
   - codecov
