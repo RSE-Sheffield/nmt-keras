@@ -2,7 +2,7 @@
 
 set -e
 
-conf=configs/config-word-BiRNN.yml
+conf=dq_tests/config-word-BiRNN.yml
 task_name=testData-word
 model_type=EncWord
 model_name=${task_name}_srcmt_${model_type}

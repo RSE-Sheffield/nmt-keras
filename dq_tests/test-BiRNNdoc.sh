@@ -2,7 +2,7 @@
 
 set -e
 
-conf=configs/config-doc-BiRNN.yml
+conf=dq_tests/config-doc-BiRNN.yml
 task_name=testData-doc
 model_type=EncSent
 model_name=${task_name}_srcmt_${model_type}
