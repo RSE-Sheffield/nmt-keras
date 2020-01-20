@@ -16,7 +16,7 @@ from keras.utils import CustomObjectScope
 
 from dq_utils.datatools import preprocessDoc
 
-from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
+from dq_utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 from nmt_keras import check_params
 from nmt_keras.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 from nmt_keras.training import train_model
