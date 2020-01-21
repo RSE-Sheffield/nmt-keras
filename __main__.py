@@ -3,7 +3,8 @@ import argparse
 def train(args):
     set_seed(args)
     import train
-    train.main(args)
+    parameters = args2dict(args)
+    train.main(parameters)
 
 def predict(args):
     import predict
@@ -13,7 +14,7 @@ def score(args):
     import score
     score.main(args)
 
-def set_seed(args):
+def args2dict(args):
     import ast
     import yaml
     if args.config.endswith('.yml'):
@@ -42,14 +43,17 @@ def set_seed(args):
     except ValueError:
         print ('Error processing arguments: (', k, ",", v, ")")
         return 2
+    return parameters
+
+def set_seed(args):
+    parameters = args2dict(args)
     if parameters['SEED']:
         print('Setting deepQuest seed to', parameters['SEED'])
         import numpy.random
         numpy.random.seed(parameters['SEED'])
         import random
         random.seed(parameters['SEED'])
-    else:
-        return
+    return parameters
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("A framework for neural-based quality estimation for machine translation. ")

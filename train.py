@@ -288,66 +288,10 @@ def buildCallbacks(params, model, dataset):
 
             callbacks.append(callback_metric)
 
-        # if params['SAMPLE_ON_SETS']:
-        #     callback_sampling = SampleEachNUpdates(model,
-        #                                            dataset,
-        #                                            gt_id=params['OUTPUTS_IDS_DATASET'][0],
-        #                                            set_name=params['SAMPLE_ON_SETS'],
-        #                                            n_samples=params['N_SAMPLES'],
-        #                                            each_n_updates=params['SAMPLE_EACH_UPDATES'],
-        #                                            extra_vars=extra_vars,
-        #                                            reload_epoch=params['RELOAD'],
-        #                                            batch_size=params['BATCH_SIZE'],
-        #                                            is_text=True,
-        #                                            index2word_x=vocab_x,
-        #                                            index2word_y=vocab_y,
-        #                                            print_sources=True,
-        #                                            in_pred_idx=params['INPUTS_IDS_DATASET'][0],
-        #                                            sampling_type=params['SAMPLING'],  # text info
-        #                                            beam_search=params['BEAM_SEARCH'],
-        #                                            start_sampling_on_epoch=params['START_SAMPLING_ON_EPOCH'],
-        #                                            verbose=params['VERBOSE'])
-        #     callbacks.append(callback_sampling)
     return callbacks
 
-def main(args):
-    logger.info(args)
-    # load the default config parameters
-    # load the user config and overwrite any defaults
-    if args.config.endswith('.yml'):
-        with open('configs/default-config-BiRNN.yml') as file: #FIXME make this a user option (maybe depend on model type and level?)
-            parameters = yaml.load(file, Loader=yaml.FullLoader)
-        with open(args.config) as file:
-            user_parameters = yaml.load(file, Loader=yaml.FullLoader)
-        parameters.update(user_parameters)
-        del user_parameters
-        #adding parameters that are dependent on others
-        parameters['DATASET_NAME'] = parameters['TASK_NAME']
-        parameters['DATA_ROOT_PATH'] = os.path.join(parameters['DATA_DIR'],parameters['DATASET_NAME'])
-        parameters['MAPPING'] = os.path.join(parameters['DATA_ROOT_PATH'], 'mapping.%s_%s.pkl' % (parameters['SRC_LAN'], parameters['TRG_LAN']))
-        parameters['BPE_CODES_PATH'] =  os.path.join(parameters['DATA_ROOT_PATH'], '/training_codes.joint')
-        parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
-        parameters['STORE_PATH'] = os.path.join(parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
-    elif args.config.endswith('.pkl'):
-        parameters = update_parameters(parameters, pkl2dict(args.config))
-
-    try:
-        for arg in args.changes:
-            try:
-                k, v = arg.split('=')
-            except ValueError:
-                print ('Overwritten arguments must have the form key=Value. \n Currently are: %s' % str(args.changes))
-                return 2
-            if '_' in v:
-                parameters[k] = v
-            else:
-                try:
-                    parameters[k] = ast.literal_eval(v)
-                except ValueError:
-                    parameters[k] = v
-    except ValueError:
-        print ('Error processing arguments: (', k, ",", v, ")")
-        return 2
+def main(parameters):
+    logger.info(parameters)
 
     # check if model already exists
     if not os.path.exists(parameters['STORE_PATH']):
