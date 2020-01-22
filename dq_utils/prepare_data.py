@@ -41,6 +41,7 @@ def update_dataset_from_file(ds,
     """
     Updates the dataset instance from a text file according to the given params.
     Used for sampling
+
     :param ds: Dataset instance
     :param input_text_filename: Source language sentences
     :param params: Parameters for building the dataset
@@ -49,6 +50,7 @@ def update_dataset_from_file(ds,
     :param remove_outputs: Remove outputs from dataset (if True, will ignore the output_text_filename parameter)
     :param compute_state_below: Compute state below input (shifted target text for professor teaching)
     :param recompute_references: Whether we should rebuild the references of the dataset or not.
+
     :return: Dataset object with the processed data
     """
 
