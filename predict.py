@@ -1,6 +1,5 @@
 import ast
 import os
-import re
 import sys
 
 import pickle
@@ -17,14 +16,14 @@ import nmt_keras.dq_evaluation as dq_evaluation
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 logger = logging.getLogger(__name__)
 
-def apply_NMT_model(params, args):
+def apply_NMT_model(params, dataset, model, save_path):
     """
     Sample from a previously trained model.
 
     :param params: Dictionary of network hyperparameters.
     :return: None
     """
-    params['PRED_VOCAB'] = args.dataset
+    params['PRED_VOCAB'] = dataset
     dataset = loadDataset(params['PRED_VOCAB'])
     # dataset = build_dataset(params, dataset_voc.vocabulary, dataset_voc.vocabulary_len)
     if 'test' in params['EVAL_ON_SETS'] and len(dataset.ids_inputs) != len(dataset.types_inputs['test']):
@@ -34,9 +33,9 @@ def apply_NMT_model(params, args):
     params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len['target_text']
 
     # Load model
-    nmt_model = loadModel(args.model, -1, full_path=True)
+    nmt_model = loadModel(model, -1, full_path=True)
 
-    nmt_model.model_path = args.save_path
+    nmt_model.model_path = save_path
 
     inputMapping = dict()
     for i, id_in in enumerate(params['INPUTS_IDS_DATASET']):
@@ -207,46 +206,34 @@ def check_params(params):
                       'You should preprocess the word embeddings with the "utils/preprocess_*_word_vectors.py script.')
 
 
-def main(args):
-    print(args)
-    # parameters = config.load_parameters()
-    # if args.config is not None:
-    #     parameters = update_parameters(parameters, pkl2dict(args.config))
-    # Load the config parameters from the trained model pickle
-    parameters = pickle.load(open(os.path.join(os.path.split(args.model)[0],'config.pkl'), 'rb'))
-    try:
-        for arg in args.changes:
-            try:
-                k, v = arg.split('=')
-            except ValueError:
-                print('Overwriting arguments must have the form key=value.\n This one is: %s' % str(args.changes))
-                exit(1)
-            if '_' in v:
-                parameters[k] = v
-            else:
-                try:
-                    parameters[k] = ast.literal_eval(v)
-                except ValueError:
-                    parameters[k] = v
-    except ValueError:
-        print("Error processing arguments: {!r}".format(arg))
-        exit(2)
+def main(model,dataset,save_path=None,evalset=None,changes={}):
+    """
+    Predicts QE scores on a dataset using a pre-trained model.
+    :param model: Model file (.h5) to use.
+    :param dataset: Dataset file (.pkl) to use.
+    :param save_path: Optinal directory path to save predictions to. Default = STORE_PATH
+    :param evalset: Optional set to evaluate on. Default = 'test'
+    :param changes: Optional dictionary of parameters to overwrite config.
+    """
+    parameters = pickle.load(open(os.path.join(os.path.split(model)[0],'config.pkl'), 'rb'))
 
-    if args.evalset is None:
+    parameters.update(changes)
+
+    if evalset is None:
         parameters['EVAL_ON_SETS'] = ['test']
     else:
-        parameters['EVAL_ON_SETS'] = [args.evalset]
+        parameters['EVAL_ON_SETS'] = [evalset]
 
-    if args.save_path is None:
-        args.save_path = parameters['STORE_PATH']
+    if save_path is None:
+        save_path = parameters['STORE_PATH']
 
-    logging.info('Running sampling.')
+    logging.info('Running prediction.')
 
     # NMT Keras expects model path to appear without the .h5
-    if args.model.endswith(".h5"):
-        args.model = args.model[:-3]
+    if model.endswith(".h5"):
+        model = model[:-3]
     # Directory containing model
-    model_dir, file_name = os.path.split(args.model)
+    model_dir, file_name = os.path.split(model)
     _, parameters["MODEL_NAME"] = os.path.split(model_dir)
     parameters["STORE_PATH"] = "trained_models/" + parameters["MODEL_NAME"]
     del parameters["TASK_NAME"]
@@ -257,6 +244,6 @@ def main(args):
     from keras.utils import CustomObjectScope
     import nmt_keras.models.utils as layers #includes all layers and everything defined in nmt_keras.utils
     with CustomObjectScope(vars(layers)):
-        apply_NMT_model(parameters, args)
+        apply_NMT_model(parameters, dataset, model, save_path)
 
     logging.info('Done.')

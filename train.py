@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-
 import ast
-import glob
 import logging
 import os
-import sys
 
 from timeit import default_timer as timer
 import yaml
@@ -13,17 +10,12 @@ import yaml
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from keras_wrapper.cnn_model import updateModel
 from keras.utils import CustomObjectScope
-
-from dq_utils.datatools import preprocessDoc
-
-from dq_utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
+from utils.utils import update_parameters
+from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 from nmt_keras import check_params
 from nmt_keras.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
-from nmt_keras.training import train_model
-from utils.utils import update_parameters
-
-from dq_utils.datatools import preprocessDoc
 import nmt_keras.models as modFactory
+from dq_utils.datatools import preprocessDoc
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 
@@ -290,7 +282,37 @@ def buildCallbacks(params, model, dataset):
 
     return callbacks
 
-def main(parameters):
+def main(config=None,dataset=None,changes={}):
+    """
+    Handles QE model training.
+    :param config: Either a path to a YAML or pkl config file or a dictionary of parameters.
+    :param dataset: Optional path to a previously built pkl dataset.
+    :param changes: Optional dictionary of parameters to overwrite config.
+    """
+    if isinstance(config,str):
+        if arg.endswith('.yml'):
+            with open('configs/default-config-BiRNN.yml') as file: #FIXME make this a user option (maybe depend on model type and level?)
+                parameters = yaml.load(file, Loader=yaml.FullLoader)
+            with open(arg) as file:
+                user_parameters = yaml.load(file, Loader=yaml.FullLoader)
+            parameters.update(user_parameters)
+            del user_parameters
+        elif arg.endswith('.pkl'):
+            parameters = update_parameters(parameters, pkl2dict(arg))
+    elif isinstance(config,dict):
+        parameters = config
+    else:
+        raise Exception('Expected path string to a config yml or pkl or a parameters dictionary, but received: %s . ',type(arg))
+
+    parameters.update(changes)
+    parameters['DATASET_NAME'] = parameters['TASK_NAME']
+    parameters['DATA_ROOT_PATH'] = os.path.join(parameters['DATA_DIR'],parameters['DATASET_NAME'])
+    parameters['MAPPING'] = os.path.join(parameters['DATA_ROOT_PATH'], 'mapping.%s_%s.pkl' % (parameters['SRC_LAN'], parameters['TRG_LAN']))
+    parameters['BPE_CODES_PATH'] =  os.path.join(parameters['DATA_ROOT_PATH'], '/training_codes.joint')
+    parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
+    parameters['STORE_PATH'] = os.path.join(parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
+
+    print(parameters)
     logger.info(parameters)
 
     # check if model already exists
@@ -385,13 +407,13 @@ def main(parameters):
                     logging.info('Running training task for ' + parameters['MODEL_NAME'])
                     parameters['MAX_EPOCH'] = parameters['EPOCH_PER_MODEL']
 
-                    train_model(parameters, weights_dict, args.dataset, trainable_est=trainable_est, trainable_pred=trainable_pred, weights_path=parameters.get('PRED_WEIGHTS', None))
+                    train_model(parameters, weights_dict, dataset, trainable_est=trainable_est, trainable_pred=trainable_pred, weights_path=parameters.get('PRED_WEIGHTS', None))
 
                     flag=True
     else:
 
         logging.info('Running training task.')
-        train_model(parameters, args.dataset, trainable_est=True, trainable_pred=True, weights_path=parameters.get('PRED_WEIGHTS', None))
+        train_model(parameters, dataset, trainable_est=True, trainable_pred=True, weights_path=parameters.get('PRED_WEIGHTS', None))
 
 
     logger.info('Done!')

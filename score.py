@@ -17,11 +17,15 @@ def read_file_to_list(file_in,logger):
             data_list.append(float(line))
     return data_list
 
-def main(args):
-    assert len(args.files) == 2, "Number of files specified must equal 2. "
+def main(files):
+    """
+    Evaluate a set of predictions with regard to a reference set.
+    :param files: List of paths to two text files containing predictions and references. 
+    """
+    assert len(files) == 2, "Number of files specified must equal 2. "
 
     data = []
-    for i,path in enumerate(args.files,1):
+    for i,path in enumerate(files,1):
         a = read_file_to_list(path,logger)
         data.append(a)
 
