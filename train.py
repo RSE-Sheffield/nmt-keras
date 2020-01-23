@@ -9,6 +9,7 @@ import yaml
 
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from keras_wrapper.cnn_model import updateModel
+from keras_wrapper.dataset import loadDataset, saveDataset
 from keras.utils import CustomObjectScope
 from utils.utils import update_parameters
 from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
