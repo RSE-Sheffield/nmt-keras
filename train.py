@@ -293,7 +293,7 @@ def buildCallbacks(params, model, dataset):
 
     return callbacks
 
-def log_random_state(write_path,user_seed=None):
+def save_random_states(write_path,user_seed=None):
     import numpy.random
     import random
     import pickle
@@ -389,7 +389,7 @@ def main(config=None, dataset=None, changes={}):
 
     check_params(parameters)
 
-    log_random_state(parameters['STORE_PATH'], user_seed=parameters.get('SEED'))
+    save_random_states(parameters['STORE_PATH'], user_seed=parameters.get('SEED'))
 
     if parameters['MULTI_TASK']:
 
