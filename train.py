@@ -293,6 +293,21 @@ def buildCallbacks(params, model, dataset):
 
     return callbacks
 
+def log_random_state(write_path,user_seed=None):
+    import numpy.random
+    import random
+    import pickle
+
+    np_rand_state = numpy.random.get_state()
+    py_rand_state = random.getstate()
+
+    data = {'np_rand_state' : np_rand_state,
+            'py_rand_state' : py_rand_state,
+            'user_seed': user_seed}
+
+    with open(os.path.join(write_path, 'random_states.pkl'),'wb') as outfile:
+        pickle.dump(data, outfile)
+
 
 def main(config=None, dataset=None, changes={}):
     """
@@ -373,6 +388,8 @@ def main(config=None, dataset=None, changes={}):
             return
 
     check_params(parameters)
+
+    log_random_state(parameters['STORE_PATH'], user_seed=parameters.get('SEED'))
 
     if parameters['MULTI_TASK']:
 
