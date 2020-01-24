@@ -388,6 +388,10 @@ def main(config=None, dataset=None, changes={}):
                 raise Exception('Model parameters not equal, can not resume training. ')
             else:
                 logger.info('Resuming training from epoch ' + str(parameters['RELOAD']))
+            
+            # if there is a pre-trained model and dataset is not specified earlier, set the path to load the existing dataset
+            if dataset == None:
+                dataset = parameters['DATASET_STORE_PATH'] + '/Dataset_' + parameters['DATASET_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '.pkl'
         else:
             logger.info(
                 'Previously trained config and new config are the same, specify which epoch to resume training from. ')
