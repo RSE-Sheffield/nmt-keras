@@ -17,9 +17,11 @@ from nmt_keras.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 import nmt_keras.models as modFactory
 from dq_utils.datatools import preprocessDoc
 
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
+logging.basicConfig(level=logging.INFO,
+                    format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 
 logger = logging.getLogger(__name__)
+
 
 def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, trainable_est=True, weights_path=None):
     """
@@ -40,7 +42,8 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                 pred_vocab = params.get('PRED_VOCAB', None)
                 if pred_vocab is not None:
                     dataset_voc = loadDataset(params['PRED_VOCAB'])
-                    dataset = build_dataset(params, dataset_voc.vocabulary, dataset_voc.vocabulary_len)
+                    dataset = build_dataset(params, dataset_voc.vocabulary,
+                                            dataset_voc.vocabulary_len)
                 else:
                     dataset = build_dataset(params)
             else:
@@ -50,15 +53,17 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
 
                 for split, filename in params['TEXT_FILES'].iteritems():
                     dataset = update_dataset_from_file(dataset,
-                                                       params['DATA_ROOT_PATH'] + '/' + filename + params['SRC_LAN'],
+                                                       params['DATA_ROOT_PATH'] + '/' +
+                                                       filename + params['SRC_LAN'],
                                                        params,
                                                        splits=list([split]),
                                                        output_text_filename=params['DATA_ROOT_PATH'] + '/' + filename +
-                                                                            params['TRG_LAN'],
+                                                       params['TRG_LAN'],
                                                        remove_outputs=False,
                                                        compute_state_below=True,
                                                        recompute_references=True)
-                    dataset.name = params['DATASET_NAME'] + '_' + params['SRC_LAN'] + params['TRG_LAN']
+                    dataset.name = params['DATASET_NAME'] + '_' + \
+                        params['SRC_LAN'] + params['TRG_LAN']
                 saveDataset(dataset, params['DATASET_STORE_PATH'])
 
         else:
@@ -78,7 +83,8 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                 if 'doc_qe' in params['OUTPUTS_IDS_MODEL']:
                     params = preprocessDoc(params)
                 elif 'EstimatorDoc' in params['MODEL_TYPE']:
-                    raise Exception('Translation_Model model_type "' + params['MODEL_TYPE'] + '" is not implemented.')
+                    raise Exception('Translation_Model model_type "' +
+                                    params['MODEL_TYPE'] + '" is not implemented.')
                 dataset = build_dataset(params)
                 if params['NO_REF']:
                     keep_n_captions(dataset, repeat=1, n=1, set_names=params['EVAL_ON_SETS'])
@@ -93,7 +99,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
     try:
         # mf = QEModelFactory()
         # qe_model = QEModelFactory(params['MODEL_TYPE'], 'sentence'))
-        #FIXME: change 'nmt_keras' for 'quest'
+        # FIXME: change 'nmt_keras' for 'quest'
         # model_obj = getattr(importlib.import_module("nmt_keras.models.{}".format(params['MODEL_TYPE'].lower())))
 
         # qe_model = model_obj(params,
@@ -131,9 +137,10 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             # otherwise we just reload the weights
             # from the files containing the model
             from keras.utils import CustomObjectScope
-            import nmt_keras.models.utils as layers #includes all layers and everything defined in nmt_keras.utils
+            import nmt_keras.models.utils as layers  # includes all layers and everything defined in nmt_keras.utils
             with CustomObjectScope(vars(layers)):
-                qe_model = updateModel(qe_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
+                qe_model = updateModel(
+                    qe_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
             qe_model.setParams(params)
             qe_model.setOptimizer()
             params['EPOCH_OFFSET'] = params['RELOAD'] if params['RELOAD_EPOCH'] else \
@@ -188,11 +195,12 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
     qe_model.trainNet(dataset, training_params)
     if weights_dict is not None:
         for layer in qe_model.model.layers:
-            weights_dict[layer.name]= layer.get_weights()
+            weights_dict[layer.name] = layer.get_weights()
 
     total_end_time = timer()
     time_difference = total_end_time - total_start_time
     logging.info('In total is {0:.2f}s = {1:.2f}m'.format(time_difference, time_difference / 60.0))
+
 
 def buildCallbacks(params, model, dataset):
     """
@@ -238,9 +246,11 @@ def buildCallbacks(params, model, dataset):
             extra_vars['coverage_norm_factor'] = params.get('COVERAGE_NORM_FACTOR', 0.0)
             extra_vars['pos_unk'] = params['POS_UNK']
             extra_vars['output_max_length_depending_on_x'] = params.get('MAXLEN_GIVEN_X', True)
-            extra_vars['output_max_length_depending_on_x_factor'] = params.get('MAXLEN_GIVEN_X_FACTOR', 3)
+            extra_vars['output_max_length_depending_on_x_factor'] = params.get(
+                'MAXLEN_GIVEN_X_FACTOR', 3)
             extra_vars['output_min_length_depending_on_x'] = params.get('MINLEN_GIVEN_X', True)
-            extra_vars['output_min_length_depending_on_x_factor'] = params.get('MINLEN_GIVEN_X_FACTOR', 2)
+            extra_vars['output_min_length_depending_on_x_factor'] = params.get(
+                'MINLEN_GIVEN_X_FACTOR', 2)
 
             if params['POS_UNK']:
                 extra_vars['heuristic'] = params['HEURISTIC']
@@ -253,7 +263,8 @@ def buildCallbacks(params, model, dataset):
                 extra_vars[s]['references'] = dataset.extra_variables[s][params['OUTPUTS_IDS_DATASET'][0]]
             callback_metric = PrintPerformanceMetricOnEpochEndOrEachNUpdates(model,
                                                                              dataset,
-                                                                             gt_id=[params['OUTPUTS_IDS_DATASET'][0]],
+                                                                             gt_id=[
+                                                                                 params['OUTPUTS_IDS_DATASET'][0]],
                                                                              metric_name=params['METRICS'],
                                                                              set_name=params['EVAL_ON_SETS'],
                                                                              batch_size=params['BATCH_SIZE'],
@@ -282,16 +293,18 @@ def buildCallbacks(params, model, dataset):
 
     return callbacks
 
-def main(config=None,dataset=None,changes={}):
+
+def main(config=None, dataset=None, changes={}):
     """
     Handles QE model training.
     :param config: Either a path to a YAML or pkl config file or a dictionary of parameters.
     :param dataset: Optional path to a previously built pkl dataset.
     :param changes: Optional dictionary of parameters to overwrite config.
     """
-    if isinstance(config,str):
+    if isinstance(config, str):
         if arg.endswith('.yml'):
-            with open('configs/default-config-BiRNN.yml') as file: #FIXME make this a user option (maybe depend on model type and level?)
+            # FIXME make this a user option (maybe depend on model type and level?)
+            with open('configs/default-config-BiRNN.yml') as file:
                 parameters = yaml.load(file, Loader=yaml.FullLoader)
             with open(arg) as file:
                 user_parameters = yaml.load(file, Loader=yaml.FullLoader)
@@ -299,17 +312,21 @@ def main(config=None,dataset=None,changes={}):
             del user_parameters
         elif arg.endswith('.pkl'):
             parameters = update_parameters(parameters, pkl2dict(arg))
-    elif isinstance(config,dict):
+    elif isinstance(config, dict):
         parameters = config
     else:
-        raise Exception('Expected path string to a config yml or pkl or a parameters dictionary, but received: %s . ',type(arg))
+        raise Exception(
+            'Expected path string to a config yml or pkl or a parameters dictionary, but received: %s . ', type(arg))
 
     parameters.update(changes)
     parameters['DATASET_NAME'] = parameters['TASK_NAME']
-    parameters['DATA_ROOT_PATH'] = os.path.join(parameters['DATA_DIR'],parameters['DATASET_NAME'])
-    parameters['MAPPING'] = os.path.join(parameters['DATA_ROOT_PATH'], 'mapping.%s_%s.pkl' % (parameters['SRC_LAN'], parameters['TRG_LAN']))
-    parameters['BPE_CODES_PATH'] =  os.path.join(parameters['DATA_ROOT_PATH'], '/training_codes.joint')
-    parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
+    parameters['DATA_ROOT_PATH'] = os.path.join(parameters['DATA_DIR'], parameters['DATASET_NAME'])
+    parameters['MAPPING'] = os.path.join(parameters['DATA_ROOT_PATH'], 'mapping.%s_%s.pkl' % (
+        parameters['SRC_LAN'], parameters['TRG_LAN']))
+    parameters['BPE_CODES_PATH'] = os.path.join(
+        parameters['DATA_ROOT_PATH'], '/training_codes.joint')
+    parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + \
+        parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
     parameters['STORE_PATH'] = os.path.join(parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
 
     print(parameters)
@@ -328,7 +345,8 @@ def main(config=None,dataset=None,changes={}):
         logger.info('Loading trained model config_init.pkl from ' + prev_config_init)
         parameters_prev = pkl2dict(prev_config_init)
         if parameters['RELOAD_EPOCH'] != True or parameters['RELOAD'] == 0:
-            logger.info('Specify RELOAD_EPOCH=True and RELOAD>0 in your config to resume training an existing model. ')
+            logger.info(
+                'Specify RELOAD_EPOCH=True and RELOAD>0 in your config to resume training an existing model. ')
             return
         elif parameters != parameters_prev:
             reload_keys = ['RELOAD', 'RELOAD_EPOCH']
@@ -338,7 +356,8 @@ def main(config=None,dataset=None,changes={}):
                     logger.info('Previously trained model config does not contain ' + key)
                     stop_flag = True
                 elif parameters[key] != parameters_prev[key] and key not in reload_keys:
-                    logger.info('Previous model has ' + key + ': ' + str(parameters[key]) + ' but this model has ' + key + ': ' + str(parameters_prev[key]))
+                    logger.info('Previous model has ' + key + ': ' +
+                                str(parameters[key]) + ' but this model has ' + key + ': ' + str(parameters_prev[key]))
                     stop_flag = True
             for key in parameters:
                 if key not in (parameters_prev or reload_keys):
@@ -349,14 +368,15 @@ def main(config=None,dataset=None,changes={}):
             else:
                 logger.info('Resuming training from epoch ' + str(parameters['RELOAD']))
         else:
-            logger.info('Previously trained config and new config are the same, specify which epoch to resume training from. ')
+            logger.info(
+                'Previously trained config and new config are the same, specify which epoch to resume training from. ')
             return
 
     check_params(parameters)
 
     if parameters['MULTI_TASK']:
 
-        total_epochs=parameters['MAX_EPOCH']
+        total_epochs = parameters['MAX_EPOCH']
         epoch_per_update = parameters['EPOCH_PER_UPDATE']
 
         weights_dict = dict()
@@ -367,14 +387,14 @@ def main(config=None,dataset=None,changes={}):
                 trainable_est = True
                 trainable_pred = True
 
-                if i>0 and 'PRED_WEIGHTS' in parameters:
+                if i > 0 and 'PRED_WEIGHTS' in parameters:
                     del parameters['PRED_WEIGHTS']
                     #parameters['PRED_WEIGHTS'] = os.getcwd()+'/trained_models/'+parameters['MODEL_NAME']+'/epoch_'+str(parameters['EPOCH_PER_MODEL'])+'_weights.h5'
 
                 parameters['OUTPUTS_IDS_DATASET'] = [output]
                 parameters['OUTPUTS_IDS_MODEL'] = [output]
 
-                if output == 'target_text' and i>0:
+                if output == 'target_text' and i > 0:
 
                     parameters['MODEL_TYPE'] = 'Predictor'
                     parameters['MODEL_NAME'] = 'Predictor'
@@ -387,7 +407,7 @@ def main(config=None,dataset=None,changes={}):
                     parameters['MODEL_NAME'] = 'EstimatorSent'
                     parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_EST_SENT']
                     parameters['LOSS'] = 'mse'
-                    if i==0:
+                    if i == 0:
                         trainable_pred = False
 
                 elif output == 'word_qe':
@@ -396,7 +416,7 @@ def main(config=None,dataset=None,changes={}):
                     parameters['MODEL_NAME'] = 'EstimatorWord'
                     parameters['EPOCH_PER_MODEL'] = parameters['EPOCH_PER_EST_WORD']
                     parameters['LOSS'] = 'categorical_crossentropy'
-                    if i==0:
+                    if i == 0:
                         trainable_pred = False
 
                 else:
@@ -407,13 +427,14 @@ def main(config=None,dataset=None,changes={}):
                     logging.info('Running training task for ' + parameters['MODEL_NAME'])
                     parameters['MAX_EPOCH'] = parameters['EPOCH_PER_MODEL']
 
-                    train_model(parameters, weights_dict, dataset, trainable_est=trainable_est, trainable_pred=trainable_pred, weights_path=parameters.get('PRED_WEIGHTS', None))
+                    train_model(parameters, weights_dict, dataset, trainable_est=trainable_est,
+                                trainable_pred=trainable_pred, weights_path=parameters.get('PRED_WEIGHTS', None))
 
-                    flag=True
+                    flag = True
     else:
 
         logging.info('Running training task.')
-        train_model(parameters, dataset, trainable_est=True, trainable_pred=True, weights_path=parameters.get('PRED_WEIGHTS', None))
-
+        train_model(parameters, dataset, trainable_est=True, trainable_pred=True,
+                    weights_path=parameters.get('PRED_WEIGHTS', None))
 
     logger.info('Done!')
