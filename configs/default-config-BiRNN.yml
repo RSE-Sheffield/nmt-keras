@@ -14,7 +14,6 @@ WORD_QE_CLASSES: 5
 
 DATA_DIR: 'data/'                                  # Data directory
 MODEL_DIRECTORY: 'trained_models/'                # Trained models will be stored here
-DATASET_STORE_PATH: 'datasets/'                   # Dataset instance will be stored here
 
 #EVAL_ON_SETS_KERAS: ['val']                 # Possible values: 'train', 'val' and 'test' (Keras' evaluator). Untested.
 EVAL_ON_SETS_KERAS: []

@@ -348,6 +348,7 @@ def main(config=None, dataset=None, changes={}):
     parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + \
         parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
     parameters['STORE_PATH'] = os.path.join(parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
+    parameters['DATASET_STORE_PATH'] = parameters['STORE_PATH']
 
     print(parameters)
     logger.info(parameters)

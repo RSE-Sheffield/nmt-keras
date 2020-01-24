@@ -30,7 +30,7 @@ else
   TRAIN_RESULT="passed"
   echo "QE training $TRAIN_RESULT ($level  level BiRNN with $KERAS_BACKEND on $task_name test dataset)"
   EPOCH=$(awk -F, '/pearson/ {M=-1;next};$3>M {M=$3;E=$1};END {print E}' trained_models/${task_name}_srcmt_${model_type}/val.qe_metrics)
-  python __main__.py predict --dataset datasets/Dataset_${task_name}_srcmt.pkl --model trained_models/${model_name}/epoch_${EPOCH}.h5 --save_path saved_predictions/prediction_${task_name}/ --evalset test
+  python __main__.py predict --dataset ${store_path}/Dataset_${task_name}_srcmt.pkl --model trained_models/${model_name}/epoch_${EPOCH}.h5 --save_path saved_predictions/prediction_${task_name}/ --evalset test
   PCC=$(awk -F, '/pearson/ {M=-1;next};$3>M {M=$3};END {print M}' saved_predictions/prediction_${task_name}/test.qe_metrics)
   TESTVAL=$(awk -v backend=$KERAS_BACKEND -v level=${level}Predict -v task_name=$task_name -v metric=$metric -F,\
    'NR==1 {next};$1==backend && $2==level && $3==task_name && $4==metric {M=$5};END {print M}' dq_tests/testVals.csv )
