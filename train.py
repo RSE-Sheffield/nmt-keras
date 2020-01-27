@@ -299,14 +299,11 @@ def save_random_states(write_path, user_seed=None):
     import random
     import json
 
-    n = numpy.random.get_state()
-    p = random.getstate()
-
     n = list(numpy.random.get_state())
     n[1] = n[1].tolist()
 
-    p = list(numpy.random.get_state())
-    p[1] = p[1].tolist()
+    p = list(random.getstate())
+    p[1] = list(p[1])
 
     data = {'user_seed': user_seed,
             'numpy_rand_state': n,
