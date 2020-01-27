@@ -1,55 +1,31 @@
-# This predict script doesn't work yet -- drj 2019-09
-
-import argparse
 import ast
 import os
-import re
 import sys
 
-import config
-from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
-from keras_wrapper.cnn_model import loadModel, updateModel
-from keras_wrapper.dataset import loadDataset, saveDataset
-from dq_utils.callbacks import *
-from nmt_keras.model_zoo import TranslationModel
-from utils.utils import update_parameters
+import pickle
+
+from dq_utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
+from keras_wrapper.cnn_model import loadModel
+from keras_wrapper.dataset import loadDataset
 from keras.utils import CustomObjectScope
 
-from numpy.random import seed
-
+from dq_utils.callbacks import *
 import nmt_keras.models as modFactory
 import nmt_keras.dq_evaluation as dq_evaluation
 
-logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
+logging.basicConfig(level=logging.DEBUG,
+                    format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 logger = logging.getLogger(__name__)
 
 
-def parse_args():
-    parser = argparse.ArgumentParser("Train or sample NMT models")
-    parser.add_argument("--dataset", required=True,
-        help="dataset file (.pkl) to use")
-    parser.add_argument("--model", required=True,
-        help="model file (.h5) to use")
-    parser.add_argument("-c", "--config", required=False, help="Config pkl for loading the model configuration. "
-                                                               "If not specified, hyperparameters "
-                                                               "are read from config.py")
-    parser.add_argument("--save_path", required=False,
-        help="Directory path to save predictions to. "
-             "If not specified, defaults to STORE_PATH")
-    parser.add_argument("changes", nargs="*", help="Changes to config. "
-                                                   "Following the syntax Key=Value",
-                        default="")
-    return parser.parse_args()
-
-
-def apply_NMT_model(params, args):
+def apply_NMT_model(params, dataset, model, save_path):
     """
     Sample from a previously trained model.
 
     :param params: Dictionary of network hyperparameters.
     :return: None
     """
-    params['PRED_VOCAB'] = args.dataset
+    params['PRED_VOCAB'] = dataset
     dataset = loadDataset(params['PRED_VOCAB'])
     # dataset = build_dataset(params, dataset_voc.vocabulary, dataset_voc.vocabulary_len)
     if 'test' in params['EVAL_ON_SETS'] and len(dataset.ids_inputs) != len(dataset.types_inputs['test']):
@@ -59,9 +35,9 @@ def apply_NMT_model(params, args):
     params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len['target_text']
 
     # Load model
-    nmt_model = loadModel(args.model, -1, full_path=True)
+    nmt_model = loadModel(model, -1, full_path=True)
 
-    nmt_model.model_path = args.save_path
+    nmt_model.model_path = save_path
 
     inputMapping = dict()
     for i, id_in in enumerate(params['INPUTS_IDS_DATASET']):
@@ -87,30 +63,30 @@ def apply_NMT_model(params, args):
                       'apply_detokenization': params['APPLY_DETOKENIZATION'],
                       'tokenize_hypotheses': params['TOKENIZE_HYPOTHESES'],
                       'tokenize_references': params['TOKENIZE_REFERENCES']}
-        
+
         extra_vars[s] = dict()
         # True when we should score against a reference
 
-        #add the test split reference to the dataset
-        path_list = params['DATA_ROOT_PATH'] + s  + '.' + params['PRED_SCORE']
+        # add the test split reference to the dataset
+        path_list = os.path.join(params['DATA_ROOT_PATH'], s + '.' + params['PRED_SCORE'])
         if dataset.ids_outputs[0] == 'word_qe':
             out_type = 'text'
         else:
             out_type = 'real'
 
         if not params.get('NO_REF', False):
-            if not dataset.loaded_raw_test[1] and s=='test':
+            if not dataset.loaded_raw_test[1] and s == 'test':
                 dataset.setRawOutput(path_list, set_name=s, type='file-name', id='raw_'+id_out, overwrite_split=False,
-                            add_additional=False)
-            if not dataset.loaded_test[1] and s=='test':
+                                     add_additional=False)
+            if not dataset.loaded_test[1] and s == 'test':
                 dataset.setOutput(path_list, set_name=s, type=out_type, id=id_out, repeat_set=1, overwrite_split=False,
-                        add_additional=False, sample_weights=False, label_smoothing=0.,
-                        tokenization='tokenize_none', max_text_len=0, offset=0, fill='end', min_occ=0,  # 'text'
-                        pad_on_batch=True, words_so_far=False, build_vocabulary=False, max_words=0,  # 'text'
-                        bpe_codes=None, separator='@@', use_unk_class=False,  # 'text'
-                        associated_id_in=None, num_poolings=None,  # '3DLabel' or '3DSemanticLabel'
-                        sparse=False,  # 'binary'
-                        )
+                                  add_additional=False, sample_weights=False, label_smoothing=0.,
+                                  tokenization='tokenize_none', max_text_len=0, offset=0, fill='end', min_occ=0,  # 'text'
+                                  pad_on_batch=True, words_so_far=False, build_vocabulary=False, max_words=0,  # 'text'
+                                  bpe_codes=None, separator='@@', use_unk_class=False,  # 'text'
+                                  associated_id_in=None, num_poolings=None,  # '3DLabel' or '3DSemanticLabel'
+                                  sparse=False,  # 'binary'
+                                  )
             keep_n_captions(dataset, repeat=1, n=1, set_names=params['EVAL_ON_SETS'])
 
         input_text_id = params['INPUTS_IDS_DATASET'][0]
@@ -118,8 +94,8 @@ def apply_NMT_model(params, args):
         vocab_y = dataset.vocabulary[params['INPUTS_IDS_DATASET'][1]]['idx2words']
 
         callbacks = buildCallbacks(params, nmt_model, dataset)
-        metrics = callbacks.evaluate(params['RELOAD'], counter_name='epoch' if params['EVAL_EACH_EPOCHS'] else 'update')
-
+        metrics = callbacks.evaluate(
+            params['RELOAD'], counter_name='epoch' if params['EVAL_EACH_EPOCHS'] else 'update')
 
 
 def buildCallbacks(params, model, dataset):
@@ -166,9 +142,11 @@ def buildCallbacks(params, model, dataset):
             extra_vars['coverage_norm_factor'] = params.get('COVERAGE_NORM_FACTOR', 0.0)
             extra_vars['pos_unk'] = params['POS_UNK']
             extra_vars['output_max_length_depending_on_x'] = params.get('MAXLEN_GIVEN_X', True)
-            extra_vars['output_max_length_depending_on_x_factor'] = params.get('MAXLEN_GIVEN_X_FACTOR', 3)
+            extra_vars['output_max_length_depending_on_x_factor'] = params.get(
+                'MAXLEN_GIVEN_X_FACTOR', 3)
             extra_vars['output_min_length_depending_on_x'] = params.get('MINLEN_GIVEN_X', True)
-            extra_vars['output_min_length_depending_on_x_factor'] = params.get('MINLEN_GIVEN_X_FACTOR', 2)
+            extra_vars['output_min_length_depending_on_x_factor'] = params.get(
+                'MINLEN_GIVEN_X_FACTOR', 2)
 
             if params['POS_UNK']:
                 extra_vars['heuristic'] = params['HEURISTIC']
@@ -181,35 +159,36 @@ def buildCallbacks(params, model, dataset):
                 if not params.get('NO_REF', False):
                     extra_vars[s]['references'] = dataset.extra_variables[s][params['OUTPUTS_IDS_DATASET'][0]]
             callback_metric = EvalPerformance(model,
-                                            dataset,
-                                            gt_id=[params['OUTPUTS_IDS_DATASET'][0]],
-                                            metric_name=params['METRICS'],
-                                            set_name=params['EVAL_ON_SETS'],
-                                            batch_size=params['BATCH_SIZE'],
-                                            each_n_epochs=params['EVAL_EACH'],
-                                            extra_vars=extra_vars,
-                                            reload_epoch=params['RELOAD'],
-                                            is_text=True,
-                                            input_text_id=input_text_id,
-                                            index2word_y=vocab_y,
-                                            # index2word_y=dataset.vocabulary[params['OUTPUTS_IDS_DATASET'][0]]['idx2words'],
-                                            index2word_x=vocab_x,
-                                            sampling_type=params['SAMPLING'],
-                                            beam_search=params['BEAM_SEARCH'],
-                                            save_path=model.model_path,
-                                            start_eval_on_epoch=params[
-                                                'START_EVAL_ON_EPOCH'],
-                                            write_samples=True,
-                                            write_type=params['SAMPLING_SAVE_MODE'],
-                                            eval_on_epochs=params['EVAL_EACH_EPOCHS'],
-                                            save_each_evaluation=params[
-                                                'SAVE_EACH_EVALUATION'],
-                                            verbose=params['VERBOSE'],
-                                            no_ref=params['NO_REF'])
+                                              dataset,
+                                              gt_id=[params['OUTPUTS_IDS_DATASET'][0]],
+                                              metric_name=params['METRICS'],
+                                              set_name=params['EVAL_ON_SETS'],
+                                              batch_size=params['BATCH_SIZE'],
+                                              each_n_epochs=params['EVAL_EACH'],
+                                              extra_vars=extra_vars,
+                                              reload_epoch=params['RELOAD'],
+                                              is_text=True,
+                                              input_text_id=input_text_id,
+                                              index2word_y=vocab_y,
+                                              # index2word_y=dataset.vocabulary[params['OUTPUTS_IDS_DATASET'][0]]['idx2words'],
+                                              index2word_x=vocab_x,
+                                              sampling_type=params['SAMPLING'],
+                                              beam_search=params['BEAM_SEARCH'],
+                                              save_path=model.model_path,
+                                              start_eval_on_epoch=params[
+                                                  'START_EVAL_ON_EPOCH'],
+                                              write_samples=True,
+                                              write_type=params['SAMPLING_SAVE_MODE'],
+                                              eval_on_epochs=params['EVAL_EACH_EPOCHS'],
+                                              save_each_evaluation=params[
+                                                  'SAVE_EACH_EVALUATION'],
+                                              verbose=params['VERBOSE'],
+                                              no_ref=params['NO_REF'])
 
             callbacks = callback_metric
 
     return callbacks
+
 
 def check_params(params):
     """
@@ -232,48 +211,34 @@ def check_params(params):
                       'You should preprocess the word embeddings with the "utils/preprocess_*_word_vectors.py script.')
 
 
-if __name__ == "__main__":
-    args = parse_args()
-    print(args)
-    parameters = config.load_parameters()
-    if args.config is not None:
-        parameters = update_parameters(parameters, pkl2dict(args.config))
-    try:
-        for arg in args.changes:
-            try:
-                k, v = arg.split('=')
-            except ValueError:
-                print('Overwriting arguments must have the form key=value.\n This one is: %s' % str(args.changes))
-                exit(1)
-            if '_' in v:
-                parameters[k] = v
-            else:
-                try:
-                    parameters[k] = ast.literal_eval(v)
-                except ValueError:
-                    parameters[k] = v
-    except ValueError:
-        print("Error processing arguments: {!r}".format(arg))
-        exit(2)
+def main(model, dataset, save_path=None, evalset=None, changes={}):
+    """
+    Predicts QE scores on a dataset using a pre-trained model.
+    :param model: Model file (.h5) to use.
+    :param dataset: Dataset file (.pkl) to use.
+    :param save_path: Optinal directory path to save predictions to. Default = STORE_PATH
+    :param evalset: Optional set to evaluate on. Default = 'test'
+    :param changes: Optional dictionary of parameters to overwrite config.
+    """
+    parameters = pickle.load(open(os.path.join(os.path.split(model)[0], 'config.pkl'), 'rb'))
 
-    if args.save_path is None:
-        args.save_path = parameters['STORE_PATH']
+    parameters.update(changes)
 
-    rnd_seed = parameters.get('RND_SEED', None)
-    if rnd_seed != None:
-        seed(rnd_seed)
-    
-    logging.info('Running sampling.')
-    # parameters['DATA_ROOT_PATH'] = "examples/wmt15/"
-    # parameters["SRC_LAN"] = "source"
-    # parameters["TRG_LAN"] = "target"
-    # parameters["MODEL_NAME"] =  "trained_models/wmt15_sourcetarget_EncSent/epoch_2"
+    if evalset is None:
+        parameters['EVAL_ON_SETS'] = ['test']
+    else:
+        parameters['EVAL_ON_SETS'] = [evalset]
+
+    if save_path is None:
+        save_path = parameters['STORE_PATH']
+
+    logging.info('Running prediction.')
 
     # NMT Keras expects model path to appear without the .h5
-    if args.model.endswith(".h5"):
-        args.model = args.model[:-3]
+    if model.endswith(".h5"):
+        model = model[:-3]
     # Directory containing model
-    model_dir, file_name = os.path.split(args.model)
+    model_dir, file_name = os.path.split(model)
     _, parameters["MODEL_NAME"] = os.path.split(model_dir)
     parameters["STORE_PATH"] = "trained_models/" + parameters["MODEL_NAME"]
     del parameters["TASK_NAME"]
@@ -282,8 +247,8 @@ if __name__ == "__main__":
 
     # from nmt_keras import model_zoo
     from keras.utils import CustomObjectScope
-    import nmt_keras.models.utils as layers #includes all layers and everything defined in nmt_keras.utils
+    import nmt_keras.models.utils as layers  # includes all layers and everything defined in nmt_keras.utils
     with CustomObjectScope(vars(layers)):
-        apply_NMT_model(parameters, args)
-    
+        apply_NMT_model(parameters, dataset, model, save_path)
+
     logging.info('Done.')

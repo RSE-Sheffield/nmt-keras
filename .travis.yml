@@ -2,6 +2,7 @@ sudo: required
 dist: xenial
 language: python
 python:
+  - '3.6'
   - '3.7'
 env:
     - KERAS_BACKEND=theano TEST_MODE=sentence
@@ -34,7 +35,7 @@ install:
   - export LD_LIBRARY_PATH=$HOME/miniconda/envs/test-environment/lib/:$LD_LIBRARY_PATH
 
   # install TensorFlow (CPU version).
-  - pip install tensorflow==1.13.2 # TF v 1.13.2 is the currently tested version of tf with deepquest
+  - pip install tensorflow==1.14.0
 
     # detect whether core files are changed or not (from Keras)
   - export CORE_CHANGED=False;
@@ -45,4 +46,4 @@ install:
 
 # command to run tests
 script:
-  - utils/test-master.sh
+  - dq_tests/test-master.sh
