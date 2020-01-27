@@ -14,7 +14,7 @@ def train(args):
     elif args.config.endswith('.pkl'):
         parameters = update_parameters(parameters, pkl2dict(args.config))
     parameters.update(changes2dict(args))
-    if parameters['SEED']:
+    if parameters.get('SEED') is not None:
         print('Setting deepQuest seed to', parameters['SEED'])
         import numpy.random
         numpy.random.seed(parameters['SEED'])
