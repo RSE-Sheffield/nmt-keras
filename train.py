@@ -293,7 +293,8 @@ def buildCallbacks(params, model, dataset):
 
     return callbacks
 
-def save_random_states(write_path,user_seed=None):
+
+def save_random_states(write_path, user_seed=None):
     import numpy.random
     import random
     import pickle
@@ -302,11 +303,11 @@ def save_random_states(write_path,user_seed=None):
     py_rand_state = random.getstate()
 
     data = {'user_seed': user_seed,
-            'np_rand_state' : np_rand_state,
-            'py_rand_state' : py_rand_state
+            'np_rand_state': np_rand_state,
+            'py_rand_state': py_rand_state
             }
 
-    with open(os.path.join(write_path, 'random_states.pkl'),'wb') as outfile:
+    with open(os.path.join(write_path, 'random_states.pkl'), 'wb') as outfile:
         pickle.dump(data, outfile)
 
 
