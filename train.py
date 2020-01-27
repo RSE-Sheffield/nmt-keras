@@ -301,9 +301,10 @@ def save_random_states(write_path,user_seed=None):
     np_rand_state = numpy.random.get_state()
     py_rand_state = random.getstate()
 
-    data = {'np_rand_state' : np_rand_state,
-            'py_rand_state' : py_rand_state,
-            'user_seed': user_seed}
+    data = {'user_seed': user_seed,
+            'np_rand_state' : np_rand_state,
+            'py_rand_state' : py_rand_state
+            }
 
     with open(os.path.join(write_path, 'random_states.pkl'),'wb') as outfile:
         pickle.dump(data, outfile)
