@@ -4,14 +4,13 @@ import sys
 
 import pickle
 
-from dq_utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 from keras_wrapper.cnn_model import loadModel
 from keras_wrapper.dataset import loadDataset
 from keras.utils import CustomObjectScope
-
-from dq_utils.callbacks import *
-import nmt_keras.models as modFactory
-import nmt_keras.dq_evaluation as dq_evaluation
+from .dq_utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
+from .dq_utils.callbacks import *
+from .nmt_keras import models as modFactory
+from .nmt_keras import dq_evaluation
 
 logging.basicConfig(level=logging.DEBUG,
                     format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
