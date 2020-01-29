@@ -60,12 +60,10 @@ def changes2dict(args):
         return {}
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        "A framework for neural-based quality estimation for machine translation. ")
-    subparsers = parser.add_subparsers(help='train '
-                                            'predict '
-                                            'score ')
+def main():
+    parser = argparse.ArgumentParser(prog='{deepquest, dq}',
+                                    description='A framework for neural-based quality estimation.')
+    subparsers = parser.add_subparsers(help='mode of operation')
 
     # parser for training
     train_parser = subparsers.add_parser('train', help='Train QE models')
@@ -99,4 +97,12 @@ if __name__ == "__main__":
         "files", nargs=2, help="Two text files containing predictions and references. ")
 
     args = parser.parse_args()
-    args.func(args)
+    if args.func == 'train':
+        train(args)
+    elif args.func == 'predict':
+        predict(args)
+    elif args.func == 'score':
+        score(args)
+
+if __name__ == "__main__":
+    main()
