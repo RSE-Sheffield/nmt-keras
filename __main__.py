@@ -1,5 +1,5 @@
 import argparse
-
+import sys
 
 def train(args):
     import yaml
@@ -25,12 +25,12 @@ def train(args):
 
 
 def predict(args):
-    import predict
+    import .predict
     predict.main(args.model, args.dataset, args.save_path, args.evalset, changes2dict(args))
 
 
 def score(args):
-    import score
+    import .score
     score.main(args.files)
 
 
@@ -97,12 +97,13 @@ def main():
         "files", nargs=2, help="Two text files containing predictions and references. ")
 
     args = parser.parse_args()
-    if args.func == 'train':
-        train(args)
-    elif args.func == 'predict':
-        predict(args)
-    elif args.func == 'score':
-        score(args)
+    if (not hasattr(args,'func')) or (len(sys.argv) == 1):
+        parser.print_help()
+    elif hasattr(args,'func') and (len(sys.argv) == 2):
+        parser.print_help()
+    else:
+        args.func(args)
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()
