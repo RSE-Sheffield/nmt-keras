@@ -320,21 +320,21 @@ def main(config=None, changes={}):
     :param changes: Optional dictionary of parameters to overwrite config.
     """
     if isinstance(config, str):
-        if arg.endswith('.yml'):
+        if config.endswith('.yml'):
             # FIXME make this a user option (maybe depend on model type and level?)
             with open('configs/default-config-BiRNN.yml') as file:
                 parameters = yaml.load(file, Loader=yaml.FullLoader)
-            with open(arg) as file:
+            with open(config) as file:
                 user_parameters = yaml.load(file, Loader=yaml.FullLoader)
             parameters.update(user_parameters)
             del user_parameters
-        elif arg.endswith('.pkl'):
-            parameters = update_parameters(parameters, pkl2dict(arg))
+        elif config.endswith('.pkl'):
+            parameters = update_parameters(parameters, pkl2dict(config))
     elif isinstance(config, dict):
         parameters = config
     else:
         raise Exception(
-            'Expected path string to a config yml or pkl or a parameters dictionary, but received: %s . ', type(arg))
+            'Expected path string to a config yml or pkl or a parameters dictionary, but received: %s . ', type(config))
 
     parameters.update(changes)
     parameters['DATASET_NAME'] = parameters['TASK_NAME']
