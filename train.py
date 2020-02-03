@@ -294,6 +294,25 @@ def buildCallbacks(params, model, dataset):
     return callbacks
 
 
+def save_random_states(write_path, user_seed=None):
+    import numpy.random
+    import random
+    import json
+
+    n = list(numpy.random.get_state())
+    n[1] = n[1].tolist()
+
+    p = list(random.getstate())
+
+    data = {'user_seed': user_seed,
+            'numpy_rand_state': n,
+            'python_rand_state': p
+            }
+
+    with open(os.path.join(write_path, 'random_states.json'), 'w') as outfile:
+        json.dump(data, outfile)
+
+
 def main(config=None, dataset=None, changes={}):
     """
     Handles QE model training.
@@ -373,6 +392,8 @@ def main(config=None, dataset=None, changes={}):
             return
 
     check_params(parameters)
+
+    save_random_states(parameters['STORE_PATH'], user_seed=parameters.get('SEED'))
 
     if parameters['MULTI_TASK']:
 
