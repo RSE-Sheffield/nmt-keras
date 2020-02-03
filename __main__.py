@@ -21,7 +21,7 @@ def train(args):
         import random
         random.seed(parameters['SEED'])
     import train
-    train.main(parameters, args.dataset)
+    train.main(parameters)
 
 
 def predict(args):
@@ -72,8 +72,6 @@ if __name__ == "__main__":
     train_parser.set_defaults(func=train)
     train_parser.add_argument("-c", "--config",   required=False,
                               help="Config YAML or pkl for loading the model configuration. ")
-    train_parser.add_argument("-ds", "--dataset", required=False,
-                              help="Optional dataset instance to be trained on. ")
     train_parser.add_argument("changes", nargs="*", help="Changes to config. "
                               "Following the syntax Key=Value",
                               default="")

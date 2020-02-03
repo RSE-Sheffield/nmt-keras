@@ -9,6 +9,7 @@ import yaml
 
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from keras_wrapper.cnn_model import updateModel
+from keras_wrapper.dataset import loadDataset, saveDataset
 from keras.utils import CustomObjectScope
 from utils.utils import update_parameters
 from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
@@ -293,7 +294,6 @@ def buildCallbacks(params, model, dataset):
 
     return callbacks
 
-
 def save_random_states(write_path, user_seed=None):
     import numpy.random
     import random
@@ -312,8 +312,7 @@ def save_random_states(write_path, user_seed=None):
     with open(os.path.join(write_path, 'random_states.json'), 'w') as outfile:
         json.dump(data, outfile)
 
-
-def main(config=None, dataset=None, changes={}):
+def main(config=None, changes={}):
     """
     Handles QE model training.
     :param config: Either a path to a YAML or pkl config file or a dictionary of parameters.
@@ -347,6 +346,7 @@ def main(config=None, dataset=None, changes={}):
     parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + \
         parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
     parameters['STORE_PATH'] = os.path.join(parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
+    parameters['DATASET_STORE_PATH'] = parameters['STORE_PATH']
 
     print(parameters)
     logger.info(parameters)
@@ -357,6 +357,7 @@ def main(config=None, dataset=None, changes={}):
         # write out initial parameters to pkl
         os.makedirs(parameters['STORE_PATH'])
         dict2pkl(parameters, os.path.join(parameters['STORE_PATH'], 'config_init.pkl'))
+        dataset=None
     else:
         # if model already exists check that only RELOAD or RELOAD_EPOCH differ
         logger.info('Model ' + parameters['STORE_PATH'] + ' already exists. ')
@@ -386,6 +387,9 @@ def main(config=None, dataset=None, changes={}):
                 raise Exception('Model parameters not equal, can not resume training. ')
             else:
                 logger.info('Resuming training from epoch ' + str(parameters['RELOAD']))
+
+            # if there is a pre-trained model and dataset is not specified earlier, set the path to load the existing dataset
+            dataset = parameters['DATASET_STORE_PATH'] + '/Dataset_' + parameters['DATASET_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '.pkl'
         else:
             logger.info(
                 'Previously trained config and new config are the same, specify which epoch to resume training from. ')
