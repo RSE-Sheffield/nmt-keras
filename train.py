@@ -12,7 +12,7 @@ from keras_wrapper.cnn_model import updateModel
 from keras_wrapper.dataset import loadDataset, saveDataset
 from keras.utils import CustomObjectScope
 from nmt_keras.utils.utils import update_parameters
-from nmt_keras.data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
+from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 from nmt_keras.nmt_keras import check_params
 from quest.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 from quest import models as modFactory
