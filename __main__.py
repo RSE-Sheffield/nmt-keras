@@ -25,12 +25,12 @@ def train(args):
 
 
 def predict(args):
-    import .predict
+    import predict
     predict.main(args.model, args.dataset, args.save_path, args.evalset, changes2dict(args))
 
 
 def score(args):
-    import .score
+    import score
     score.main(args.files)
 
 
