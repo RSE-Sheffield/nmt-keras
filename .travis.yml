@@ -46,4 +46,4 @@ install:
 
 # command to run tests
 script:
-  - dq_tests/test-master.sh
+  - tests/test-master.sh
