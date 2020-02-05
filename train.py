@@ -14,7 +14,7 @@ from keras.utils import CustomObjectScope
 from nmt_keras.utils.utils import update_parameters
 from utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 from nmt_keras.nmt_keras import check_params
-from quest.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
+from utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 from quest import models as modFactory
 
 logging.basicConfig(level=logging.INFO,
