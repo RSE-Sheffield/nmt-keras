@@ -12,11 +12,10 @@ from keras_wrapper.cnn_model import updateModel
 from keras_wrapper.dataset import loadDataset, saveDataset
 from keras.utils import CustomObjectScope
 from nmt_keras.utils.utils import update_parameters
-from utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
+from utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 from nmt_keras.nmt_keras import check_params
 from quest.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 from quest import models as modFactory
-from utils.datatools import preprocessDoc
 
 logging.basicConfig(level=logging.INFO,
                     format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
