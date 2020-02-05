@@ -15,7 +15,7 @@ from nmt_keras.utils.utils import update_parameters
 from utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 from nmt_keras.nmt_keras import check_params
 from utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
-from quest import models as modFactory
+import qe_models as modFactory
 
 logging.basicConfig(level=logging.INFO,
                     format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -137,7 +137,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             # otherwise we just reload the weights
             # from the files containing the model
             from keras.utils import CustomObjectScope
-            from .quest.models import utils as layers  # includes all layers and everything defined in nmt_keras.utils
+            from .qe_models import utils as layers  # includes all layers and everything defined in nmt_keras.utils
             with CustomObjectScope(vars(layers)):
                 qe_model = updateModel(
                     qe_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])

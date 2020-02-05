@@ -9,7 +9,7 @@ from keras_wrapper.dataset import loadDataset
 from keras.utils import CustomObjectScope
 from utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 from utils.callbacks import *
-from quest import models as modFactory
+import qe_models as modFactory
 from utils import evaluation
 
 logging.basicConfig(level=logging.DEBUG,
@@ -246,7 +246,7 @@ def main(model, dataset, save_path=None, evalset=None, changes={}):
 
     # from nmt_keras import model_zoo
     from keras.utils import CustomObjectScope
-    import quest.models.utils as layers  # includes all layers and everything defined in nmt_keras.utils
+    import qe_models.utils as layers  # includes all layers and everything defined in nmt_keras.utils
     with CustomObjectScope(vars(layers)):
         apply_NMT_model(parameters, dataset, model, save_path)
 
