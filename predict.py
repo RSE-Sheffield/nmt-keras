@@ -8,7 +8,7 @@ from keras_wrapper.cnn_model import loadModel
 from keras_wrapper.dataset import loadDataset
 from keras.utils import CustomObjectScope
 from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
-from dq_utils.callbacks import *
+from utils.callbacks import *
 from quest import models as modFactory
 from quest import dq_evaluation
 

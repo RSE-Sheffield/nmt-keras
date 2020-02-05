@@ -16,7 +16,7 @@ from data_engine.prepare_data import build_dataset, update_dataset_from_file, ke
 from nmt_keras.nmt_keras import check_params
 from quest.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 from quest import models as modFactory
-from dq_utils.datatools import preprocessDoc
+from utils.datatools import preprocessDoc
 
 logging.basicConfig(level=logging.INFO,
                     format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
