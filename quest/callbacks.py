@@ -9,7 +9,7 @@ from keras_wrapper.extra.read_write import *
 
 import keras_wrapper.extra.evaluation as evaluation
 
-from . import dq_evaluation
+from utils import evaluation
 
 
 def checkDefaultParamsBeamSearch(params):
