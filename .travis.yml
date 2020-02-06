@@ -44,6 +44,9 @@ install:
   # Install Theano-1.0.4 (for compatibility with numpy>=1.16
   - conda install -c conda-forge theano
 
+  # Pip install the deepQuest package using setup.py
+  - pip install -e .
+
 # command to run tests
 script:
   - tests/test-master.sh
