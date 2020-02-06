@@ -8,7 +8,7 @@ from keras_wrapper.utils import decode_predictions_one_hot, decode_predictions_b
     decode_multilabel
 from keras_wrapper.extra.read_write import *
 
-from utils import evaluation as evaluation_pred
+from . import evaluation as evaluation_pred
 
 
 def checkDefaultParamsBeamSearch(params):

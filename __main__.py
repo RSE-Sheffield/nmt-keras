@@ -20,18 +20,18 @@ def train(args):
         numpy.random.seed(parameters['SEED'])
         import random
         random.seed(parameters['SEED'])
-    import train
-    train.main(parameters)
+    from  . import train
+    train(parameters)
 
 
 def predict(args):
-    import predict
-    predict.main(args.model, args.dataset, args.save_path, args.evalset, changes2dict(args))
+    from . import predict
+    predict(args.model, args.dataset, args.save_path, args.evalset, changes2dict(args))
 
 
 def score(args):
-    import score
-    score.main(args.files)
+    from . import score
+    score(args.files)
 
 
 def changes2dict(args):

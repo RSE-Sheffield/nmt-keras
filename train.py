@@ -14,9 +14,9 @@ from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from nmt_keras.nmt_keras import check_params
 from nmt_keras.utils.utils import update_parameters
 
-import qe_models as modFactory
-from utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
-from utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
+import deepquest.qe_models as modFactory
+from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
+from deepquest.utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 
 logging.basicConfig(level=logging.INFO,
                     format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -138,7 +138,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             # otherwise we just reload the weights
             # from the files containing the model
             from keras.utils import CustomObjectScope
-            from .qe_models import utils as layers  # includes all layers and everything defined in nmt_keras.utils
+            from deepquest.qe_models import utils as layers  # includes all layers and everything defined in nmt_keras.utils
             with CustomObjectScope(vars(layers)):
                 qe_model = updateModel(
                     qe_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
