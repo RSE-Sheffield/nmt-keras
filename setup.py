@@ -18,10 +18,10 @@ setuptools.setup(
     ],
     install_requires=[
         "future",
-        "numpy<1.17,>=1.14.5",
+        "numpy",
         "scipy",
         "pyyaml",
-        "tensorflow==1.14.0",
+        "tensorflow<2.0",
         "multimodal_keras_wrapper",
         "Theano",
         "keras @ https://github.com/MarcBS/keras/archive/master.zip",
