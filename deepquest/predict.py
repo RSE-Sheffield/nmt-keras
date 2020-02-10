@@ -247,7 +247,7 @@ def main(model, dataset, save_path=None, evalset=None, changes={}):
 
     # from nmt_keras import model_zoo
     from keras.utils import CustomObjectScope
-    import deepquest.qe_models.utils as layers  # includes all layers and everything defined in nmt_keras.utils
+    import deepquest.qe_models.utils as layers  # includes all layers and everything defined in deepquest.qe_models.utils
     with CustomObjectScope(vars(layers)):
         apply_NMT_model(parameters, dataset, model, save_path)
 
