@@ -28,7 +28,7 @@ import numpy as np
 
 from keras_wrapper.extra.tokenizers import *
 from keras_wrapper.dataset import Dataset as Keras_dataset
-from .tokenizers import FullTokenizer
+from deepquest.data_engine.tokenizers import FullTokenizer
 
 import tensorflow as tf
 import tensorflow_hub as hub
