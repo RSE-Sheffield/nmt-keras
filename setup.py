@@ -22,6 +22,7 @@ setuptools.setup(
         "scipy",
         "pyyaml",
         "tensorflow<2.0",
+        "tensorflow_hub",
         "multimodal_keras_wrapper",
         "Theano",
         "keras @ https://github.com/MarcBS/keras/archive/master.zip",
