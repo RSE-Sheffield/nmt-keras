@@ -1,9 +1,10 @@
 coverage
 cloudpickle
 future
--e git+https://github.com/MarcBS/keras.git#egg=keras
--e git+https://github.com/lvapeab/multimodal_keras_wrapper.git#egg=keras_wrapper
--e git+https://github.com/lvapeab/coco-caption.git#egg=coco-caption
+git+https://github.com/MarcBS/keras.git#egg=keras
+multimodal-keras-wrapper
+git+https://github.com/lvapeab/coco-caption.git#egg=coco-caption
+git+https://github.com/lvapeab/nmt-keras.git#egg=nmt_keras
 flaky
 keras_applications
 keras_preprocessing

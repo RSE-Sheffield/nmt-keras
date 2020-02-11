@@ -1,5 +1,5 @@
 import argparse
-
+import sys
 
 def train(args):
     import yaml
@@ -20,18 +20,18 @@ def train(args):
         numpy.random.seed(parameters['SEED'])
         import random
         random.seed(parameters['SEED'])
-    import train
-    train.main(parameters)
+    from  . import train
+    train(parameters)
 
 
 def predict(args):
-    import predict
-    predict.main(args.model, args.dataset, args.save_path, args.evalset, changes2dict(args))
+    from . import predict
+    predict(args.model, args.dataset, args.save_path, args.evalset, changes2dict(args))
 
 
 def score(args):
-    import score
-    score.main(args.files)
+    from . import score
+    score(args.files)
 
 
 def changes2dict(args):
@@ -60,12 +60,10 @@ def changes2dict(args):
         return {}
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        "A framework for neural-based quality estimation for machine translation. ")
-    subparsers = parser.add_subparsers(help='train '
-                                            'predict '
-                                            'score ')
+def main():
+    parser = argparse.ArgumentParser(prog='{deepquest, dq}',
+                                    description='A framework for neural-based quality estimation.')
+    subparsers = parser.add_subparsers(help='mode of operation')
 
     # parser for training
     train_parser = subparsers.add_parser('train', help='Train QE models')
@@ -99,4 +97,13 @@ if __name__ == "__main__":
         "files", nargs=2, help="Two text files containing predictions and references. ")
 
     args = parser.parse_args()
-    args.func(args)
+    if (not hasattr(args,'func')) or (len(sys.argv) == 1):
+        parser.print_help()
+    elif hasattr(args,'func') and (len(sys.argv) == 2):
+        parser.print_help()
+    else:
+        args.func(args)
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()

@@ -7,16 +7,16 @@ import os
 from timeit import default_timer as timer
 import yaml
 
-from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
+from keras.utils import CustomObjectScope
 from keras_wrapper.cnn_model import updateModel
 from keras_wrapper.dataset import loadDataset, saveDataset
-from keras.utils import CustomObjectScope
-from utils.utils import update_parameters
-from data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
-from nmt_keras import check_params
-from nmt_keras.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
-import nmt_keras.models as modFactory
-from dq_utils.datatools import preprocessDoc
+from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
+from nmt_keras.nmt_keras import check_params
+from nmt_keras.utils.utils import update_parameters
+
+import deepquest.qe_models as modFactory
+from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
+from deepquest.utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 
 logging.basicConfig(level=logging.INFO,
                     format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -138,7 +138,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             # otherwise we just reload the weights
             # from the files containing the model
             from keras.utils import CustomObjectScope
-            import nmt_keras.models.utils as layers  # includes all layers and everything defined in nmt_keras.utils
+            import deepquest.qe_models.utils as layers  # includes all layers and everything defined in deepquest.qe_models.utils
             with CustomObjectScope(vars(layers)):
                 qe_model = updateModel(
                     qe_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
@@ -320,21 +320,21 @@ def main(config=None, changes={}):
     :param changes: Optional dictionary of parameters to overwrite config.
     """
     if isinstance(config, str):
-        if arg.endswith('.yml'):
+        if config.endswith('.yml'):
             # FIXME make this a user option (maybe depend on model type and level?)
             with open('configs/default-config-BiRNN.yml') as file:
                 parameters = yaml.load(file, Loader=yaml.FullLoader)
-            with open(arg) as file:
+            with open(config) as file:
                 user_parameters = yaml.load(file, Loader=yaml.FullLoader)
             parameters.update(user_parameters)
             del user_parameters
-        elif arg.endswith('.pkl'):
-            parameters = update_parameters(parameters, pkl2dict(arg))
+        elif config.endswith('.pkl'):
+            parameters = update_parameters(parameters, pkl2dict(config))
     elif isinstance(config, dict):
         parameters = config
     else:
         raise Exception(
-            'Expected path string to a config yml or pkl or a parameters dictionary, but received: %s . ', type(arg))
+            'Expected path string to a config yml or pkl or a parameters dictionary, but received: %s . ', type(config))
 
     parameters.update(changes)
     parameters['DATASET_NAME'] = parameters['TASK_NAME']

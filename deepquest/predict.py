@@ -4,14 +4,14 @@ import sys
 
 import pickle
 
-from dq_utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
+from keras.utils import CustomObjectScope
 from keras_wrapper.cnn_model import loadModel
 from keras_wrapper.dataset import loadDataset
-from keras.utils import CustomObjectScope
 
-from dq_utils.callbacks import *
-import nmt_keras.models as modFactory
-import nmt_keras.dq_evaluation as dq_evaluation
+from . import qe_models as modFactory
+from .utils import evaluation
+from .utils.callbacks import *
+from .utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 
 logging.basicConfig(level=logging.DEBUG,
                     format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -247,7 +247,7 @@ def main(model, dataset, save_path=None, evalset=None, changes={}):
 
     # from nmt_keras import model_zoo
     from keras.utils import CustomObjectScope
-    import nmt_keras.models.utils as layers  # includes all layers and everything defined in nmt_keras.utils
+    import deepquest.qe_models.utils as layers  # includes all layers and everything defined in deepquest.qe_models.utils
     with CustomObjectScope(vars(layers)):
         apply_NMT_model(parameters, dataset, model, save_path)
 
