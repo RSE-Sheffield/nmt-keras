@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'DeepQuest'
+project = 'deepQuest'
 copyright = '2018, Julia Ive, Fred Blain, Lucia Specia'
 author = 'Julia Ive, Fred Blain, Lucia Specia'
 
@@ -40,7 +40,7 @@ release = ''
 # ones.
 extensions = [
     'sphinx.ext.todo',
-    'sphinx.ext.imgmath',
+    'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
 ]
