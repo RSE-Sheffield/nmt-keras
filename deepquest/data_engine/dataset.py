@@ -17,6 +17,7 @@
 
 import os
 import sys
+import logging
 
 if sys.version_info.major == 3:
     import _pickle as pk
@@ -34,6 +35,8 @@ import tensorflow as tf
 import tensorflow_hub as hub
 
 
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
+logger = logging.getLogger(__name__)
 
 
 class Dataset(Keras_dataset):
@@ -45,7 +48,7 @@ class Dataset(Keras_dataset):
         self.bert_vocab_file = None
         self.bert_tokenizer_built = False
 
-        # super().__init__(self, name, path, pad_symbol, unk_symbol, null_symbol, silence)
+        super().__init__(name, path, pad_symbol, unk_symbol, null_symbol, silence)
 
 
     def build_bert_tokenizer(self, bert_hub_module_handle):
