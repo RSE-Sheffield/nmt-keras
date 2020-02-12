@@ -8,10 +8,10 @@ from keras.utils import CustomObjectScope
 from keras_wrapper.cnn_model import loadModel
 from keras_wrapper.dataset import loadDataset
 
-from . import qe_models as modFactory
-from .utils import evaluation
-from .utils.callbacks import *
-from .data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
+import deepquest.qe_models as modFactory
+from deepquest.data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
+from deepquest.utils import evaluation
+from deepquest.utils.callbacks import *
 
 logging.basicConfig(level=logging.DEBUG,
                     format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
