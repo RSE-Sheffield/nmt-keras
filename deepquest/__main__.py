@@ -65,6 +65,10 @@ def main():
                                     description='A framework for neural-based quality estimation.')
     subparsers = parser.add_subparsers(help='mode of operation')
 
+    # parser for help text
+    help_parser = subparsers.add_parser('help', help='Show the help text')
+    help_parser.set_defaults(func=help)
+
     # parser for training
     train_parser = subparsers.add_parser('train', help='Train QE models')
     train_parser.set_defaults(func=train)
