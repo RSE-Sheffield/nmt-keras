@@ -1,4 +1,5 @@
 TENSORBOARD: True
+N_GPUS: 2
 
 # Input data params
 TASK_NAME: 'testData-sent'                         # Task name

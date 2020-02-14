@@ -20,6 +20,10 @@ def train(args):
         numpy.random.seed(parameters['SEED'])
         import random
         random.seed(parameters['SEED'])
+
+    if args.gpuid:
+        set_gpu_id(args.gpuid)
+
     from  . import train
     train(parameters)
 
@@ -33,6 +37,17 @@ def score(args):
     from . import score
     score(args.files)
 
+def set_gpu_id(gpuid):
+    import os
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    gpustr = ''
+    for g in gpuid:
+        gpustr += str(g) + ','
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = gpustr[0:-1]
+    print(os.environ["CUDA_VISIBLE_DEVICES"])
+    import sys
+    sys.exit()
 
 def changes2dict(args):
     import ast
@@ -78,6 +93,8 @@ def main():
     train_parser.add_argument("changes", nargs="*", help="Changes to config. "
                               "Following the syntax Key=Value",
                               default="")
+    train_parser.add_argument("--gpuid", nargs="+", type=str, required=False,
+                            help="One or more integers specifying GPU device IDs (default 0)")
 
     # parser for prediction
     predict_parser = subparsers.add_parser('predict', help='Sample using trained QE models')
