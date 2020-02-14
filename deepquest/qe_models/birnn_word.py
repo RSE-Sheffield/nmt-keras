@@ -15,6 +15,7 @@
 """
 
 from .model import QEModel
+from keras.utils import multi_gpu_model
 from .utils import *
 from .layers import *
 
@@ -204,4 +205,9 @@ class encword(QEModel):
                 inputs=inputs,
                 outputs=[output_qe_layer]
                 )
+        
+        if params.get('N_GPUS', 1) > 1:
+            self.multi_gpu_model = multi_gpu_model(self.model, gpus=params['N_GPUS'])
+        else:
+            self.multi_gpu_model = None
 

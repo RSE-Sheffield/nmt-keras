@@ -181,7 +181,6 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                        'eval_on_epochs': params.get('EVAL_EACH_EPOCHS', True),
                        'each_n_epochs': params.get('EVAL_EACH', 1),
                        'start_eval_on_epoch': params.get('START_EVAL_ON_EPOCH', 0),
-<<<<<<< HEAD
                        'n_gpus': params.get('N_GPUS', 1),
                        }
 
@@ -204,9 +203,6 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
         }
         training_params.update(tensorboard_training_params)
 
-=======
-                       'n_gpus': params.get('N_GPUS', 1)}
->>>>>>> add n_gpus training parameter
     if weights_dict is not None:
         for layer in qe_model.model.layers:
             if layer.name in weights_dict:

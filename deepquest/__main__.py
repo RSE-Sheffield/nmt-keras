@@ -3,7 +3,11 @@ import sys
 
 
 def train(args):
-    from . import train
+
+    if args.gpuid:
+        set_gpu_id(args.gpuid)
+
+    from  . import train
     train(args.config, args.changes)
 
 
@@ -16,6 +20,17 @@ def score(args):
     from . import score
     score(args.files)
 
+def set_gpu_id(gpuid):
+    import os
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    gpustr = ''
+    for g in gpuid:
+        gpustr += str(g) + ','
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = gpustr[0:-1]
+    print(os.environ["CUDA_VISIBLE_DEVICES"])
+    import sys
+    sys.exit()
 
 def main():
     parser = argparse.ArgumentParser(prog='{deepquest, dq}',
@@ -35,6 +50,8 @@ def main():
                               "Following the syntax Key=Value",
                               default="")
     train_parser.add_argument("help", nargs='?', help="Show the help information.")
+    train_parser.add_argument("--gpuid", nargs="+", type=str, required=False,
+                            help="One or more integers specifying GPU device IDs (default 0)")
 
     # parser for prediction
     predict_parser = subparsers.add_parser('predict', help='Sample using trained QE models')
