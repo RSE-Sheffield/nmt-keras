@@ -187,7 +187,8 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                        'metric_check': params.get('STOP_METRIC', None) if params.get('EARLY_STOP', False) else None,
                        'eval_on_epochs': params.get('EVAL_EACH_EPOCHS', True),
                        'each_n_epochs': params.get('EVAL_EACH', 1),
-                       'start_eval_on_epoch': params.get('START_EVAL_ON_EPOCH', 0)}
+                       'start_eval_on_epoch': params.get('START_EVAL_ON_EPOCH', 0),
+                       'n_gpus': params.get('N_GPUS', 1)}
     if weights_dict is not None:
         for layer in qe_model.model.layers:
             if layer.name in weights_dict:
