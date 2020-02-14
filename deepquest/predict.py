@@ -234,9 +234,9 @@ def main(model, dataset, save_path=None, evalset=None, changes={}):
 
     logging.info('Running prediction.')
 
-    # NMT Keras expects model path to appear without the .h5
     if model.endswith(".h5"):
         model = model[:-3]
+
     # Directory containing model
     model_dir, file_name = os.path.split(model)
     _, parameters["MODEL_NAME"] = os.path.split(model_dir)
@@ -245,7 +245,6 @@ def main(model, dataset, save_path=None, evalset=None, changes={}):
     assert file_name.startswith("epoch_")
     parameters["RELOAD"] = file_name.replace("epoch_", "")
 
-    # from nmt_keras import model_zoo
     from keras.utils import CustomObjectScope
     import deepquest.qe_models.utils as layers  # includes all layers and everything defined in deepquest.qe_models.utils
     with CustomObjectScope(vars(layers)):

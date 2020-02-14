@@ -11,11 +11,10 @@ from keras.utils import CustomObjectScope
 from keras_wrapper.cnn_model import updateModel
 from keras_wrapper.dataset import loadDataset, saveDataset
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
-from nmt_keras.nmt_keras import check_params
-from nmt_keras.utils.utils import update_parameters
 
 import deepquest.qe_models as modFactory
 from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
+from deepquest.utils import check_params, update_parameters
 from deepquest.utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 
 logging.basicConfig(level=logging.INFO,
@@ -98,20 +97,6 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
 
     # Build model
     try:
-        # mf = QEModelFactory()
-        # qe_model = QEModelFactory(params['MODEL_TYPE'], 'sentence'))
-        # FIXME: change 'nmt_keras' for 'quest'
-        # model_obj = getattr(importlib.import_module("nmt_keras.models.{}".format(params['MODEL_TYPE'].lower())))
-
-        # qe_model = model_obj(params,
-        #         model_type=params['MODEL_TYPE'],
-        #         verbose=params['VERBOSE'],
-        #         model_name=params['MODEL_NAME'],
-        #         vocabularies=dataset.vocabulary,
-        #         store_path=params['STORE_PATH'],
-        #         clear_dirs=True,
-        #         weights_path=weights_path)
-        # model_obj = getattr(importlib.import_module("nmt_keras.models.{}".format(params['MODEL_TYPE'].lower())))
         qe_model = modFactory.get(params['MODEL_TYPE'], params)
 
         # Define the inputs and outputs mapping from our Dataset instance to our model

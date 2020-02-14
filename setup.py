@@ -23,8 +23,7 @@ setuptools.setup(
         "pyyaml",
         "tensorflow<2.0",
         "multimodal_keras_wrapper",
-        "keras @ https://github.com/MarcBS/keras/archive/master.zip",
-        "nmt_keras @ https://github.com/davidwilby/nmt-keras/archive/setup.zip"
+        "keras @ https://github.com/MarcBS/keras/archive/master.zip"
     ],
     packages=setuptools.find_packages(),
     package_data={
