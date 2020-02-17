@@ -104,8 +104,6 @@ def main():
 
     args = parser.parse_args()
 
-    print(sys.argv)
-
     if (not hasattr(args,'func')) or (len(sys.argv) == 1):
         parser.print_help()
     elif hasattr(args, 'func') and (len(sys.argv) == 2):
