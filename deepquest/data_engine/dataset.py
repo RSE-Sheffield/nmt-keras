@@ -102,6 +102,12 @@ class Dataset(Keras_dataset):
         input_mask.extend(zero_mask)
         segment_ids.extend(zero_mask)
 
+        # loadText in keras_wrapper requires string, not list
+        tokens = ' '.join(tokens)
+        input_ids = ' '.join(str(input_ids))
+        input_mask = ' '.join(str(input_mask))
+        segment_ids = ' '.join(str(segment_ids))
+
         return tokens, input_ids, input_mask, segment_ids
 
 
@@ -289,10 +295,6 @@ class Dataset(Keras_dataset):
         :return: Preprocessed sentences.
         """
         sentences = []
-        # the next two are for BERT
-        sentences_mask = []
-        sentences_segids = []
-
         if isinstance(annotations_list, str) and os.path.isfile(annotations_list):
             with codecs.open(annotations_list, 'r', encoding='utf-8') as list_:
                 for line in list_:
@@ -322,8 +324,16 @@ class Dataset(Keras_dataset):
                 raise Exception('Tokenization procedure "' + tokenization + '" is not implemented.')
 
             if 'bert' in tokenization.lower():
+                # the next two are for BERT
+                sentences_mask =  [None] * len(sentences)
+                sentences_segids = [None] * len(sentences)
                 for i, sentence in enumerate(sentences):
-                    sentences[i], _, sentences_mask[i], sentences_segids[i] = tokfun(sentence, max_text_len)
+                    # sentences[i], _, sentences_mask[i], sentences_segids[i] = tokfun(sentence, max_text_len)
+                    tokens, input_ids, input_mask, segment_ids = tokfun(sentence, max_text_len)
+                    sentences[i] = tokens
+                    sentences_mask[i] = input_mask
+                    sentences_segids[i] = segment_ids
+
                 # free memory from the BERT model
                 del self.bert_tokenizer
             else:
@@ -351,6 +361,9 @@ class Dataset(Keras_dataset):
 
         elif build_vocabulary:
             if 'bert' in tokenization.lower():
+                # initialise with an empty dict
+                self.vocabulary[data_id] = {}
+
                 vocab_dict = {'<unk>': 0}
                 with codecs.open(self.bert_vocab_file, 'r', 'utf-8') as fh:
                   idx = 0
@@ -361,20 +374,21 @@ class Dataset(Keras_dataset):
                 inv_vocab_dict = {v: k for k, v in vocab_dict.items()}
 
                 #tokids
-                self.vocabulary[id_name]['words2idx'] = vocab_dict
-                self.vocabulary[id_name]['idx2words'] = inv_vocab_dict
-                self.vocabulary_len[id_name] = len(vocab_dict.keys())
+                self.vocabulary[data_id]['words2idx'] = vocab_dict
+                self.vocabulary[data_id]['idx2words'] = inv_vocab_dict
+                self.vocabulary_len[data_id] = len(vocab_dict.keys())
 
                 # mask
-                self.vocabulary[id_name + "_mask"]['words2idx'] = {u'<unk>': 0, u'0': 0, u'1': 1}
-                self.vocabulary[id_name + "_mask"]['idx2words'] = {0: u'0', 1: u'1'}
-                self.vocabulary_len[id_name + "_mask"] = 3
+                self.vocabulary[data_id + "_mask"] = {}
+                self.vocabulary[data_id + "_mask"]['words2idx'] = {u'<unk>': 0, u'0': 0, u'1': 1}
+                self.vocabulary[data_id + "_mask"]['idx2words'] = {0: u'0', 1: u'1'}
+                self.vocabulary_len[data_id + "_mask"] = 3
 
                 # segids
-                self.vocabulary[id_name + "_segids"]['words2idx'] = {u'<unk>': 0, u'0': 0, u'1': 1}
-                self.vocabulary[id_name + "_segids"]['idx2words'] = {0: u'0', 1: u'1'}
-                self.vocabulary_len[id_name + "_segids"] = 3
-
+                self.vocabulary[data_id + "_segids"] = {}
+                self.vocabulary[data_id + "_segids"]['words2idx'] = {u'<unk>': 0, u'0': 0, u'1': 1}
+                self.vocabulary[data_id + "_segids"]['idx2words'] = {0: u'0', 1: u'1'}
+                self.vocabulary_len[data_id + "_segids"] = 3
 
             else:
                 self.build_vocabulary(sentences, data_id,
