@@ -16,6 +16,7 @@
 
 from .model import QEModel
 from .utils import *
+from deepquest.utils.bert_layer import BertLayer
 
 class EncWord(QEModel):
 
@@ -34,6 +35,13 @@ class EncWord(QEModel):
 
         params = self.params
 
+        if 'bert' in params['TOKENIZATION_METHOD']:
+            bert_layer = BertLayer(
+                    max_seq_len=params['MAX_INPUT_TEXT_LEN'],
+                    trainable=True,
+                    name="bert_embedding_layer"
+                    )
+
         #######################################################################
         ####      INPUTS OF THE MODEL                                      ####
         #######################################################################
@@ -50,17 +58,34 @@ class EncWord(QEModel):
         ####      ENCODERS                                                 ####
         #######################################################################
         ## SOURCE encoder
-        src_embedding = Embedding(params['INPUT_VOCABULARY_SIZE'],
-                params['SOURCE_TEXT_EMBEDDING_SIZE'],
-                embeddings_regularizer=l2(params['WEIGHT_DECAY']),
-                embeddings_initializer=params['INIT_FUNCTION'],
-                trainable=self.trainable,
-                mask_zero=True,
-                name='src_word_embedding'
-                )(src_words)
+        if 'bert' in params['TOKENIZATION_METHOD'].lower():
+            src_words_mask = Input(name=self.ids_inputs[0] + '_mask',
+                    batch_shape=tuple([None, params['MAX_INPUT_TEXT_LEN']]),
+                    dtype='int32')
 
-        src_embedding = Regularize(src_embedding, params,
-                trainable=self.trainable, name='src_state')
+            src_words_segids = Input(name=self.ids_inputs[0] + '_segids',
+                    batch_shape=tuple([None, params['MAX_INPUT_TEXT_LEN']]),
+                    dtype='int32')
+
+            src_bert_input = [src_words, src_words_mask, src_words_segids]
+
+            src_embedding = bert_layer(src_bert_input)
+        else:
+            src_embedding = Embedding(params['INPUT_VOCABULARY_SIZE'],
+                    params['SOURCE_TEXT_EMBEDDING_SIZE'],
+                    embeddings_regularizer=l2(params['WEIGHT_DECAY']),
+                    embeddings_initializer=params['INIT_FUNCTION'],
+                    trainable=self.trainable,
+                    mask_zero=True,
+                    name='src_word_embedding'
+                    )(src_words)
+
+        src_embedding = Regularize(
+                src_embedding,
+                params,
+                trainable=self.trainable,
+                name='src_state'
+                )
 
         src_annotations = Bidirectional(
                 eval(params['ENCODER_RNN_TYPE'])(params['ENCODER_HIDDEN_SIZE'],
@@ -79,14 +104,27 @@ class EncWord(QEModel):
 
 
         ## TARGET encoder
-        trg_embedding = Embedding(params['OUTPUT_VOCABULARY_SIZE'],
-                params['TARGET_TEXT_EMBEDDING_SIZE'],
-                embeddings_regularizer=l2(params['WEIGHT_DECAY']),
-                embeddings_initializer=params['INIT_FUNCTION'],
-                trainable=self.trainable,
-                mask_zero=True,
-                name='target_word_embedding'
-                )(trg_words)
+        if 'bert' in params['TOKENIZATION_METHOD'].lower():
+            trg_words_mask = Input(name=self.ids_inputs[1] + '_mask',
+                    batch_shape=tuple([None, params['MAX_INPUT_TEXT_LEN']]),
+                    dtype='int32')
+
+            trg_words_segids = Input(name=self.ids_inputs[1] + '_segids',
+                    batch_shape=tuple([None, params['MAX_INPUT_TEXT_LEN']]),
+                    dtype='int32')
+            trg_bert_input = [trg_words, trg_words_mask, trg_words_segids]
+
+            trg_embedding = bert_layer(trg_bert_input)
+
+        else:
+            trg_embedding = Embedding(params['OUTPUT_VOCABULARY_SIZE'],
+                    params['TARGET_TEXT_EMBEDDING_SIZE'],
+                    embeddings_regularizer=l2(params['WEIGHT_DECAY']),
+                    embeddings_initializer=params['INIT_FUNCTION'],
+                    trainable=self.trainable,
+                    mask_zero=True,
+                    name='target_word_embedding'
+                    )(trg_words)
 
         trg_embedding = Regularize(
                 trg_embedding,
@@ -135,8 +173,12 @@ class EncWord(QEModel):
                 )(annotations)
 
         # instantiating a Model object
+        if 'bert' in params['TOKENIZATION_METHOD'].lower():
+            inputs=[src_words, src_words_mask, src_words_segids, trg_words, trg_words_mask, trg_words_segids]
+        else:
+            inputs=[src_words, trg_words]
         self.model = Model(
-                inputs=[src_words, trg_words],
+                inputs=inputs,
                 outputs=[output_qe_layer]
                 )
 
