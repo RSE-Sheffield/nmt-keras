@@ -260,8 +260,18 @@ class Dataset(Keras_dataset):
         if 'bert' in tokenization.lower():
             # data[0]: tokens, data[1]: mask, data[2]: segids
             self.__setInput(data[0], set_name, type, id, overwrite_split, add_additional)
+
+            # if we use BERT, we create new inputs in the Dataset artificially
+            # for both the mask and segids required by the BERT Layer
             self.__setInput(data[1], set_name, type, id + '_mask', overwrite_split, add_additional)
+            self.ids_inputs.append(id + '_mask')
+            self.optional_inputs.append(id + '_mask')
+            self.types_inputs[set_name].append(type)
+
             self.__setInput(data[2], set_name, type, id + '_segids', overwrite_split, add_additional)
+            self.ids_inputs.append(id + '_segids')
+            self.optional_inputs.append(id + '_segids')
+            self.types_inputs[set_name].append(type)
         else:
             self.__setInput(data, set_name, type, id, overwrite_split, add_additional)
 
@@ -410,6 +420,23 @@ class Dataset(Keras_dataset):
         self.words_so_far[data_id] = words_so_far
 
         if 'bert' in tokenization.lower():
+            # if you use BERT, we create the corresponding attributes artificially
+            if self.max_text_len.get(data_id + '_mask') is None:
+                self.max_text_len[data_id + '_mask'] = dict()
+            self.max_text_len[data_id + '_mask'][set_name] = max_text_len
+            self.text_offset[data_id + '_mask'] = offset
+            self.fill_text[data_id + '_mask'] = fill
+            self.pad_on_batch[data_id + '_mask'] = pad_on_batch
+            self.words_so_far[data_id + '_mask'] = words_so_far
+
+            if self.max_text_len.get(data_id + '_segids') is None:
+                self.max_text_len[data_id + '_segids'] = dict()
+            self.max_text_len[data_id + '_segids'][set_name] = max_text_len
+            self.text_offset[data_id + '_segids'] = offset
+            self.fill_text[data_id + '_segids'] = fill
+            self.pad_on_batch[data_id + '_segids'] = pad_on_batch
+            self.words_so_far[data_id + '_segids'] = words_so_far
+
             return (sentences, sentences_mask, sentences_segids)
         else:
             return sentences
