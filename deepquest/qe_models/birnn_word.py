@@ -22,9 +22,22 @@ class EncWord(QEModel):
 
     def __init__(self, params):
         # define here attributes that are model specific
+        self.use_bert = False
 
         # and init from the QEModel class
         super().__init__(params)
+
+        if 'bert' in params['TOKENIZATION_METHOD'].lower():
+            self.use_bert = True
+
+            # if we use BERT, we extend the list on ids_inputs to 
+            # match with the dataset ids_inputs
+            self.ids_inputs.extend([
+                params['INPUTS_IDS_MODEL'][0] + '_mask',
+                params['INPUTS_IDS_MODEL'][0] + '_segids',
+                params['INPUTS_IDS_MODEL'][0] + '_mask',
+                params['INPUTS_IDS_MODEL'][0] + '_segids'
+                ])
 
 
     def build(self):
@@ -35,7 +48,7 @@ class EncWord(QEModel):
 
         params = self.params
 
-        if 'bert' in params['TOKENIZATION_METHOD']:
+        if self.use_bert:
             bert_layer = BertLayer(
                     max_seq_len=params['MAX_INPUT_TEXT_LEN'],
                     trainable=True,
@@ -58,7 +71,7 @@ class EncWord(QEModel):
         ####      ENCODERS                                                 ####
         #######################################################################
         ## SOURCE encoder
-        if 'bert' in params['TOKENIZATION_METHOD'].lower():
+        if self.use_bert:
             src_words_mask = Input(name=self.ids_inputs[0] + '_mask',
                     batch_shape=tuple([None, params['MAX_INPUT_TEXT_LEN']]),
                     dtype='int32')
@@ -104,7 +117,7 @@ class EncWord(QEModel):
 
 
         ## TARGET encoder
-        if 'bert' in params['TOKENIZATION_METHOD'].lower():
+        if self.use_bert:
             trg_words_mask = Input(name=self.ids_inputs[1] + '_mask',
                     batch_shape=tuple([None, params['MAX_INPUT_TEXT_LEN']]),
                     dtype='int32')
@@ -173,7 +186,7 @@ class EncWord(QEModel):
                 )(annotations)
 
         # instantiating a Model object
-        if 'bert' in params['TOKENIZATION_METHOD'].lower():
+        if self.use_bert:
             inputs=[src_words, src_words_mask, src_words_segids, trg_words, trg_words_mask, trg_words_segids]
         else:
             inputs=[src_words, trg_words]
