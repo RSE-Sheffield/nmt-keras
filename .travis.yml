@@ -5,9 +5,6 @@ python:
   - '3.6'
   - '3.7'
 env:
-    - KERAS_BACKEND=theano TEST_MODE=sentence
-    - KERAS_BACKEND=theano TEST_MODE=document
-    - KERAS_BACKEND=theano TEST_MODE=word
     - KERAS_BACKEND=tensorflow TEST_MODE=sentence
     - KERAS_BACKEND=tensorflow TEST_MODE=document
     - KERAS_BACKEND=tensorflow TEST_MODE=word
@@ -42,9 +39,6 @@ install:
     # detect whether core files are changed or not (from Keras)
   - export CORE_CHANGED=False;
   - export APP_CHANGED=False;
-
-  # Install Theano-1.0.4 (for compatibility with numpy>=1.16
-  - conda install -c conda-forge theano
 
   # Pip install the deepQuest package using setup.py
   - pip install -e .
