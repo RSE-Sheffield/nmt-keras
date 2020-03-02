@@ -1,7 +1,7 @@
-backend,level,dataset,metric,value
-tensorflow,sentence,testData-sent,pearson,0.17672911147222845
-tensorflow,document,testData-doc,pearson,0.24353273868533473
-tensorflow,word,testData-word,f1_prod,0.24527229173645096
-tensorflow,sentencePredict,testData-sent,pearson,0.1832040730294446
-tensorflow,wordPredict,testData-word,f1_prod,0.25517028216931437
-tensorflow,documentPredict,testData-doc,pearson,-0.11998211794398919
+backend,level,mode,dataset,metric,value
+tensorflow,sentence,train,testData-sent,pearson,0.17672911147222845
+tensorflow,document,train,testData-doc,pearson,0.24353273868533473
+tensorflow,word,train,testData-word,f1_prod,0.24527229173645096
+tensorflow,sentence,predict,testData-sent,pearson,0.1832040730294446
+tensorflow,word,predict,testData-word,f1_prod,0.25517028216931437
+tensorflow,document,predict,testData-doc,pearson,-0.11998211794398919
