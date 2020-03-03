@@ -79,32 +79,15 @@ def getPredictedVal(filepath, metric):
 	return float(value)
 
 
-def test_BiRNN():
-
-	# check for required environment variables
-	assert os.environ['TEST_LEVEL'] is not None
+def test_BiRNN_word():
 
 	backend = keras.backend.backend()
 
-	if os.environ['TEST_LEVEL'] == 'word':
-		level = os.environ["TEST_LEVEL"]
-		task_name = 'testData-word'
-		metric = 'f1_prod'
-		model_type = 'EncWord'
-		getTestData.BiRNN_word()
-	elif os.environ["TEST_LEVEL"] == 'sentence':
-		level = os.environ["TEST_LEVEL"]
-		task_name = 'testData-sent'
-		metric = 'pearson'
-		model_type = 'EncSent'
-		getTestData.BiRNN_sent()
-	elif os.environ["TEST_LEVEL"] == 'document':
-		level = os.environ["TEST_LEVEL"]
-		task_name = 'testData-doc'
-		metric = 'pearson'
-		model_type = 'EncSent'  # FIXME after merge with EncDoc branch
-		getTestData.BiRNN_doc()
-
+	level = 'word'
+	task_name = 'testData-word'
+	metric = 'f1_prod'
+	model_type = 'EncWord'
+	getTestData.BiRNN_word()
 
 
 	# TRAINING TEST
@@ -122,7 +105,7 @@ def test_BiRNN():
 		dq.train('tests/config-' + level + '-BiRNN.yml')
 	result, epoch = getOutputVal('trained_models/' + model_name + '/val.qe_metrics', metric)
 
-	assert (result - testVal)**2 < 1E-10 # check that output is within 1E-6 of the expected result
+	assert (result - testVal)**2 < 1E-10 # check that output is within 1E-5 of the expected result
 
 
 
@@ -137,4 +120,91 @@ def test_BiRNN():
 	result = getPredictedVal(save_path + 'test.qe_metrics', metric)
 	testVal = getTestVal(backend, level, 'predict', task_name, metric)
 
-	assert (result - testVal)**2 < 1E-10 # check that output is within 1E-6 of the expected result
+	assert (result - testVal)**2 < 1E-10 # check that output is within 1E-5 of the expected result
+
+
+def test_BiRNN_sentence():
+
+	backend = keras.backend.backend()
+
+	level = 'sentence'
+	task_name = 'testData-sent'
+	metric = 'pearson'
+	model_type = 'EncSent'
+	getTestData.BiRNN_sent()
+
+
+	# TRAINING TEST
+
+	testVal = getTestVal(backend, level, 'train', task_name, metric)
+
+	# set the seed
+	numpy.random.seed(1)
+	random.seed(1)
+
+	model_name = task_name + '_srcmt_' + model_type
+
+	# this is a problem, keras_wrapper's evaluate callback exits by using exit(1) which raises SystemExit
+	with pytest.raises(SystemExit):
+		dq.train('tests/config-' + level + '-BiRNN.yml')
+	result, epoch = getOutputVal('trained_models/' + model_name + '/val.qe_metrics', metric)
+
+	assert (result - testVal)**2 < 1E-10 # check that output is within 1E-5 of the expected result
+
+
+
+	# PREDICTION TEST
+
+	model = 'trained_models/' + model_name +'/epoch_' + epoch + '.h5'
+	dataset = 'trained_models/' + model_name + '/Dataset_' + task_name + '_srcmt.pkl'
+	save_path = 'saved_predictions/prediction_' + task_name + '/'
+	evalset = 'test'
+	# with pytest.raises(SystemExit):
+	dq.predict(model=model, dataset=dataset, save_path=save_path, evalset=evalset)
+	result = getPredictedVal(save_path + 'test.qe_metrics', metric)
+	testVal = getTestVal(backend, level, 'predict', task_name, metric)
+
+	assert (result - testVal)**2 < 1E-10 # check that output is within 1E-5 of the expected result
+
+def test_BiRNN_document():
+
+	backend = keras.backend.backend()
+
+	level = 'document'
+	task_name = 'testData-doc'
+	metric = 'pearson'
+	model_type = 'EncSent'  # FIXME after merge with EncDoc branch
+	getTestData.BiRNN_doc()
+
+
+	# TRAINING TEST
+
+	testVal = getTestVal(backend, level, 'train', task_name, metric)
+
+	# set the seed
+	numpy.random.seed(1)
+	random.seed(1)
+
+	model_name = task_name + '_srcmt_' + model_type
+
+	# this is a problem, keras_wrapper's evaluate callback exits by using exit(1) which raises SystemExit
+	with pytest.raises(SystemExit):
+		dq.train('tests/config-' + level + '-BiRNN.yml')
+	result, epoch = getOutputVal('trained_models/' + model_name + '/val.qe_metrics', metric)
+
+	assert (result - testVal)**2 < 1E-10 # check that output is within 1E-5 of the expected result
+
+
+
+	# PREDICTION TEST
+
+	model = 'trained_models/' + model_name +'/epoch_' + epoch + '.h5'
+	dataset = 'trained_models/' + model_name + '/Dataset_' + task_name + '_srcmt.pkl'
+	save_path = 'saved_predictions/prediction_' + task_name + '/'
+	evalset = 'test'
+	# with pytest.raises(SystemExit):
+	dq.predict(model=model, dataset=dataset, save_path=save_path, evalset=evalset)
+	result = getPredictedVal(save_path + 'test.qe_metrics', metric)
+	testVal = getTestVal(backend, level, 'predict', task_name, metric)
+
+	assert (result - testVal)**2 < 1E-10 # check that output is within 1E-5 of the expected result

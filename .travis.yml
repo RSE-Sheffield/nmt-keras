@@ -1,14 +1,9 @@
 dist: xenial
 language: python
 python:
-  # - '3.6'
+  - '3.6'
   - '3.7'
-  # - '3.8'
-env:
-    - TEST_LEVEL=sentence
-    - TEST_LEVEL=document
-    - TEST_LEVEL=word
-
+  # - '3.8' # Tensorflow currently compatible up to 3.7
 install:
   - pip install -e .
   - pip install pytest pytest-cov
