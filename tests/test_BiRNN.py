@@ -1,3 +1,14 @@
+import csv
+import os
+
+import keras
+import numpy.random
+import pytest
+import random
+
+import deepquest as dq
+import tests.getTestData as getTestData
+
 def getTestVal(backend, level, mode, task_name, metric):
     """Gets the relevant value from the testVal.csv file to run a test against
 
@@ -11,7 +22,6 @@ def getTestVal(backend, level, mode, task_name, metric):
     float: Value to run test against
     """
 
-    import csv
     with open('tests/testVals.csv') as testValsFile:
         reader = csv.reader(testValsFile)
         next(reader) # skip header line
@@ -21,8 +31,6 @@ def getTestVal(backend, level, mode, task_name, metric):
     return value
 
 def getOutputVal(filepath, metric):
-
-    import csv
     with open(filepath) as file: # trained_models/${task_name}_srcmt_${model_type}/val.qe_metrics
         reader = csv.reader(file)
         value = 0.
@@ -34,34 +42,30 @@ def getOutputVal(filepath, metric):
                 value = float(row[col])
     return value
 
-def test_BiRNN_word_train():
-    import os
-    import keras
-    import pytest
-    import tests.getTestData as getTestData
-    import deepquest as dq
+def test_BiRNN_train():
+
 
     # check for required environment variables
     assert os.environ['TEST_LEVEL'] is not None
+    backend = keras.backend.backend()
 
     if os.environ['TEST_LEVEL'] == 'word':
-        backend = keras.backend.backend()
+        level = 'word'
         task_name = 'testData-word'
         metric = 'f1_prod'
         model_type = 'EncWord'
-
         getTestData.BiRNN_word()
-        testVal = getTestVal(backend, 'word', 'train', task_name, metric)
 
-        # set the seed
-        import numpy.random
-        numpy.random.seed(1)
-        import random
-        random.seed(1)
+    testVal = getTestVal(backend, level, 'train', task_name, metric)
 
-        with pytest.raises(SystemExit):
-            dq.train('tests/config-word-BiRNN.yml')
-        result = getOutputVal('trained_models/' + task_name + '_srcmt_' + model_type + '/val.qe_metrics', metric)
+    # set the seed
+    numpy.random.seed(1)
+    random.seed(1)
+
+# this is a problem, keras_wrapper's evaluate callback exits by using exit(1) which raises SystemExit
+    with pytest.raises(SystemExit):
+        dq.train('tests/config-' + level + '-BiRNN.yml')
+    result = getOutputVal('trained_models/' + task_name + '_srcmt_' + model_type + '/val.qe_metrics', metric)
 
     assert (result - testVal)**2 < 1E-12
 
