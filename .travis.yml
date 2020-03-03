@@ -1,15 +1,16 @@
 dist: xenial
 language: python
 python:
-  - '3.6'
+  # - '3.6'
   - '3.7'
+  # - '3.8'
 env:
-    - TEST_MODE=sentence
-    - TEST_MODE=document
-    - TEST_MODE=word
+    - TEST_LEVEL=sentence
+    - TEST_LEVEL=document
+    - TEST_LEVEL=word
 
 install:
   - pip install -e .
-
+  - pip install pytest
 script:
-  - KERAS_BACKEND=tensorflow tests/test-master.sh
+  - pytest
