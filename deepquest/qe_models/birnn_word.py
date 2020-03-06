@@ -22,22 +22,14 @@ class EncWord(QEModel):
 
     def __init__(self, params):
         # define here attributes that are model specific
-        self.use_bert = False
+        if 'bert' in params['TOKENIZATION_METHOD'].lower():
+            self.use_bert = True
+            self.bert_pooling = None
+        else:
+            self.use_bert = False
 
         # and init from the QEModel class
         super().__init__(params)
-
-        if 'bert' in params['TOKENIZATION_METHOD'].lower():
-            self.use_bert = True
-
-            # if we use BERT, we extend the list on ids_inputs to 
-            # match with the dataset ids_inputs
-            self.ids_inputs.extend([
-                params['INPUTS_IDS_MODEL'][0] + '_mask',
-                params['INPUTS_IDS_MODEL'][0] + '_segids',
-                params['INPUTS_IDS_MODEL'][0] + '_mask',
-                params['INPUTS_IDS_MODEL'][0] + '_segids'
-                ])
 
 
     def build(self):
@@ -49,9 +41,21 @@ class EncWord(QEModel):
         params = self.params
 
         if self.use_bert:
+            # if we use BERT, we extend the list on ids_inputs to
+            # match with the dataset ids_inputs
+            self.ids_inputs.extend([
+                params['INPUTS_IDS_MODEL'][0] + '_mask',
+                params['INPUTS_IDS_MODEL'][0] + '_segids',
+                params['INPUTS_IDS_MODEL'][1] + '_mask',
+                params['INPUTS_IDS_MODEL'][1] + '_segids'
+                ])
+
             bert_layer = BertLayer(
                     max_seq_len=params['MAX_INPUT_TEXT_LEN'],
+                    pooling=self.bert_pooling,
+                    n_tune_layers=params.get('BERT_N_FINE_TUNE_LAYERS', 3),
                     trainable=True,
+                    verbose=True,
                     name="bert_embedding_layer"
                     )
 
@@ -190,6 +194,7 @@ class EncWord(QEModel):
             inputs=[src_words, src_words_mask, src_words_segids, trg_words, trg_words_mask, trg_words_segids]
         else:
             inputs=[src_words, trg_words]
+
         self.model = Model(
                 inputs=inputs,
                 outputs=[output_qe_layer]
