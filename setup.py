@@ -24,7 +24,6 @@ setuptools.setup(
         "tensorflow<2.0",
         "tensorflow_hub",
         "multimodal_keras_wrapper",
-        "Theano",
         "keras @ https://github.com/MarcBS/keras/archive/master.zip",
         "nmt_keras @ https://github.com/davidwilby/nmt-keras/archive/setup.zip"
     ],
