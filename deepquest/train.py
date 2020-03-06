@@ -91,30 +91,16 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                     keep_n_captions(dataset, repeat=1, n=1, set_names=params['EVAL_ON_SETS'])
         else:
             dataset = loadDataset(load_dataset)
-
     params['INPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['INPUTS_IDS_DATASET'][0]]
     #params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['OUTPUTS_IDS_DATASET_FULL'][0]]
     params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len['target_text']
 
     # Build model
     try:
-        # mf = QEModelFactory()
-        # qe_model = QEModelFactory(params['MODEL_TYPE'], 'sentence'))
-        # FIXME: change 'nmt_keras' for 'quest'
-        # model_obj = getattr(importlib.import_module("nmt_keras.models.{}".format(params['MODEL_TYPE'].lower())))
-
-        # qe_model = model_obj(params,
-        #         model_type=params['MODEL_TYPE'],
-        #         verbose=params['VERBOSE'],
-        #         model_name=params['MODEL_NAME'],
-        #         vocabularies=dataset.vocabulary,
-        #         store_path=params['STORE_PATH'],
-        #         clear_dirs=True,
-        #         weights_path=weights_path)
-        # model_obj = getattr(importlib.import_module("nmt_keras.models.{}".format(params['MODEL_TYPE'].lower())))
         qe_model = modFactory.get(params['MODEL_TYPE'], params)
 
         # Define the inputs and outputs mapping from our Dataset instance to our model
+        params['INPUTS_IDS_DATASET'] = qe_model.ids_inputs
         inputMapping = dict()
         for i, id_in in enumerate(params['INPUTS_IDS_DATASET']):
             pos_source = dataset.ids_inputs.index(id_in)
@@ -122,6 +108,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             inputMapping[id_dest] = pos_source
         qe_model.setInputsMapping(inputMapping)
 
+        params['OUTPUTS_IDS_DATASET'] = qe_model.ids_outputs
         outputMapping = dict()
         for i, id_out in enumerate(params['OUTPUTS_IDS_DATASET']):
             pos_target = dataset.ids_outputs.index(id_out)
@@ -148,10 +135,10 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                 int(params['RELOAD'] * params['BATCH_SIZE'] / dataset.len_train)
 
     except AttributeError as error:
-        logging.error(error)
+        logging.error("Error occured: {}".format(error))
 
     except Exception as exception:
-        logging.exception(exception)
+        logging.exception("Exception occured: {}".format(exception))
 
     # Store configuration as pkl
     dict2pkl(params, params['STORE_PATH'] + '/config')
@@ -348,7 +335,6 @@ def main(config=None, changes={}):
     parameters['STORE_PATH'] = os.path.join(parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
     parameters['DATASET_STORE_PATH'] = parameters['STORE_PATH']
 
-    print(parameters)
     logger.info(parameters)
 
     # check if model already exists
