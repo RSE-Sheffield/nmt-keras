@@ -103,12 +103,12 @@ class Dataset(Keras_dataset):
         segment_ids.extend(zero_mask)
 
         # loadText in keras_wrapper requires string, not list
-        tokens = ' '.join(tokens)
-        input_ids = ' '.join(str(input_ids))
-        input_mask = ' '.join(str(input_mask))
-        segment_ids = ' '.join(str(segment_ids))
+        # tokens = ' '.join(tokens)
+        input_ids =  ' '.join(str(x) for x in input_ids)
+        input_mask =  ' '.join(str(x) for x in input_mask)
+        segment_ids =  ' '.join(str(x) for x in segment_ids)
 
-        return tokens, input_ids, input_mask, segment_ids
+        return input_ids, input_mask, segment_ids
 
 
     def setInput(self, path_list, set_name, type='raw-image', id='image', repeat_set=1, required=True,
@@ -264,14 +264,19 @@ class Dataset(Keras_dataset):
             # if we use BERT, we create new inputs in the Dataset artificially
             # for both the mask and segids required by the BERT Layer
             self.__setInput(data[1], set_name, type, id + '_mask', overwrite_split, add_additional)
-            self.ids_inputs.append(id + '_mask')
-            self.optional_inputs.append(id + '_mask')
+            if id + '_mask' not in self.ids_inputs:
+                self.ids_inputs.append(id + '_mask')
             self.types_inputs[set_name].append(type)
+            # if not required and (id + '_mask') not in self.optional_inputs:
+            self.optional_inputs.append(id + '_mask')
 
             self.__setInput(data[2], set_name, type, id + '_segids', overwrite_split, add_additional)
-            self.ids_inputs.append(id + '_segids')
-            self.optional_inputs.append(id + '_segids')
+            if id + '_segids' not in self.ids_inputs:
+                self.ids_inputs.append(id + '_segids')
             self.types_inputs[set_name].append(type)
+            # if not required and (id + '_segids') not in self.optional_inputs:
+            self.optional_inputs.append(id + '_segids')
+
         else:
             self.__setInput(data, set_name, type, id, overwrite_split, add_additional)
 
@@ -338,13 +343,12 @@ class Dataset(Keras_dataset):
                 sentences_mask =  [None] * len(sentences)
                 sentences_segids = [None] * len(sentences)
                 for i, sentence in enumerate(sentences):
-                    # sentences[i], _, sentences_mask[i], sentences_segids[i] = tokfun(sentence, max_text_len)
-                    tokens, input_ids, input_mask, segment_ids = tokfun(sentence, max_text_len)
-                    sentences[i] = tokens
+                    input_ids, input_mask, segment_ids = tokfun(sentence, max_text_len)
+                    sentences[i] = input_ids
                     sentences_mask[i] = input_mask
                     sentences_segids[i] = segment_ids
 
-                # free memory from the BERT model
+                # free memory from the BERT tokenizer
                 del self.bert_tokenizer
             else:
                 for i, sentence in enumerate(sentences):
