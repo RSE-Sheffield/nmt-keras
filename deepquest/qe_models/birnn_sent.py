@@ -14,11 +14,11 @@
 #TODO: add a description of the model here.
 """
 
-from .birnn_word import EncWord
+from .birnn_word import encword
 from .utils import *
 
 
-class EncSent(EncWord):
+class encsent(encword):
 
     def __init__(self, params):
         # define here attributes that are model specific

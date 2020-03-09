@@ -17,7 +17,7 @@
 from .model import QEModel
 from .utils import *
 
-class EncWord(QEModel):
+class encword(QEModel):
 
     def __init__(self, params):
         # define here attributes that are model specific

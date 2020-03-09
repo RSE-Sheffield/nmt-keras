@@ -36,7 +36,7 @@ from .model import QEModel
 from .utils import *
 
 
-class EstimatorWord(QEModel):
+class estimatorword(QEModel):
 
     def __init__(self, params, model_type='EstimatorWord',
             verbose=1, structure_path=None, weights_path=None,

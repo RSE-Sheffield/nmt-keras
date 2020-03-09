@@ -86,7 +86,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             else:
                 if 'doc_qe' in params['OUTPUTS_IDS_MODEL']:
                     params = preprocessDoc(params)
-                elif 'EstimatorDoc' in params['MODEL_TYPE']:
+                elif 'estimatordoc' in params['MODEL_TYPE'].lower():
                     raise Exception('Translation_Model model_type "' +
                                     params['MODEL_TYPE'] + '" is not implemented.')
                 dataset = build_dataset(params)

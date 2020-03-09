@@ -260,7 +260,7 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
         # OUTPUT DATA
         # Load the train, val and test splits of the target language sentences (outputs). The files include a sentence per line.
 
-        if params['MODEL_TYPE']=='Predictor':
+        if params['MODEL_TYPE'].lower()=='predictor':
             if 'PRED_VOCAB' in params:
                 ds.setOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['TRG_LAN'],
                          'train',
@@ -295,7 +295,7 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
                          label_smoothing=params.get('LABEL_SMOOTHING', 0.))
 
 
-        elif params['MODEL_TYPE']=='EstimatorSent' or params['MODEL_TYPE']=='EncSent' or 'EstimatorDoc' in params['MODEL_TYPE'] or 'EncDoc' in params['MODEL_TYPE']:
+        elif params['MODEL_TYPE'].lower()=='estimatorsent' or params['MODEL_TYPE'].lower()=='encsent' or 'estimatordoc' in params['MODEL_TYPE'].lower() or 'encdoc' in params['MODEL_TYPE'].lower():
 
             ds.setOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['PRED_SCORE'],
                          'train',
@@ -312,7 +312,7 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
                          bpe_codes=params.get('BPE_CODES_PATH', None),
                          label_smoothing=params.get('LABEL_SMOOTHING', 0.))
 
-        elif params['MODEL_TYPE'] == 'EstimatorWord' or params['MODEL_TYPE'] == 'EncWord' or params['MODEL_TYPE'] == 'EncWordAtt' or params['MODEL_TYPE'] == 'EncPhraseAtt' or params['MODEL_TYPE'] == 'EstimatorPhrase':
+        elif params['MODEL_TYPE'].lower() == 'estimatorword' or params['MODEL_TYPE'].lower() == 'encword' or params['MODEL_TYPE'].lower() == 'encwordatt' or params['MODEL_TYPE'].lower() == 'encphraseatt' or params['MODEL_TYPE'].lower() == 'estimatorphrase':
 
             ds.setOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['PRED_SCORE'],
                          'train',
@@ -342,7 +342,7 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
         #     val_test_list = []
         for split in val_test_list:
             if params['TEXT_FILES'].get(split) is not None:
-                if params['MODEL_TYPE'] == 'Predictor':
+                if params['MODEL_TYPE'].lower() == 'predictor':
 
                     ds.setOutput(base_path + '/' + params['TEXT_FILES'][split] + params['TRG_LAN'],
                                  split,
@@ -356,7 +356,7 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
                                  bpe_codes=params.get('BPE_CODES_PATH', None),
                                  label_smoothing=0.)
 
-                elif params['MODEL_TYPE'] == 'EstimatorSent' or params['MODEL_TYPE'] == 'EncSent' or 'EstimatorDoc' in params['MODEL_TYPE'] or 'EncDoc' in params['MODEL_TYPE']:
+                elif params['MODEL_TYPE'].lower() == 'estimatorsent' or params['MODEL_TYPE'].lower() == 'encsent' or 'estimatordoc' in params['MODEL_TYPE'].lower() or 'encdoc' in params['MODEL_TYPE'].lower():
 
                     ds.setOutput(base_path + '/' + params['TEXT_FILES'][split] + params['PRED_SCORE'],
                                  split,
@@ -370,7 +370,7 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
                                  bpe_codes=params.get('BPE_CODES_PATH', None),
                                  label_smoothing=0.)
 
-                elif params['MODEL_TYPE'] == 'EstimatorWord' or params['MODEL_TYPE'] == 'EncWord' or params['MODEL_TYPE'] == 'EncWordAtt' or params['MODEL_TYPE'] == 'EncPhraseAtt' or params['MODEL_TYPE'] == 'EstimatorPhrase':
+                elif params['MODEL_TYPE'].lower() == 'estimatorword' or params['MODEL_TYPE'].lower() == 'encword' or params['MODEL_TYPE'].lower() == 'encwordatt' or params['MODEL_TYPE'].lower() == 'encphraseatt' or params['MODEL_TYPE'].lower() == 'estimatorphrase':
 
                     ds.setOutput(base_path + '/' + params['TEXT_FILES'][split] + params['PRED_SCORE'],
                                  split,
@@ -404,13 +404,13 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
         data_type_src = params.get('INPUTS_TYPES_DATASET', ['text', 'text'])[0]
         data_type_trg = data_type_src
 
-        if 'EstimatorDoc' in params['MODEL_TYPE'] or 'EncDoc' in params['MODEL_TYPE']:
+        if 'estimatordoc' in params['MODEL_TYPE'].lower() or 'encdoc' in params['MODEL_TYPE'].lower():
             data_type_src = 'text'
             data_type_trg = 'text'
 
 
         # here we set to doc meaning just the 3d input
-        if params['MODEL_TYPE'] == 'EstimatorPhrase' or params['MODEL_TYPE'] == 'EncPhraseAtt':
+        if params['MODEL_TYPE'].lower() == 'estimatorphrase' or params['MODEL_TYPE'].lower() == 'encphraseatt':
             data_type_trg = 'doc'
 
 
