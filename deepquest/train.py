@@ -379,7 +379,6 @@ def main(config=None, changes={}):
     parameters.update(changes) # update with any key=value pair changes
     parameters = add_dependent_params(parameters) # add some parameters that depend on others
 
-    print(parameters)
     logger.info(parameters)
 
     # check if model already exists
