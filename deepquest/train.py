@@ -15,6 +15,7 @@ from nmt_keras.nmt_keras import check_params
 from nmt_keras.utils.utils import update_parameters
 
 import deepquest.qe_models as modFactory
+from deepquest.utils import default_params
 from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 from deepquest.utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 
@@ -360,11 +361,9 @@ def main(config=None, changes={}):
     :param dataset: Optional path to a previously built pkl dataset.
     :param changes: Optional dictionary of parameters to overwrite config.
     """
+    parameters = default_params()
     if isinstance(config, str):
         if config.endswith('.yml'):
-            # FIXME make this a user option (maybe depend on model type and level?)
-            with open('configs/default-config-BiRNN.yml') as file:
-                parameters = yaml.load(file, Loader=yaml.FullLoader)
             with open(config) as file:
                 user_parameters = yaml.load(file, Loader=yaml.FullLoader)
             parameters.update(user_parameters)
@@ -372,7 +371,7 @@ def main(config=None, changes={}):
         elif config.endswith('.pkl'):
             parameters = update_parameters(parameters, pkl2dict(config))
     elif isinstance(config, dict):
-        parameters = config
+        parameters.update(config)
     else:
         raise Exception(
             'Expected path string to a config yml or pkl or a parameters dictionary, but received: %s . ', type(config))
