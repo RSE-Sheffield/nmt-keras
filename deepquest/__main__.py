@@ -3,16 +3,16 @@ import sys
 
 def train(args):
     import yaml
+    from deepquest.utils import default_params
+    parameters = default_params() # load the default parameters (BiRNN by default)
     if args.config.endswith('.yml'):
-        # FIXME make this a user option (maybe depend on model type and level?)
-        with open('configs/default-config-BiRNN.yml') as file:
-            parameters = yaml.load(file, Loader=yaml.FullLoader)
         with open(args.config) as file:
             user_parameters = yaml.load(file, Loader=yaml.FullLoader)
         parameters.update(user_parameters)
         del user_parameters
     elif args.config.endswith('.pkl'):
         parameters = update_parameters(parameters, pkl2dict(args.config))
+    
     parameters.update(changes2dict(args))
     if parameters.get('SEED') is not None:
         print('Setting deepQuest seed to', parameters['SEED'])
