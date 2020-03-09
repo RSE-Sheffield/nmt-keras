@@ -3,6 +3,7 @@ import sys
 
 def train(args):
     import yaml
+    from keras_wrapper.extra.read_write import pkl2dict
     from deepquest.utils import default_params
     parameters = default_params() # load the default parameters (BiRNN by default)
     if args.config.endswith('.yml'):
