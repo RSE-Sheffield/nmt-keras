@@ -12,7 +12,7 @@ def train(args):
         parameters.update(user_parameters)
         del user_parameters
     elif args.config.endswith('.pkl'):
-        parameters = update_parameters(parameters, pkl2dict(args.config))
+        parameters = parameters.update(pkl2dict(args.config))
     
     parameters.update(changes2dict(args))
     if parameters.get('SEED') is not None:

@@ -12,7 +12,6 @@ from keras_wrapper.cnn_model import updateModel
 from keras_wrapper.dataset import loadDataset, saveDataset
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from nmt_keras.nmt_keras import check_params
-from nmt_keras.utils.utils import update_parameters
 
 import deepquest.qe_models as modFactory
 from deepquest.utils import default_params, add_dependent_params
@@ -369,7 +368,7 @@ def main(config=None, changes={}):
             parameters.update(user_parameters)
             del user_parameters
         elif config.endswith('.pkl'):
-            parameters = update_parameters(parameters, pkl2dict(config))
+            parameters = parameters.updatepkl2dict(config)
     elif isinstance(config, dict):
         parameters.update(config)
     else:
