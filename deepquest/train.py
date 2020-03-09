@@ -15,7 +15,7 @@ from nmt_keras.nmt_keras import check_params
 from nmt_keras.utils.utils import update_parameters
 
 import deepquest.qe_models as modFactory
-from deepquest.utils import default_params
+from deepquest.utils import default_params, add_dependent_params
 from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 from deepquest.utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 
@@ -361,7 +361,7 @@ def main(config=None, changes={}):
     :param dataset: Optional path to a previously built pkl dataset.
     :param changes: Optional dictionary of parameters to overwrite config.
     """
-    parameters = default_params()
+    parameters = default_params() # load the default parameters (BiRNN by default)
     if isinstance(config, str):
         if config.endswith('.yml'):
             with open(config) as file:
@@ -376,20 +376,8 @@ def main(config=None, changes={}):
         raise Exception(
             'Expected path string to a config yml or pkl or a parameters dictionary, but received: %s . ', type(config))
 
-    parameters.update(changes)
-    parameters['DATASET_NAME'] = parameters['TASK_NAME']
-    parameters['DATA_ROOT_PATH'] = os.path.join(
-        parameters['DATA_DIR'], parameters['DATASET_NAME'])
-    parameters['MAPPING'] = os.path.join(parameters['DATA_ROOT_PATH'], 'mapping.%s_%s.pkl' % (
-        parameters['SRC_LAN'], parameters['TRG_LAN']))
-    parameters['BPE_CODES_PATH'] = os.path.join(
-        parameters['DATA_ROOT_PATH'], '/training_codes.joint')
-    parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + \
-        parameters['SRC_LAN'] + parameters['TRG_LAN'] + \
-        '_' + parameters['MODEL_TYPE']
-    parameters['STORE_PATH'] = os.path.join(
-        parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
-    parameters['DATASET_STORE_PATH'] = parameters['STORE_PATH']
+    parameters.update(changes) # update with any key=value pair changes
+    parameters = add_dependent_params(parameters) # add some parameters that depend on others
 
     print(parameters)
     logger.info(parameters)

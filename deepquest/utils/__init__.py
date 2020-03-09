@@ -27,6 +27,9 @@ def default_params(model='BiRNN'):
         # Model parameters
         MODEL_TYPE = 'EncSent'                 # Model to train. See model_zoo() for the supported architectures
 
+        # Tensorboard params
+        TENSORBOARD = False
+
         # Dataset class parameters
         INPUTS_IDS_DATASET = ['source_text', 'target_text']     # Corresponding inputs of the dataset
         #OUTPUTS_IDS_DATASET_FULL = ['target_text', 'word_qe', 'sent_hter']                   # Corresponding outputs of the dataset
@@ -251,4 +254,31 @@ def default_params(model='BiRNN'):
 
     # ================================================ #
     parameters = locals().copy()
+    return parameters
+
+def add_dependent_params(parameters):
+    """
+    Take the 'static' parameters and calculate any remaining parameters which depend on others.
+    Parameters:
+
+    parameters (dict): dict of parameters
+
+    :return parameters: Dictionary of parameters
+    """
+    import os
+
+    parameters['DATASET_NAME'] = parameters['TASK_NAME']
+    parameters['DATA_ROOT_PATH'] = os.path.join(
+        parameters['DATA_DIR'], parameters['DATASET_NAME'])
+    parameters['MAPPING'] = os.path.join(parameters['DATA_ROOT_PATH'], 'mapping.%s_%s.pkl' % (
+        parameters['SRC_LAN'], parameters['TRG_LAN']))
+    parameters['BPE_CODES_PATH'] = os.path.join(
+        parameters['DATA_ROOT_PATH'], '/training_codes.joint')
+    parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + \
+        parameters['SRC_LAN'] + parameters['TRG_LAN'] + \
+        '_' + parameters['MODEL_TYPE']
+    parameters['STORE_PATH'] = os.path.join(
+        parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
+    parameters['DATASET_STORE_PATH'] = parameters['STORE_PATH']
+
     return parameters
