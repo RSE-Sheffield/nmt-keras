@@ -40,14 +40,12 @@ def score(args):
 def set_gpu_id(gpuid):
     import os
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    gpuid = gpuid.split(',') if ',' in gpuid else gpuid.split()
     gpustr = ''
     for g in gpuid:
-        gpustr += str(g) + ','
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = gpustr[0:-1]
-    print(os.environ["CUDA_VISIBLE_DEVICES"])
-    import sys
-    sys.exit()
+        gpustr += str(g).strip() + ','
+    gpustr = gpustr[0:-1]
+    os.environ["CUDA_VISIBLE_DEVICES"] = gpustr
 
 def changes2dict(args):
     import ast
@@ -93,7 +91,7 @@ def main():
     train_parser.add_argument("changes", nargs="*", help="Changes to config. "
                               "Following the syntax Key=Value",
                               default="")
-    train_parser.add_argument("--gpuid", nargs="+", type=str, required=False,
+    train_parser.add_argument("--gpuid", type=str, required=False,
                             help="One or more integers specifying GPU device IDs (default 0)")
 
     # parser for prediction
