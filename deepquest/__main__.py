@@ -5,7 +5,8 @@ import sys
 def train(args):
 
     if args.gpuid:
-        set_gpu_id(args.gpuid)
+        n_gpus = set_gpu_id(args.gpuid)
+        parameters.update({'N_GPUS': n_gpus, 'GPU_ID': args.gpuid})
 
     from  . import train
     train(args.config, args.changes)
@@ -25,10 +26,40 @@ def set_gpu_id(gpuid):
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     gpuid = gpuid.split(',') if ',' in gpuid else gpuid.split()
     gpustr = ''
+    gpucount = 0
     for g in gpuid:
         gpustr += str(g).strip() + ','
+        gpucount += 1
     gpustr = gpustr[0:-1]
     os.environ["CUDA_VISIBLE_DEVICES"] = gpustr
+
+    return gpucount
+
+def changes2dict(args):
+    import ast
+    if args.changes:
+        changes = {}
+        try:
+            for arg in args.changes:
+                try:
+                    k, v = arg.split('=')
+                except ValueError:
+                    print('Overwriting arguments must have the form key=value.\n This one is: %s' % str(changes))
+                    exit(1)
+                if '_' in v:
+                    changes[k] = v
+                else:
+                    try:
+                        changes[k] = ast.literal_eval(v)
+                    except ValueError:
+                        changes[k] = v
+        except ValueError:
+            print("Error processing arguments: {!r}".format(arg))
+            exit(2)
+        return changes
+    else:
+        return {}
+
 
 def main():
     parser = argparse.ArgumentParser(prog='{deepquest, dq}',
