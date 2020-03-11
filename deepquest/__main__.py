@@ -3,27 +3,6 @@ import sys
 
 
 def train(args):
-<<<<<<< HEAD
-=======
-    import yaml
-    if args.config.endswith('.yml'):
-        # FIXME make this a user option (maybe depend on model type and level?)
-        with open('configs/default-config-BiRNN.yml') as file:
-            parameters = yaml.load(file, Loader=yaml.FullLoader)
-        with open(args.config) as file:
-            user_parameters = yaml.load(file, Loader=yaml.FullLoader)
-        parameters.update(user_parameters)
-        del user_parameters
-    elif args.config.endswith('.pkl'):
-        parameters = update_parameters(parameters, pkl2dict(args.config))
-    parameters.update(changes2dict(args))
-    if parameters.get('SEED') is not None:
-        print('Setting deepQuest seed to', parameters['SEED'])
-        import numpy.random
-        numpy.random.seed(parameters['SEED'])
-        import random
-        random.seed(parameters['SEED'])
->>>>>>> add multi gpu functionality to models
 
     if args.gpuid:
         set_gpu_id(args.gpuid)
@@ -44,14 +23,12 @@ def score(args):
 def set_gpu_id(gpuid):
     import os
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    gpuid = gpuid.split(',') if ',' in gpuid else gpuid.split()
     gpustr = ''
     for g in gpuid:
-        gpustr += str(g) + ','
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = gpustr[0:-1]
-    print(os.environ["CUDA_VISIBLE_DEVICES"])
-    import sys
-    sys.exit()
+        gpustr += str(g).strip() + ','
+    gpustr = gpustr[0:-1]
+    os.environ["CUDA_VISIBLE_DEVICES"] = gpustr
 
 def main():
     parser = argparse.ArgumentParser(prog='{deepquest, dq}',
@@ -70,11 +47,8 @@ def main():
     train_parser.add_argument("--changes", nargs="*", help="Changes to config. "
                               "Following the syntax Key=Value",
                               default="")
-<<<<<<< HEAD
     train_parser.add_argument("help", nargs='?', help="Show the help information.")
-=======
->>>>>>> add multi gpu functionality to models
-    train_parser.add_argument("--gpuid", nargs="+", type=str, required=False,
+    train_parser.add_argument("--gpuid", type=str, required=False,
                             help="One or more integers specifying GPU device IDs (default 0)")
 
     # parser for prediction
