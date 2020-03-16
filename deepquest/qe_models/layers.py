@@ -31,8 +31,6 @@ from keras_wrapper.cnn_model import Model_Wrapper
 
 import tensorflow as tf
 import tensorflow_hub as hub
-from tensorflow.keras import backend as K
-
 
 
 class BertLayer(Layer):
