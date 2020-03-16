@@ -17,6 +17,7 @@
 from .birnn_word import EncWord
 from .model import QEModel
 from .utils import *
+from .layers import *
 from keras.models import clone_model
 
 

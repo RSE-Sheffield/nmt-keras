@@ -35,6 +35,7 @@
 
 from .estimator_word import EstimatorWord
 from .utils import *
+from .layers import *
 
 
 class EstimatorSent(EstimatorWord):

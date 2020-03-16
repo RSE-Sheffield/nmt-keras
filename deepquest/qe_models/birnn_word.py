@@ -16,7 +16,7 @@
 
 from .model import QEModel
 from .utils import *
-from deepquest.utils.bert_layer import BertLayer
+from .layers import *
 
 class EncWord(QEModel):
 
@@ -41,7 +41,7 @@ class EncWord(QEModel):
         params = self.params
 
         if self.use_bert:
-            # if we use BERT, we extend the list on ids_inputs to
+            # if we use BERT, we extend the list on ids_inputs to 
             # match with the dataset ids_inputs
             self.ids_inputs.extend([
                 params['INPUTS_IDS_MODEL'][0] + '_mask',
@@ -51,10 +51,11 @@ class EncWord(QEModel):
                 ])
 
             bert_layer = BertLayer(
-                    max_seq_len=params['MAX_INPUT_TEXT_LEN'],
+                    max_seq_len=params.get('MAX_INPUT_TEXT_LEN', 70),
                     pooling=self.bert_pooling,
-                    n_tune_layers=params.get('BERT_N_FINE_TUNE_LAYERS', 3),
                     trainable=True,
+                    fine_tune_n_layers=params.get('BERT_FINE_TUNE_N_LAYER', 3),
+                    tune_embeddings = True,
                     verbose=True,
                     name="bert_embedding_layer"
                     )
@@ -77,10 +78,12 @@ class EncWord(QEModel):
         ## SOURCE encoder
         if self.use_bert:
             src_words_mask = Input(name=self.ids_inputs[0] + '_mask',
+            # src_words_mask = Input(name=self.ids_inputs[2],
                     batch_shape=tuple([None, params['MAX_INPUT_TEXT_LEN']]),
                     dtype='int32')
 
             src_words_segids = Input(name=self.ids_inputs[0] + '_segids',
+            # src_words_segids = Input(name=self.ids_inputs[3],
                     batch_shape=tuple([None, params['MAX_INPUT_TEXT_LEN']]),
                     dtype='int32')
 
@@ -123,10 +126,12 @@ class EncWord(QEModel):
         ## TARGET encoder
         if self.use_bert:
             trg_words_mask = Input(name=self.ids_inputs[1] + '_mask',
+            # trg_words_mask = Input(name=self.ids_inputs[4],
                     batch_shape=tuple([None, params['MAX_INPUT_TEXT_LEN']]),
                     dtype='int32')
 
             trg_words_segids = Input(name=self.ids_inputs[1] + '_segids',
+            # trg_words_segids = Input(name=self.ids_inputs[5],
                     batch_shape=tuple([None, params['MAX_INPUT_TEXT_LEN']]),
                     dtype='int32')
             trg_bert_input = [trg_words, trg_words_mask, trg_words_segids]
