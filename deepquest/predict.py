@@ -203,7 +203,7 @@ def check_params(params):
         assert params['OPTIMIZED_SEARCH'], 'The application of "COVERAGE_PENALTY" requires ' \
                                            'to use the optimized search ("OPTIMIZED_SEARCH" parameter).'
     if params['SRC_PRETRAINED_VECTORS'] and params['SRC_PRETRAINED_VECTORS'][:-1] != '.npy':
-        warnings.warn('It seems that the pretrained word vectors provided for the target text are not in npy format.'
+        warnings.warn('It seems that the pretrained word vectors provided for the source text are not in npy format.'
                       'You should preprocess the word embeddings with the "utils/preprocess_*_word_vectors.py script.')
 
     if params['TRG_PRETRAINED_VECTORS'] and params['TRG_PRETRAINED_VECTORS'][:-1] != '.npy':
@@ -245,10 +245,15 @@ def main(model, dataset, save_path=None, evalset=None, changes={}):
     assert file_name.startswith("epoch_")
     parameters["RELOAD"] = file_name.replace("epoch_", "")
 
-    # from nmt_keras import model_zoo
+    # includes all layers and everything defined in deepquest.qe_models.{utils,layers}
+    import deepquest.qe_models.utils as dq_utils
+    import deepquest.qe_models.layers as dq_layers
+
+    dict_utils = vars(dq_utils)
+    dict_layers = vars(dq_layers)
+
     from keras.utils import CustomObjectScope
-    import deepquest.qe_models.utils as layers  # includes all layers and everything defined in deepquest.qe_models.utils
-    with CustomObjectScope(vars(layers)):
+    with CustomObjectScope({**dict_utils, **dict_layers}):
         apply_NMT_model(parameters, dataset, model, save_path)
 
     logging.info('Done.')
