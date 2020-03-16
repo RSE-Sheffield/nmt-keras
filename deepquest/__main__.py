@@ -22,7 +22,8 @@ def train(args):
         random.seed(parameters['SEED'])
 
     if args.gpuid:
-        set_gpu_id(args.gpuid)
+        n_gpus = set_gpu_id(args.gpuid)
+        parameters.update({'N_GPUS': n_gpus, 'GPU_ID': args.gpuid})
 
     from  . import train
     train(parameters)
@@ -40,14 +41,16 @@ def score(args):
 def set_gpu_id(gpuid):
     import os
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    gpuid = gpuid.split(',') if ',' in gpuid else gpuid.split()
     gpustr = ''
+    gpucount = 0
     for g in gpuid:
-        gpustr += str(g) + ','
+        gpustr += str(g).strip() + ','
+        gpucount += 1
+    gpustr = gpustr[0:-1]
+    os.environ["CUDA_VISIBLE_DEVICES"] = gpustr
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = gpustr[0:-1]
-    print(os.environ["CUDA_VISIBLE_DEVICES"])
-    import sys
-    sys.exit()
+    return gpucount
 
 def changes2dict(args):
     import ast
@@ -80,23 +83,29 @@ def main():
                                     description='A framework for neural-based quality estimation.')
     subparsers = parser.add_subparsers(help='mode of operation')
 
+    # parser for help text
+    help_parser = subparsers.add_parser('help', help='Show the help text')
+    help_parser.set_defaults(func=help)
+
     # parser for training
     train_parser = subparsers.add_parser('train', help='Train QE models')
     train_parser.set_defaults(func=train)
+    train_parser.add_argument("help", nargs='?', help="Show the help information.")
     train_parser.add_argument("-c", "--config",   required=False,
                               help="Config YAML or pkl for loading the model configuration. ")
     train_parser.add_argument("changes", nargs="*", help="Changes to config. "
                               "Following the syntax Key=Value",
                               default="")
-    train_parser.add_argument("--gpuid", nargs="+", type=str, required=False,
+    train_parser.add_argument("--gpuid", type=str, required=False,
                             help="One or more integers specifying GPU device IDs (default 0)")
 
     # parser for prediction
     predict_parser = subparsers.add_parser('predict', help='Sample using trained QE models')
     predict_parser.set_defaults(func=predict)
-    predict_parser.add_argument("--model", required=True,
+    predict_parser.add_argument("help", nargs='?', help="Show the help information.")
+    predict_parser.add_argument("--model", required=False,
                                 help="model file (.h5) to use")
-    predict_parser.add_argument("--dataset", required=True,
+    predict_parser.add_argument("--dataset", required=False,
                                 help="dataset file (.pkl) to use")
     predict_parser.add_argument("--save_path", required=False, help="Directory path to save predictions to. "
                                 "If not specified, defaults to STORE_PATH")
@@ -109,15 +118,21 @@ def main():
     # parser for scoring
     score_parser = subparsers.add_parser(
         'score', help='Evaluate a set of predictions with regard to a reference set. ')
+    score_parser.add_argument("help", nargs='?', help="Show the help information.")
     score_parser.set_defaults(func=score)
-    score_parser.add_argument(
-        "files", nargs=2, help="Two text files containing predictions and references. ")
+    score_parser.add_argument("files", nargs="*", help="Two text files containing predictions and references. ", default="")
 
     args = parser.parse_args()
+
     if (not hasattr(args,'func')) or (len(sys.argv) == 1):
         parser.print_help()
-    elif hasattr(args,'func') and (len(sys.argv) == 2):
+    elif hasattr(args, 'func') and (len(sys.argv) == 2):
         parser.print_help()
+    elif hasattr(args, 'func') and 'help' in sys.argv:
+        parsers = {'train': train_parser,
+                   'predict': predict_parser,
+                   'score': score_parser}
+        parsers[str(args.func.__name__)].print_help()
     else:
         args.func(args)
     sys.exit(0)

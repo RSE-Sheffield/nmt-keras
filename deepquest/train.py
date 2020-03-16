@@ -55,7 +55,8 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                 for split, filename in params['TEXT_FILES'].iteritems():
                     dataset = update_dataset_from_file(dataset,
                                                        params['DATA_ROOT_PATH'] + '/' +
-                                                       filename + params['SRC_LAN'],
+                                                       filename +
+                                                       params['SRC_LAN'],
                                                        params,
                                                        splits=list([split]),
                                                        output_text_filename=params['DATA_ROOT_PATH'] + '/' + filename +
@@ -79,7 +80,8 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                 # for the testing pharse handle model vocab differences
                 #dataset_voc.vocabulary['target_text'] = dataset_voc.vocabulary['target']
                 #dataset_voc.vocabulary_len['target_text'] = dataset_voc.vocabulary_len['target']
-                dataset = build_dataset(params, dataset_voc.vocabulary, dataset_voc.vocabulary_len)
+                dataset = build_dataset(
+                    params, dataset_voc.vocabulary, dataset_voc.vocabulary_len)
             else:
                 if 'doc_qe' in params['OUTPUTS_IDS_MODEL']:
                     params = preprocessDoc(params)
@@ -88,7 +90,8 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                                     params['MODEL_TYPE'] + '" is not implemented.')
                 dataset = build_dataset(params)
                 if params['NO_REF']:
-                    keep_n_captions(dataset, repeat=1, n=1, set_names=params['EVAL_ON_SETS'])
+                    keep_n_captions(dataset, repeat=1, n=1,
+                                    set_names=params['EVAL_ON_SETS'])
         else:
             dataset = loadDataset(load_dataset)
 
@@ -138,14 +141,16 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             # otherwise we just reload the weights
             # from the files containing the model
             from keras.utils import CustomObjectScope
-            import deepquest.qe_models.utils as layers  # includes all layers and everything defined in deepquest.qe_models.utils
+            # includes all layers and everything defined in deepquest.qe_models.utils
+            import deepquest.qe_models.utils as layers
             with CustomObjectScope(vars(layers)):
                 qe_model = updateModel(
                     qe_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
             qe_model.setParams(params)
             qe_model.setOptimizer()
             params['EPOCH_OFFSET'] = params['RELOAD'] if params['RELOAD_EPOCH'] else \
-                int(params['RELOAD'] * params['BATCH_SIZE'] / dataset.len_train)
+                int(params['RELOAD'] *
+                    params['BATCH_SIZE'] / dataset.len_train)
 
     except AttributeError as error:
         logging.error(error)
@@ -168,7 +173,8 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                        'homogeneous_batches': params['HOMOGENEOUS_BATCHES'],
                        'maxlen': params['MAX_OUTPUT_TEXT_LEN'],
                        'joint_batches': params['JOINT_BATCHES'],
-                       'lr_decay': params.get('LR_DECAY', None),  # LR decay parameters
+                       # LR decay parameters
+                       'lr_decay': params.get('LR_DECAY', None),
                        'reduce_each_epochs': params.get('LR_REDUCE_EACH_EPOCHS', True),
                        'start_reduction_on_epoch': params.get('LR_START_REDUCTION_ON_EPOCH', 0),
                        'lr_gamma': params.get('LR_GAMMA', 0.9),
@@ -183,12 +189,34 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                        'reload_epoch': params['RELOAD'],
                        'epoch_offset': params.get('EPOCH_OFFSET', 0),
                        'data_augmentation': params['DATA_AUGMENTATION'],
-                       'patience': params.get('PATIENCE', 0),  # early stopping parameters
+                       # early stopping parameters
+                       'patience': params.get('PATIENCE', 0),
                        'metric_check': params.get('STOP_METRIC', None) if params.get('EARLY_STOP', False) else None,
                        'eval_on_epochs': params.get('EVAL_EACH_EPOCHS', True),
                        'each_n_epochs': params.get('EVAL_EACH', 1),
                        'start_eval_on_epoch': params.get('START_EVAL_ON_EPOCH', 0),
-                       'n_gpus': params.get('N_GPUS', 1)}
+                       'n_gpus': params.get('N_GPUS', 1),
+                       }
+
+    # if tensorboard is on, then add tensorboard params to training params
+    if params.get('TENSORBOARD', False):
+        tensorboard_training_params = {'tensorboard': params.get('TENSORBOARD', False),
+                                       'tensorboard_params': {'log_dir': params.get('LOG_DIR', 'tensorboard_logs'),
+                                                              'histogram_freq': params.get('HISTOGRAM_FREQ', 0),
+                                                              'batch_size': params.get('TENSORBOARD_BATCH_SIZE', params['BATCH_SIZE']),
+                                                              'write_graph': params.get('WRITE_GRAPH', True),
+                                                              'write_grads': params.get('WRITE_GRADS', False),
+                                                              'write_images': params.get('WRITE_IMAGES', False),
+                                                              'embeddings_freq': params.get('EMBEDDINGS_FREQ', 0),
+                                                              'embeddings_layer_names': params.get('EMBEDDINGS_LAYER_NAMES', None),
+                                                              'embeddings_metadata': params.get('EMBEDDINGS_METADATA', None),
+                                                              'label_word_embeddings_with_vocab': params.get(
+                                           'LABEL_WORD_EMBEDDINGS_WITH_VOCAB', False),
+            'word_embeddings_labels': params.get('WORD_EMBEDDINGS_LABELS', None),
+        }
+        }
+        training_params.update(tensorboard_training_params)
+
     if weights_dict is not None:
         for layer in qe_model.model.layers:
             if layer.name in weights_dict:
@@ -201,7 +229,8 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
 
     total_end_time = timer()
     time_difference = total_end_time - total_start_time
-    logging.info('In total is {0:.2f}s = {1:.2f}m'.format(time_difference, time_difference / 60.0))
+    logging.info('In total is {0:.2f}s = {1:.2f}m'.format(
+        time_difference, time_difference / 60.0))
 
 
 def buildCallbacks(params, model, dataset):
@@ -229,28 +258,37 @@ def buildCallbacks(params, model, dataset):
 
         input_text_id = params['INPUTS_IDS_DATASET'][0]
         vocab_x = dataset.vocabulary[input_text_id]['idx2words']
-        vocab_y = dataset.vocabulary[params['INPUTS_IDS_DATASET'][1]]['idx2words']
+        vocab_y = dataset.vocabulary[params['INPUTS_IDS_DATASET']
+                                     [1]]['idx2words']
         if params['BEAM_SEARCH']:
             extra_vars['beam_size'] = params.get('BEAM_SIZE', 6)
-            extra_vars['state_below_index'] = params.get('BEAM_SEARCH_COND_INPUT', -1)
+            extra_vars['state_below_index'] = params.get(
+                'BEAM_SEARCH_COND_INPUT', -1)
             extra_vars['maxlen'] = params.get('MAX_OUTPUT_TEXT_LEN_TEST', 30)
-            extra_vars['optimized_search'] = params.get('OPTIMIZED_SEARCH', True)
+            extra_vars['optimized_search'] = params.get(
+                'OPTIMIZED_SEARCH', True)
             extra_vars['model_inputs'] = params['INPUTS_IDS_MODEL']
             extra_vars['model_outputs'] = params['OUTPUTS_IDS_MODEL']
             extra_vars['dataset_inputs'] = params['INPUTS_IDS_DATASET']
             extra_vars['dataset_outputs'] = params['OUTPUTS_IDS_DATASET']
             extra_vars['search_pruning'] = params.get('SEARCH_PRUNING', False)
-            extra_vars['normalize_probs'] = params.get('NORMALIZE_SAMPLING', False)
+            extra_vars['normalize_probs'] = params.get(
+                'NORMALIZE_SAMPLING', False)
             extra_vars['alpha_factor'] = params.get('ALPHA_FACTOR', 1.)
-            extra_vars['coverage_penalty'] = params.get('COVERAGE_PENALTY', False)
+            extra_vars['coverage_penalty'] = params.get(
+                'COVERAGE_PENALTY', False)
             extra_vars['length_penalty'] = params.get('LENGTH_PENALTY', False)
-            extra_vars['length_norm_factor'] = params.get('LENGTH_NORM_FACTOR', 0.0)
-            extra_vars['coverage_norm_factor'] = params.get('COVERAGE_NORM_FACTOR', 0.0)
+            extra_vars['length_norm_factor'] = params.get(
+                'LENGTH_NORM_FACTOR', 0.0)
+            extra_vars['coverage_norm_factor'] = params.get(
+                'COVERAGE_NORM_FACTOR', 0.0)
             extra_vars['pos_unk'] = params['POS_UNK']
-            extra_vars['output_max_length_depending_on_x'] = params.get('MAXLEN_GIVEN_X', True)
+            extra_vars['output_max_length_depending_on_x'] = params.get(
+                'MAXLEN_GIVEN_X', True)
             extra_vars['output_max_length_depending_on_x_factor'] = params.get(
                 'MAXLEN_GIVEN_X_FACTOR', 3)
-            extra_vars['output_min_length_depending_on_x'] = params.get('MINLEN_GIVEN_X', True)
+            extra_vars['output_min_length_depending_on_x'] = params.get(
+                'MINLEN_GIVEN_X', True)
             extra_vars['output_min_length_depending_on_x_factor'] = params.get(
                 'MINLEN_GIVEN_X_FACTOR', 2)
 
@@ -295,6 +333,7 @@ def buildCallbacks(params, model, dataset):
 
     return callbacks
 
+
 def save_random_states(write_path, user_seed=None):
     import numpy.random
     import random
@@ -312,6 +351,7 @@ def save_random_states(write_path, user_seed=None):
 
     with open(os.path.join(write_path, 'random_states.json'), 'w') as outfile:
         json.dump(data, outfile)
+
 
 def main(config=None, changes={}):
     """
@@ -339,14 +379,17 @@ def main(config=None, changes={}):
 
     parameters.update(changes)
     parameters['DATASET_NAME'] = parameters['TASK_NAME']
-    parameters['DATA_ROOT_PATH'] = os.path.join(parameters['DATA_DIR'], parameters['DATASET_NAME'])
+    parameters['DATA_ROOT_PATH'] = os.path.join(
+        parameters['DATA_DIR'], parameters['DATASET_NAME'])
     parameters['MAPPING'] = os.path.join(parameters['DATA_ROOT_PATH'], 'mapping.%s_%s.pkl' % (
         parameters['SRC_LAN'], parameters['TRG_LAN']))
     parameters['BPE_CODES_PATH'] = os.path.join(
         parameters['DATA_ROOT_PATH'], '/training_codes.joint')
     parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + \
-        parameters['SRC_LAN'] + parameters['TRG_LAN'] + '_' + parameters['MODEL_TYPE']
-    parameters['STORE_PATH'] = os.path.join(parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
+        parameters['SRC_LAN'] + parameters['TRG_LAN'] + \
+        '_' + parameters['MODEL_TYPE']
+    parameters['STORE_PATH'] = os.path.join(
+        parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
     parameters['DATASET_STORE_PATH'] = parameters['STORE_PATH']
 
     print(parameters)
@@ -357,13 +400,16 @@ def main(config=None, changes={}):
         # if model doesn't already exist
         # write out initial parameters to pkl
         os.makedirs(parameters['STORE_PATH'])
-        dict2pkl(parameters, os.path.join(parameters['STORE_PATH'], 'config_init.pkl'))
-        dataset=None
+        dict2pkl(parameters, os.path.join(
+            parameters['STORE_PATH'], 'config_init.pkl'))
+        dataset = None
     else:
         # if model already exists check that only RELOAD or RELOAD_EPOCH differ
         logger.info('Model ' + parameters['STORE_PATH'] + ' already exists. ')
-        prev_config_init = os.path.join(parameters['STORE_PATH'], 'config_init.pkl')
-        logger.info('Loading trained model config_init.pkl from ' + prev_config_init)
+        prev_config_init = os.path.join(
+            parameters['STORE_PATH'], 'config_init.pkl')
+        logger.info(
+            'Loading trained model config_init.pkl from ' + prev_config_init)
         parameters_prev = pkl2dict(prev_config_init)
         if parameters['RELOAD_EPOCH'] != True or parameters['RELOAD'] == 0:
             logger.info(
@@ -374,7 +420,8 @@ def main(config=None, changes={}):
             stop_flag = False
             for key in parameters_prev:
                 if key not in (parameters or reload_keys):
-                    logger.info('Previously trained model config does not contain ' + key)
+                    logger.info(
+                        'Previously trained model config does not contain ' + key)
                     stop_flag = True
                 elif parameters[key] != parameters_prev[key] and key not in reload_keys:
                     logger.info('Previous model has ' + key + ': ' +
@@ -385,12 +432,15 @@ def main(config=None, changes={}):
                     logger.info('New model config does not contain ' + key)
                     stop_flag = True
             if stop_flag == True:
-                raise Exception('Model parameters not equal, can not resume training. ')
+                raise Exception(
+                    'Model parameters not equal, can not resume training. ')
             else:
-                logger.info('Resuming training from epoch ' + str(parameters['RELOAD']))
+                logger.info('Resuming training from epoch ' +
+                            str(parameters['RELOAD']))
 
             # if there is a pre-trained model and dataset is not specified earlier, set the path to load the existing dataset
-            dataset = parameters['DATASET_STORE_PATH'] + '/Dataset_' + parameters['DATASET_NAME'] + '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '.pkl'
+            dataset = parameters['DATASET_STORE_PATH'] + '/Dataset_' + parameters['DATASET_NAME'] + \
+                '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '.pkl'
         else:
             logger.info(
                 'Previously trained config and new config are the same, specify which epoch to resume training from. ')
@@ -398,7 +448,8 @@ def main(config=None, changes={}):
 
     check_params(parameters)
 
-    save_random_states(parameters['STORE_PATH'], user_seed=parameters.get('SEED'))
+    save_random_states(parameters['STORE_PATH'],
+                       user_seed=parameters.get('SEED'))
 
     if parameters['MULTI_TASK']:
 
@@ -450,7 +501,8 @@ def main(config=None, changes={}):
 
                 for j in range(epoch_per_update):
 
-                    logging.info('Running training task for ' + parameters['MODEL_NAME'])
+                    logging.info('Running training task for ' +
+                                 parameters['MODEL_NAME'])
                     parameters['MAX_EPOCH'] = parameters['EPOCH_PER_MODEL']
 
                     train_model(parameters, weights_dict, dataset, trainable_est=trainable_est,
