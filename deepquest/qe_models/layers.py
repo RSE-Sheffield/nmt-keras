@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# utils.py
+# layers.py
 #
 # Copyright (C) 2019 Frederic Blain (feedoo) <f.blain@sheffield.ac.uk>
 #
@@ -12,7 +12,7 @@
 #
 
 """
-Imports modules and defines functions necessary to create the models
+Defines the layers used in our QE models.
 """
 
 from keras.engine.base_layer import Layer
