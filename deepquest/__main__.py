@@ -26,12 +26,11 @@ def train(args):
 
 def predict(args):
     from . import predict
-    predict(model=args.model, dataset=args.dataset, save_path=args.save_path, evalset=args.evalset, changes=changes2dict(args))
+    predict(model=args.model, dataset=args.dataset, directory=args.dir, filename=args.file, save_path=args.save_path, evalset=args.evalset, changes=changes2dict(args))
 
 def score(args):
     from . import score
     score(args.files)
-
 
 def changes2dict(args):
     import ast
@@ -86,6 +85,10 @@ def main():
                                 help="model file (.h5) to use")
     predict_parser.add_argument("--dataset", required=False,
                                 help="dataset file (.pkl) to use")
+    predict_parser.add_argument("--dir", required=False,
+                                help="Path to directory containing files to predict on. Default={DATA_ROOT_PATH}{evalset}.{SRC_LAN | TRG_LAN}")
+    predict_parser.add_argument("--file", required=False,
+                                help="Common name of source and target language files to be predicted on. Default={evalset}")
     predict_parser.add_argument("--save_path", required=False, help="Directory path to save predictions to. "
                                 "If not specified, defaults to STORE_PATH")
     predict_parser.add_argument("--evalset", required=False, help="Set to evaluate on. "

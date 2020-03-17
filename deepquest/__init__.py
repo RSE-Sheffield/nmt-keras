@@ -8,7 +8,7 @@ def train(config=None, changes={}):
     import deepquest.train
     train.main(config, changes)
 
-def predict(model, dataset, save_path=None, evalset=None, changes={}):
+def predict(model, dataset, directory=None, filename=None, save_path=None, evalset=None, changes={}):
     """
     Predicts QE scores on a dataset using a pre-trained model.
     :param model: Model file (.h5) to use.
@@ -18,7 +18,7 @@ def predict(model, dataset, save_path=None, evalset=None, changes={}):
     :param changes: Optional dictionary of parameters to overwrite config.
     """
     import deepquest.predict
-    predict.main(model=model, dataset=dataset, save_path=save_path, evalset=evalset, changes=changes)
+    predict.main(model=model, dataset=dataset, directory=directory, filename=filename, save_path=save_path, evalset=evalset, changes=changes)
 
 def score(files):
     """
