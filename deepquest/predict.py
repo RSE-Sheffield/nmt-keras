@@ -211,23 +211,33 @@ def check_params(params):
                       'You should preprocess the word embeddings with the "utils/preprocess_*_word_vectors.py script.')
 
 
-def main(model, dataset, save_path=None, evalset=None, changes={}):
+def main(model, dataset, directory=None, filename=None, save_path=None, evalset=None, changes={}):
     """
     Predicts QE scores on a dataset using a pre-trained model.
     :param model: Model file (.h5) to use.
     :param dataset: Dataset file (.pkl) to use.
-    :param save_path: Optinal directory path to save predictions to. Default = STORE_PATH
-    :param evalset: Optional set to evaluate on. Default = 'test'
+    :param directory: Path to directory containing files to predict on. Default={DATA_ROOT_PATH}{evalset}.{SRC_LAN | TRG_LAN}
+    :param filename: Common name of source and target language files to be predicted on. Default={evalset} 
+    :param save_path: Optional directory path to save predictions to. Default = STORE_PATH
+    :param evalset: Optional set to evaluate on. Default='test'
     :param changes: Optional dictionary of parameters to overwrite config.
     """
-    parameters = pickle.load(open(os.path.join(os.path.split(model)[0], 'config.pkl'), 'rb'))
+    parameters = pickle.load(open(os.path.join(os.path.split(model)[0], 'config.pkl'), 'rb')) # load the config from training as a pkl
+    parameters.update(changes) # update the parameters dictionary with any changes from the changes dictionary
+    
+    if directory: # set the default directory
+        parameters['DATA_ROOT_PATH'] = directory
 
-    parameters.update(changes)
+    if not filename: # set the default directory
+        filename = 'test'
 
     if evalset is None:
         parameters['EVAL_ON_SETS'] = ['test']
     else:
         parameters['EVAL_ON_SETS'] = [evalset]
+
+    # update pointers to text files for prediction
+    parameters['TEXT_FILES'][evalset] = filename + '.'
 
     if save_path is None:
         save_path = parameters['STORE_PATH']

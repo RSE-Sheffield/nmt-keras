@@ -11,7 +11,6 @@ def predict(args):
     from . import predict
     predict(args.model, args.dataset, save_path=args.save_path, evalset=args.evalset, changes=args.changes)
 
-
 def score(args):
     from . import score
     score(args.files)
