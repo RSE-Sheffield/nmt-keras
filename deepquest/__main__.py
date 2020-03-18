@@ -73,7 +73,7 @@ def main():
     train_parser.add_argument("help", nargs='?', help="Show the help information.")
     train_parser.add_argument("-c", "--config",   required=False,
                               help="Config YAML or pkl for loading the model configuration. ")
-    train_parser.add_argument("changes", nargs="*", help="Changes to config. "
+    train_parser.add_argument("--changes", nargs="*", help="Changes to config. "
                               "Following the syntax Key=Value",
                               default="")
 
@@ -93,7 +93,7 @@ def main():
                                 "If not specified, defaults to STORE_PATH")
     predict_parser.add_argument("--evalset", required=False, help="Set to evaluate on. "
                                 "Defaults to 'test' if not specified. ")
-    predict_parser.add_argument("changes", nargs="*", help="Changes to config. "
+    predict_parser.add_argument("--changes", nargs="*", help="Changes to config. "
                                 "Following the syntax Key=Value",
                                 default="")
 
