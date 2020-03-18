@@ -217,7 +217,7 @@ def findDataset(model):
         if fnmatch.fnmatch(file,'Dataset*.pkl'):
                 datasets.append(file)
     assert len(datasets)==1, "Expected to find exactly one dataset in {}/ but found {}\n{}\nPlease specify a dataset file.".format(model, len(datasets), datasets)
-    return datasets[0]
+    return os.path.join(os.path.split(model)[0],datasets[0])
 
 def main(model, dataset=None, directory=None, filename=None, save_path=None, evalset=None, changes={}):
     """
