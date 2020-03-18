@@ -67,14 +67,15 @@ def apply_NMT_model(params, dataset, model, save_path):
         extra_vars[s] = dict()
         # True when we should score against a reference
 
-        # add the test split reference to the dataset
-        path_list = os.path.join(params['DATA_ROOT_PATH'], s + '.' + params['PRED_SCORE'])
         if dataset.ids_outputs[0] == 'word_qe':
             out_type = 'text'
         else:
             out_type = 'real'
 
-        if not params.get('NO_REF', False):
+        # if NO_REF=False (ie there is a Reference) then set the outputs
+        # add the test split reference to the dataset
+        if not params.get('NO_REF', True):
+            path_list = os.path.join(params['DATA_ROOT_PATH'], s + '.' + params['PRED_SCORE'])
             if not dataset.loaded_raw_test[1] and s == 'test':
                 dataset.setRawOutput(path_list, set_name=s, type='file-name', id='raw_'+id_out, overwrite_split=False,
                                      add_additional=False)
@@ -96,7 +97,6 @@ def apply_NMT_model(params, dataset, model, save_path):
         callbacks = buildCallbacks(params, nmt_model, dataset)
         metrics = callbacks.evaluate(
             params['RELOAD'], counter_name='epoch' if params['EVAL_EACH_EPOCHS'] else 'update')
-
 
 def buildCallbacks(params, model, dataset):
     """
@@ -215,7 +215,7 @@ def main(model, dataset, directory=None, filename=None, save_path=None, evalset=
     """
     Predicts QE scores on a dataset using a pre-trained model.
     :param model: Model file (.h5) to use.
-    :param dataset: Dataset file (.pkl) to use.
+    :param dataset: Dataset file (.pkl) to use. #TODO make dataset optional, find it in the trained model directory perhaps.
     :param directory: Path to directory containing files to predict on. Default={DATA_ROOT_PATH}{evalset}.{SRC_LAN | TRG_LAN}
     :param filename: Common name of source and target language files to be predicted on. Default={evalset} 
     :param save_path: Optional directory path to save predictions to. Default = STORE_PATH
