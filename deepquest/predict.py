@@ -210,12 +210,20 @@ def check_params(params):
         warnings.warn('It seems that the pretrained word vectors provided for the target text are not in npy format.'
                       'You should preprocess the word embeddings with the "utils/preprocess_*_word_vectors.py script.')
 
+def findDataset(model):
+    import fnmatch
+    datasets=[]
+    for file in os.listdir(os.path.split(model)[0]):
+        if fnmatch.fnmatch(file,'Dataset*.pkl'):
+                datasets.append(file)
+    assert len(datasets)==1, "Expected to find exactly one dataset in {}/ but found {}\n{}\nPlease specify a dataset file.".format(model, len(datasets), datasets)
+    return datasets[0]
 
-def main(model, dataset, directory=None, filename=None, save_path=None, evalset=None, changes={}):
+def main(model, dataset=None, directory=None, filename=None, save_path=None, evalset=None, changes={}):
     """
     Predicts QE scores on a dataset using a pre-trained model.
     :param model: Model file (.h5) to use.
-    :param dataset: Dataset file (.pkl) to use. #TODO make dataset optional, find it in the trained model directory perhaps.
+    :param dataset: Optional dataset file (.pkl) to use. If blank, one is found in the model's directory
     :param directory: Path to directory containing files to predict on. Default={DATA_ROOT_PATH}{evalset}.{SRC_LAN | TRG_LAN}
     :param filename: Common name of source and target language files to be predicted on. Default={evalset} 
     :param save_path: Optional directory path to save predictions to. Default = STORE_PATH
@@ -225,6 +233,10 @@ def main(model, dataset, directory=None, filename=None, save_path=None, evalset=
     parameters = pickle.load(open(os.path.join(os.path.split(model)[0], 'config.pkl'), 'rb')) # load the config from training as a pkl
     parameters.update(changes) # update the parameters dictionary with any changes from the changes dictionary
     
+    if dataset==None:
+        dataset = findDataset(model)
+        logging.info('Found dataset file: {}'.format(dataset))
+
     if directory: # set the default directory
         parameters['DATA_ROOT_PATH'] = directory
 
