@@ -1,26 +1,20 @@
 import argparse
 import sys
 
+from deepquest.utils.utils import setparameter, changes2dict
+
 def train(args):
-    import yaml
-    if args.config.endswith('.yml'):
-        # FIXME make this a user option (maybe depend on model type and level?)
-        with open('configs/default-config-BiRNN.yml') as file:
-            parameters = yaml.load(file, Loader=yaml.FullLoader)
-        with open(args.config) as file:
-            user_parameters = yaml.load(file, Loader=yaml.FullLoader)
-        parameters.update(user_parameters)
-        del user_parameters
-    elif args.config.endswith('.pkl'):
-        parameters = update_parameters(parameters, pkl2dict(args.config))
+    parameters = setparameters(user_config_path=args.config)
+
     parameters.update(changes2dict(args))
+
     if parameters.get('SEED') is not None:
         print('Setting deepQuest seed to', parameters['SEED'])
         import numpy.random
         numpy.random.seed(parameters['SEED'])
         import random
         random.seed(parameters['SEED'])
-    from  . import train
+    from . import train
     train(parameters)
 
 
@@ -32,32 +26,6 @@ def predict(args):
 def score(args):
     from . import score
     score(args.files)
-
-
-def changes2dict(args):
-    import ast
-    if args.changes:
-        changes = {}
-        try:
-            for arg in args.changes:
-                try:
-                    k, v = arg.split('=')
-                except ValueError:
-                    print('Overwriting arguments must have the form key=value.\n This one is: %s' % str(changes))
-                    exit(1)
-                if '_' in v:
-                    changes[k] = v
-                else:
-                    try:
-                        changes[k] = ast.literal_eval(v)
-                    except ValueError:
-                        changes[k] = v
-        except ValueError:
-            print("Error processing arguments: {!r}".format(arg))
-            exit(2)
-        return changes
-    else:
-        return {}
 
 
 def main():

@@ -1,4 +1,4 @@
-def train(config=None, changes={}):
+def train(parameters):
     """
     Handles QE model training.
     :param config: Either a path to a YAML or pkl config file or a dictionary of parameters.
@@ -6,7 +6,7 @@ def train(config=None, changes={}):
     :param changes: Optional dictionary of parameters to overwrite config.
     """
     import deepquest.train
-    train.main(config, changes)
+    train.main(parameters)
 
 def predict(model, dataset, save_path=None, evalset=None, changes={}):
     """

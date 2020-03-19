@@ -12,7 +12,6 @@ from keras_wrapper.cnn_model import updateModel
 from keras_wrapper.dataset import loadDataset, saveDataset
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from nmt_keras.nmt_keras import check_params
-from nmt_keras.utils.utils import update_parameters
 
 import deepquest.qe_models as modFactory
 from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
@@ -94,7 +93,6 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                                     set_names=params['EVAL_ON_SETS'])
         else:
             dataset = loadDataset(load_dataset)
-
     params['INPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['INPUTS_IDS_DATASET'][0]]
     #params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['OUTPUTS_IDS_DATASET_FULL'][0]]
     params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len['target_text']
@@ -353,31 +351,13 @@ def save_random_states(write_path, user_seed=None):
         json.dump(data, outfile)
 
 
-def main(config=None, changes={}):
+def main(parameters):
     """
     Handles QE model training.
     :param config: Either a path to a YAML or pkl config file or a dictionary of parameters.
     :param dataset: Optional path to a previously built pkl dataset.
     :param changes: Optional dictionary of parameters to overwrite config.
     """
-    if isinstance(config, str):
-        if config.endswith('.yml'):
-            # FIXME make this a user option (maybe depend on model type and level?)
-            with open('configs/default-config-BiRNN.yml') as file:
-                parameters = yaml.load(file, Loader=yaml.FullLoader)
-            with open(config) as file:
-                user_parameters = yaml.load(file, Loader=yaml.FullLoader)
-            parameters.update(user_parameters)
-            del user_parameters
-        elif config.endswith('.pkl'):
-            parameters = update_parameters(parameters, pkl2dict(config))
-    elif isinstance(config, dict):
-        parameters = config
-    else:
-        raise Exception(
-            'Expected path string to a config yml or pkl or a parameters dictionary, but received: %s . ', type(config))
-
-    parameters.update(changes)
     parameters['DATASET_NAME'] = parameters['TASK_NAME']
     parameters['DATA_ROOT_PATH'] = os.path.join(
         parameters['DATA_DIR'], parameters['DATASET_NAME'])
@@ -392,7 +372,6 @@ def main(config=None, changes={}):
         parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
     parameters['DATASET_STORE_PATH'] = parameters['STORE_PATH']
 
-    print(parameters)
     logger.info(parameters)
 
     # check if model already exists
