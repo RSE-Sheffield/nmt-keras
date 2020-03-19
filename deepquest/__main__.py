@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-from deepquest.utils.utils import setparameter, changes2dict
+from deepquest.utils.utils import setparameters, changes2dict
 
 def train(args):
     parameters = setparameters(user_config_path=args.config)
