@@ -1,6 +1,7 @@
 import logging
 
-from keras_wrapper.dataset import Dataset, saveDataset, loadDataset
+from deepquest.data_engine.dataset import Dataset
+from keras_wrapper.dataset import saveDataset, loadDataset
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 logger = logging.getLogger(__name__)
