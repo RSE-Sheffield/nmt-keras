@@ -1,63 +1,20 @@
 import argparse
 import sys
 
+
 def train(args):
-    import yaml
-    if args.config.endswith('.yml'):
-        # FIXME make this a user option (maybe depend on model type and level?)
-        with open('configs/default-config-BiRNN.yml') as file:
-            parameters = yaml.load(file, Loader=yaml.FullLoader)
-        with open(args.config) as file:
-            user_parameters = yaml.load(file, Loader=yaml.FullLoader)
-        parameters.update(user_parameters)
-        del user_parameters
-    elif args.config.endswith('.pkl'):
-        parameters = update_parameters(parameters, pkl2dict(args.config))
-    parameters.update(changes2dict(args))
-    if parameters.get('SEED') is not None:
-        print('Setting deepQuest seed to', parameters['SEED'])
-        import numpy.random
-        numpy.random.seed(parameters['SEED'])
-        import random
-        random.seed(parameters['SEED'])
-    from  . import train
-    train(parameters)
+    from . import train
+    train(args.config, args.changes)
 
 
 def predict(args):
     from . import predict
-    predict(args.model, args.dataset, args.save_path, args.evalset, changes2dict(args))
+    predict(args.model, args.dataset, save_path=args.save_path, evalset=args.evalset, changes=args.changes)
 
 
 def score(args):
     from . import score
     score(args.files)
-
-
-def changes2dict(args):
-    import ast
-    if args.changes:
-        changes = {}
-        try:
-            for arg in args.changes:
-                try:
-                    k, v = arg.split('=')
-                except ValueError:
-                    print('Overwriting arguments must have the form key=value.\n This one is: %s' % str(changes))
-                    exit(1)
-                if '_' in v:
-                    changes[k] = v
-                else:
-                    try:
-                        changes[k] = ast.literal_eval(v)
-                    except ValueError:
-                        changes[k] = v
-        except ValueError:
-            print("Error processing arguments: {!r}".format(arg))
-            exit(2)
-        return changes
-    else:
-        return {}
 
 
 def main():
@@ -75,7 +32,7 @@ def main():
     train_parser.add_argument("help", nargs='?', help="Show the help information.")
     train_parser.add_argument("-c", "--config",   required=False,
                               help="Config YAML or pkl for loading the model configuration. ")
-    train_parser.add_argument("changes", nargs="*", help="Changes to config. "
+    train_parser.add_argument("--changes", nargs="*", help="Changes to config. "
                               "Following the syntax Key=Value",
                               default="")
 
@@ -91,7 +48,7 @@ def main():
                                 "If not specified, defaults to STORE_PATH")
     predict_parser.add_argument("--evalset", required=False, help="Set to evaluate on. "
                                 "Defaults to 'test' if not specified. ")
-    predict_parser.add_argument("changes", nargs="*", help="Changes to config. "
+    predict_parser.add_argument("--changes", nargs="*", help="Changes to config. "
                                 "Following the syntax Key=Value",
                                 default="")
 
