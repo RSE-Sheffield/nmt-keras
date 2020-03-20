@@ -1,7 +1,6 @@
 import argparse
 import sys
 
-from deepquest.utils.utils import setparameters, changes2dict
 
 def train(args):
     from . import train
@@ -10,7 +9,7 @@ def train(args):
 
 def predict(args):
     from . import predict
-    predict(args.model, args.dataset, args.save_path, args.evalset, changes2dict(args.changes))
+    predict(args.model, args.dataset, save_path=args.save_path, evalset=args.evalset, changes=args.changes)
 
 
 def score(args):

@@ -32,7 +32,7 @@ def predict(model, dataset, save_path=None, evalset=None, changes={}):
     :param changes: Optional dictionary of parameters to overwrite config.
     """
     import deepquest.predict
-    predict.main(model, dataset, save_path, evalset, changes)
+    predict.main(model, dataset, save_path, evalset, changes2dict(changes))
 
 def score(files):
     """
