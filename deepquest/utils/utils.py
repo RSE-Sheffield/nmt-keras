@@ -59,7 +59,7 @@ def setparameters(user_config_path, default_config_path='configs/default-config-
     try:
         import yaml
 
-        with codecs.open('configs/default-config-BiRNN.yml', 'r', encoding='utf-8') as fh_default:
+        with codecs.open(default_config_path, 'r', encoding='utf-8') as fh_default:
             parameters = yaml.load(fh_default, Loader=yaml.FullLoader)
 
         if user_config_path.endswith('.yml'):
