@@ -4,18 +4,8 @@ import sys
 from deepquest.utils.utils import setparameters, changes2dict
 
 def train(args):
-    parameters = setparameters(user_config_path=args.config)
-
-    parameters.update(changes2dict(args))
-
-    if parameters.get('SEED') is not None:
-        print('Setting deepQuest seed to', parameters['SEED'])
-        import numpy.random
-        numpy.random.seed(parameters['SEED'])
-        import random
-        random.seed(parameters['SEED'])
     from . import train
-    train(parameters)
+    train(args.config, args.changes)
 
 
 def predict(args):

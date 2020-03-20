@@ -1,10 +1,24 @@
-def train(parameters):
+from deepquest.utils.utils import setparameters, changes2dict
+
+def train(config=None, changes={}):
     """
     Handles QE model training.
     :param config: Either a path to a YAML or pkl config file or a dictionary of parameters.
     :param dataset: Optional path to a previously built pkl dataset.
     :param changes: Optional dictionary of parameters to overwrite config.
     """
+    parameters = setparameters(user_config_path=config)
+
+    if changes:
+        parameters.update(changes2dict(changes))
+
+    if parameters.get('SEED') is not None:
+        print('Setting deepQuest seed to', parameters['SEED'])
+        import numpy.random
+        numpy.random.seed(parameters['SEED'])
+        import random
+        random.seed(parameters['SEED'])
+
     import deepquest.train
     train.main(parameters)
 
