@@ -1,6 +1,6 @@
 from deepquest.utils.utils import setparameters, changes2dict
 
-def train(config=None, changes={}):
+def train(config, changes={}):
     """
     Handles QE model training.
     :param config: Either a path to a YAML or pkl config file or a dictionary of parameters.
