@@ -10,7 +10,7 @@ def train(args):
 
 def predict(args):
     from . import predict
-    predict(args.model, args.dataset, args.save_path, args.evalset, changes2dict(args))
+    predict(args.model, args.dataset, args.save_path, args.evalset, changes2dict(args.changes))
 
 
 def score(args):

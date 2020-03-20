@@ -26,28 +26,28 @@ def update_parameters(params, updates, restrict=False):
     return params
 
 
-def changes2dict(args):
+def changes2dict(changes_list):
     import ast
-    if args.changes:
-        changes = {}
+    if changes_list:
+        changes_dict = {}
         try:
-            for arg in args.changes:
+            for arg in changes_list:
                 try:
                     k, v = arg.split('=')
                 except ValueError:
-                    print('Overwriting arguments must have the form key=value.\n This one is: %s' % str(changes))
+                    print('Overwriting arguments must have the form key=value.\n This one is: %s' % str(changes_dict))
                     exit(1)
                 if '_' in v:
-                    changes[k] = v
+                    changes_dict[k] = v
                 else:
                     try:
-                        changes[k] = ast.literal_eval(v)
+                        changes_dict[k] = ast.literal_eval(v)
                     except ValueError:
-                        changes[k] = v
+                        changes_dict[k] = v
         except ValueError:
             print("Error processing arguments: {!r}".format(arg))
             exit(2)
-        return changes
+        return changes_dict
     else:
         return {}
 
