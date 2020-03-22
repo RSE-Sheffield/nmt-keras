@@ -1,0 +1,17 @@
+# Name of the task, name of the folder which contains the data
+TASK_NAME: 'testData-sent'
+
+PRED_PATH: /home/fblain/workspace/deepquest_dev/predictions
+
+TEST_SRC_FILE: /home/fblain/workspace/deepquest_dev/data/testData-sent/test.src
+TEST_TRG_FILE: /home/fblain/workspace/deepquest_dev/data/testData-sent/test.mt
+
+# TODO: ideally, this should be:
+# LOAD_MODEL: /home/fblain/workspace/deepquest_dev/trained_models/testData-sent_srcmt_EncSent/best_model
+LOAD_MODEL: /home/fblain/workspace/deepquest_dev/trained_models/testData-sent_srcmt_EncSent/epoch_1 
+
+BATCH_SIZE: 50
+
+GPU_ID: 0
+
+VERBOSE: 1

@@ -1,0 +1,106 @@
+# Name of the task, name of the folder which contains the data
+TASK_NAME: 'testData-sent'
+
+# Extension of the source/target files
+SRC_LAN: 'src'
+TRG_LAN: 'mt'
+
+MODEL_TYPE: 'EncSent'
+
+# Path to where the trained model will be stored
+MODEL_DIRECTORY: './trained_models/'
+
+# Path to where the training data can be found
+DATA_DIR: './data/'
+
+
+## --------------------- ##
+## -- DATA parameters -- ##
+## --------------------- ##
+# Define the name of the text files which correspond to either 
+# train, dev, and test (if any) sets
+TEXT_FILES:
+  'train': 'train.'
+  'val': 'dev.'
+  'test': 'test.'
+# Label to be predicted (together with TEXT_FILES)
+# The naming of your files should be, e.g. 'train.her'
+PRED_SCORE: 'hter'
+# # ==== /!\ word-level
+# # #TODO: harmonize this, it just be 'qe_output' only
+# PRED_SCORE: 'tags'
+# OUTPUTS_IDS_DATASET: ['word_qe']
+# OUTPUTS_IDS_MODEL: ['word_qe']
+# # ==== end word-level
+
+# Select whether we use a weights matrix (mask) for the data outputs
+# SAMPLE_WEIGHTS: {'word_qe': {'BAD': 3}} 
+
+# Select which (tok,detok)enization will be applied
+TOKENIZATION_METHOD: 'tokenize_none'
+# TOKENIZATION_METHOD: 'tokenize_bert'
+DETOKENIZATION_METHOD: 'detokenize_none'
+
+# In/Output text parameters
+# Maximum length of the in/output sequence
+MAX_INPUT_TEXT_LEN: 70
+MAX_OUTPUT_TEXT_LEN: 70
+# Size of the in/output vocabulary. Set to 0 for using all, otherwise it will
+# be truncated to these most frequent words.
+INPUT_VOCABULARY_SIZE: 30000                     
+OUTPUT_VOCABULARY_SIZE: 30000                    
+# Minimum number of occurrences allowed for the words in the in/output
+# vocabulary. Set to 0 for using them all.
+MIN_OCCURRENCES_INPUT_VOCAB: 0               
+MIN_OCCURRENCES_OUTPUT_VOCAB: 0
+
+
+
+## ---------------------- ##
+## -- MODEL parameters -- ##
+## ---------------------- ##
+# Stop when computed this number of epochs
+MAX_EPOCH: 50 
+# Number of epochs between model saves
+EPOCHS_FOR_SAVE: 1
+# Save each time we evaluate the model
+# (disk consuming for long runs!)
+SAVE_EACH_EVALUATION: True 
+
+# Eval and Early stop parameters
+# Possible values: 'train', 'val' and 'test'
+EVAL_ON_SETS: ['val', 'test']
+# Turns on/off the early stop protocol
+# if True, stops after PATIENCE number of epochs without an improvement
+EARLY_STOP: True                             
+# Metric for the stop
+STOP_METRIC: 'pearson'
+PATIENCE: 5
+# Size of each minibatch
+BATCH_SIZE: 50
+
+# Loss function. Possible values are: 
+# ['categorical_crossentropy', 'mse', 'categorical_crossentropy']
+LOSS: ['mse']
+# Optimizer
+OPTIMIZER: 'Adadelta'
+# Learning rate. Recommended values - Adam 0.001 - Adadelta 1.0
+LR: 1.0
+
+
+
+## ------------------ ##
+## -- MISC OPTIONS -- ##
+## ------------------ ##
+# activate tensorboard (True, False)
+# logs saved in the experiment folder (default)
+TENSORBOARD: True
+
+# activate multi-gpu with, e.g. '0,1'
+GPU-ID: 0
+
+# we can choose to fix the seed
+# comment the line out otherwise
+SEED: 1
+
+VERBOSE: 1
