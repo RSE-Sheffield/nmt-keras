@@ -1,5 +1,7 @@
+import os
 import codecs
 import logging
+import pickle
 
 from six import iteritems
 
@@ -59,16 +61,30 @@ def setparameters(user_config_path, default_config_path='configs/default-config-
     try:
         import yaml
 
-        with codecs.open(default_config_path, 'r', encoding='utf-8') as fh_default:
-            parameters = yaml.load(fh_default, Loader=yaml.FullLoader)
-
         if user_config_path.endswith('.yml'):
             with codecs.open(user_config_path, 'r', encoding='utf-8') as fh_user:
                 user_parameters = yaml.load(fh_user, Loader=yaml.FullLoader)
+
+            # 'LOAD_MODEL' means we are predicting, so we load the config
+            # from the pre-trained model as the default one.
+            pretrained_model = user_parameters.get('LOAD_MODEL', None)
+            if pretrained_model:
+                parameters = pickle.load(
+                        open(os.path.join(os.path.split(pretrained_model)[0],
+                            'config.pkl'), 'rb'))
+            else:
+                #TODO: remove this... and load default params from deepquest.utils
+                with codecs.open(default_config_path, 'r', encoding='utf-8') as fh_default:
+                    parameters = yaml.load(fh_default, Loader=yaml.FullLoader)
+
             parameters.update(user_parameters)
             del user_parameters
 
         elif user_config_path.endswith('.pkl'):
+            #TODO: remove this... and load default params from deepquest.utils
+            with codecs.open(default_config_path, 'r', encoding='utf-8') as fh_default:
+                parameters = yaml.load(fh_default, Loader=yaml.FullLoader)
+
             from keras_wrapper.extra.read_write import pkl2dict
             parameters = update_parameters(parameters, pkl2dict(user_config_path))
 
