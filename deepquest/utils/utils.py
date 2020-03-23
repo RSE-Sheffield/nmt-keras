@@ -34,16 +34,15 @@ def changes2dict(changes_list):
             for arg in changes_list:
                 try:
                     k, v = arg.split('=')
-                except ValueError:
-                    print('Overwriting arguments must have the form key=value.\n This one is: %s' % str(changes_dict))
-                    exit(1)
-                if '_' in v:
-                    changes_dict[k] = v
-                else:
-                    try:
-                        changes_dict[k] = ast.literal_eval(v)
-                    except ValueError:
+                    if '_' in v:
                         changes_dict[k] = v
+                    else:
+                        try:
+                            changes_dict[k] = ast.literal_eval(v)
+                        except ValueError:
+                            changes_dict[k] = v
+                except ValueError:
+                    print('Ignoring command line arg: "%s"' % str(arg))
         except ValueError:
             print("Error processing arguments: {!r}".format(arg))
             exit(2)
