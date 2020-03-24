@@ -91,7 +91,8 @@ class EvalPerformance(KerasCallback):
                  max_plot=1.0,
                  do_plot=True,
                  verbose=1,
-                 no_ref=False):
+                 no_ref=False,
+                 metric_check=None):
         """
         Evaluates a model each N epochs or updates
 
@@ -200,6 +201,7 @@ class EvalPerformance(KerasCallback):
         self.do_plot = do_plot
         self.no_ref = no_ref
         create_dir_if_not_exists(self.save_path)
+        self.metric_check = metric_check
 
         # Single-output model
         if not self.gt_pos or self.gt_pos == 0:
@@ -476,6 +478,17 @@ class EvalPerformance(KerasCallback):
         if self.save_each_evaluation:
             from keras_wrapper.cnn_model import saveModel
             saveModel(self.model_to_eval, epoch, store_iter=not self.eval_on_epochs)
+
+        # Update best epoch and score
+        if self.metric_check:
+            if metrics[self.metric_check] > self.best_score: #FIXME Pearson is maximised, but RMSE and MAE are minimised
+                self.best_score = metrics[self.metric_check]
+                self.best_epoch = epoch
+                src = self.save_path + '/' + counter_name + '_' + str(epoch) + '.h5'
+                tmp = self.save_path + '/' + 'tmp_best_' + counter_name + '.h5'
+                dst = self.save_path + '/' + 'best_' + counter_name + '.h5'
+                os.symlink(src, tmp)
+                os.rename(tmp, dst) # gets around overwriting/updating symlinks
 
 
 PrintPerformanceMetricOnEpochEndOrEachNUpdates = EvalPerformance

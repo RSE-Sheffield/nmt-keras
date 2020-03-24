@@ -14,7 +14,7 @@ from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from nmt_keras.nmt_keras import check_params
 
 import deepquest.qe_models as modFactory
-from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
+from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates#, EarlyStopping
 from deepquest.data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 
 logging.basicConfig(level=logging.INFO,
@@ -313,7 +313,8 @@ def buildCallbacks(params, model, dataset):
                                                                              save_each_evaluation=params[
                                                                                  'SAVE_EACH_EVALUATION'],
                                                                              verbose=params['VERBOSE'],
-                                                                             no_ref=params['NO_REF'])
+                                                                             no_ref=params['NO_REF'],
+                                                                             metric_check=params['STOP_METRIC'])
 
             callbacks.append(callback_metric)
 
