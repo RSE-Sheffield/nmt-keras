@@ -10,11 +10,12 @@ import yaml
 from keras.utils import CustomObjectScope
 from keras_wrapper.cnn_model import updateModel
 from keras_wrapper.dataset import loadDataset, saveDataset
+from keras_wrapper.extra.callbacks import EarlyStopping
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from nmt_keras.nmt_keras import check_params
 
 import deepquest.qe_models as modFactory
-from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates#, EarlyStopping
+from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 from deepquest.data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 
 logging.basicConfig(level=logging.INFO,
@@ -177,7 +178,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                        'data_augmentation': params['DATA_AUGMENTATION'],
                        # early stopping parameters
                        'patience': params.get('PATIENCE', 0),
-                       'metric_check': params.get('STOP_METRIC', None) if params.get('EARLY_STOP', False) else None,
+                       'metric_check': None,
                        'eval_on_epochs': params.get('EVAL_EACH_EPOCHS', True),
                        'each_n_epochs': params.get('EVAL_EACH', 1),
                        'start_eval_on_epoch': params.get('START_EVAL_ON_EPOCH', 0),
@@ -314,9 +315,22 @@ def buildCallbacks(params, model, dataset):
                                                                                  'SAVE_EACH_EVALUATION'],
                                                                              verbose=params['VERBOSE'],
                                                                              no_ref=params['NO_REF'],
-                                                                             metric_check=params['STOP_METRIC'])
+                                                                             metric_check=params['STOP_METRIC'],
+                                                                             want_to_minimize=True if params['STOP_METRIC'].lower() in ['rmse','mae'] else False)
 
             callbacks.append(callback_metric)
+
+        # Early stopper
+        if params['EARLY_STOP']:
+            callback_early_stop = EarlyStopping(model,
+                                                patience=params['PATIENCE'],
+                                                metric_check=params['STOP_METRIC'],
+                                                check_split=params['EVAL_ON_SETS'][0],
+                                                want_to_minimize=True if params['STOP_METRIC'].lower() in ['rmse','mae'] else False,
+                                                eval_on_epochs=params['EVAL_EACH_EPOCHS'],
+                                                each_n_epochs=params['EVAL_EACH'],
+                                                start_eval_on_epoch=params['START_EVAL_ON_EPOCH'])
+            callbacks.append(callback_early_stop)
 
     return callbacks
 
