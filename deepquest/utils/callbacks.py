@@ -484,11 +484,9 @@ class EvalPerformance(KerasCallback):
             if metrics[self.metric_check] > self.best_score: #FIXME Pearson is maximised, but RMSE and MAE are minimised
                 self.best_score = metrics[self.metric_check]
                 self.best_epoch = epoch
-                src = self.save_path + '/' + counter_name + '_' + str(epoch) + '.h5'
-                tmp = self.save_path + '/' + 'tmp_best_' + counter_name + '.h5'
-                dst = self.save_path + '/' + 'best_' + counter_name + '.h5'
-                os.symlink(src, tmp)
-                os.rename(tmp, dst) # gets around overwriting/updating symlinks
+                best_path = self.save_path + '/' + 'best_' + counter_name
+                from keras_wrapper.cnn_model import saveModel
+                saveModel(self.model_to_eval, epoch, store_iter=False, path=best_path, full_path=True)
 
 
 PrintPerformanceMetricOnEpochEndOrEachNUpdates = EvalPerformance
