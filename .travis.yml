@@ -9,6 +9,8 @@ install:
   - pip install pytest pytest-cov
   - pip install codecov
 script:
-  - pytest --cov=./deepquest/
+  - pytest --cov=./deepquest/ tests/BiRNNsent.py
+  - pytest --cov=./deepquest/ tests/BiRNNdoc.py
+  - pytest --cov=./deepquest/ tests/BiRNNword.py
 after_success:
   - codecov

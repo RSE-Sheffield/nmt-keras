@@ -1,8 +1,78 @@
+import csv
 import os
 import tarfile
 import urllib.request
 
-def BiRNN_sent():
+def getTestVal(backend, level, mode, task_name, metric):
+	"""Gets the relevant value from the testVal.csv file to run a test against
+
+	Parameters:
+	backend (str): Keras backend eg tensorflow, or , theano
+	level (str): QE level under test, eg 'word', 'sentence', 'document'
+	task_name (str): Name of dataset, eg 'testData-word'
+	metric (str): test metric, eg 'pearson' or 'f1_prod'
+
+	Returns:
+	float: Value to run test against
+	"""
+
+	with open('tests/testVals.csv') as testValsFile:
+		reader = csv.reader(testValsFile)
+		next(reader)  # skip header line
+		for row in reader:
+			if (row[0] == backend) and (row[1] == level) and (row[2] == mode) and (row[3] == task_name) and (row[4] == metric):
+				value = float(row[5])
+	return value
+
+
+def getOutputVal(filepath, metric):
+	"""Gets the relevant value from the trained model output
+
+	Parameters:
+	filepath (str): path to the model output file
+	metric (str): test metric, eg 'pearson' or 'f1_prod'
+
+	Returns:
+	float: Value to run test against
+	"""
+	with open(filepath) as file:
+		reader = csv.reader(file)
+		value = 0.0
+		row = next(reader)
+		col = row.index(metric)  # in header find column corresponding to metric
+		for row in reader:
+			# grab the highest value in the column
+			if float(row[col]) > value:
+				value = float(row[col])
+				epoch = row[0]
+	return value, epoch
+
+
+def getPredictedVal(filepath, metric):
+	"""Gets the relevant value from the trained model output
+
+	Parameters:
+	filepath (str): path to the model output file
+	metric (str): test metric, eg 'pearson' or 'f1_prod'
+
+	Returns:
+	float: Value to run test against
+	"""
+
+	with open(filepath) as file:
+		reader = csv.reader(file)
+		rownum = 0
+		row = next(reader)
+		col = row.index(metric)  # in header find column corresponding to metric
+		for row in reader:
+			# grab the latest value in the column
+			if reader.line_num > rownum:
+				value = row[col]
+				rownum = reader.line_num
+	return float(value)
+
+
+def getTestData_BiRNN_sent():
     # Download and extract the files
     def downloadAndExtractFiles(cachePath,*args):
         for url in args:
@@ -65,7 +135,7 @@ def BiRNN_sent():
             print('Renaming ' + f + ' to ' + filename + '.target')
             os.rename(dataDir + f, filename + '.mt')
 
-def BiRNN_word():
+def getTestData_BiRNN_word():
     # Download and extract the files
     def downloadAndExtractFiles(cachePath,*args):
         for url in args:
@@ -128,7 +198,7 @@ def BiRNN_word():
             print('Renaming ' + f + ' to ' + filename + '.target')
             os.rename(dataDir + f, filename + '.mt')
 
-def BiRNN_doc():
+def getTestData_BiRNN_doc():
     # Download and extract the files
     def downloadAndExtractFiles(cachePath,*args):
         for url in args:
