@@ -10,7 +10,7 @@ via pip
 ----------------
 deepQuest can be installed using the python package manager, pip_, via one of several methods.
 We recommend installing within a Conda_ environment and ensuring you are using the latest versions of setuptools and pip.
-deepQuest supports python versions 3.6, 3.7 and 3.8
+deepQuest supports python versions 3.6 and 3.7
 
 1. pip install from remote repo
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
