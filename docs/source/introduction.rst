@@ -37,7 +37,7 @@ This approach has become very popular in many applications, where inputs and out
 In an encoder-decoder approach, an input sequence is encoded into an internal representation (roughly, features learned automatically), and then an output sequence is generated from this representation.
 Current best practices implement encoder-decoder approaches using Recurrent Neural Networks (RNNs), which handle inputs in a sequence, while taking previous computation steps into account.
 
-DeepQuest provides two different architectures, both based on the RNN encoder-decoder implementation:
+deepQuest provides two different architectures, both based on the RNN encoder-decoder implementation:
 
 
   **POSTECH architecture** (`Kim et al., 2017`_)
@@ -51,13 +51,13 @@ DeepQuest provides two different architectures, both based on the RNN encoder-de
   - *Estimator* is which is a bidirectional RNN model to produce quality estimates for words, phrases and sentences based on representations from the Predictor, the so-called *QE feature vectors* (QEFVs).
     These QEFVs are extracted by decomposing the Predictor softmax layer and contain weights assigned by the Predictor to the words of actual MT we seek to evaluate.
 
-  Similarly to original work by (`Kim et al., 2017`_), DeepQuest also allows a stacked architecture for Multi-Task Learning (MTL), which consists in alternating between word-level predictions, and word, sentence, and phrase-level QE objectives, with one objective at a time.
+  Similarly to original work by (`Kim et al., 2017`_), deepQuest also allows a stacked architecture for Multi-Task Learning (MTL), which consists in alternating between word-level predictions, and word, sentence, and phrase-level QE objectives, with one objective at a time.
 
 
   **BiRNN architecture** (`Ive et al., 2018`_)
 
   The BiRNN architecture uses only two bi-directional RNNs (bi-RNN) with Gated Recurrent Units (GRUs) as encoders, to learn the representation of the <source, translation> sentence pair.
-  In DeepQuest, the representations of the source and of the automatic translation are learned independently, and concatenated afterwards, as illustrated below:
+  In deepQuest, the representations of the source and of the automatic translation are learned independently, and concatenated afterwards, as illustrated below:
 
   .. image:: images/sent.jpg
     :align: center
@@ -81,8 +81,8 @@ DeepQuest provides two different architectures, both based on the RNN encoder-de
 Neural-based Document-Level Quality Estimation
 **********************************************
 
-DeepQuest is also suitable for neural-based document-level QE, for which a document representation is computed with RNNs (`Lin et al., 2015`_).
-Here is an illustration of the document-level architecture implemented in DeepQuest:
+deepQuest is also suitable for neural-based document-level QE, for which a document representation is computed with RNNs (`Lin et al., 2015`_).
+Here is an illustration of the document-level architecture implemented in deepQuest:
 
 .. image:: images/doc.jpg
   :align: center
@@ -92,7 +92,7 @@ This architecture is similar to the BiRNN architecture.
 The document-level quality predictor takes as its input a set of sentence-level representations.
 The last hidden state of the decoder can be taken as the summary of an entire sequence.
 However, some document-level QE scores are not a simple aggregations of sentence-level QE scores.
-In such cases, DeepQuest provides an architecture using the attention mechanism (see equation_) to learn to weight different representations at sentence-level.
+In such cases, deepQuest provides an architecture using the attention mechanism (see equation_) to learn to weight different representations at sentence-level.
 Finally, the last hidden state (or weighted sum) of the sentence-level representations is directly used to make classification decisions.
 
 
