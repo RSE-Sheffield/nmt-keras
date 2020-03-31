@@ -17,4 +17,4 @@ script:
   - travis-sphinx build
 after_success:
   - codecov
-  - travis-sphinx deploy
+  - travis-sphinx deploy --branches master,deepquest-dev,newdocs
