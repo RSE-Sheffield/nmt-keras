@@ -15,7 +15,6 @@
 """
 
 from .model import QEModel
-from keras.utils import multi_gpu_model
 from .utils import *
 
 class EncWord(QEModel):

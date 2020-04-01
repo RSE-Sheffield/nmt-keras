@@ -13,7 +13,9 @@ def train(args):
         del user_parameters
     elif args.config.endswith('.pkl'):
         parameters = update_parameters(parameters, pkl2dict(args.config))
+    
     parameters.update(changes2dict(args))
+
     if parameters.get('SEED') is not None:
         print('Setting deepQuest seed to', parameters['SEED'])
         import numpy.random
@@ -21,9 +23,9 @@ def train(args):
         import random
         random.seed(parameters['SEED'])
 
-    if args.gpuid:
-        n_gpus = set_gpu_id(args.gpuid)
-        parameters.update({'N_GPUS': n_gpus, 'GPU_ID': args.gpuid})
+    if parameters.get('GPU_ID') is not None:
+        n_gpus = set_gpu_id(str(parameters.get('GPU_ID')))
+        parameters.update({'N_GPUS': n_gpus, 'GPU_ID': parameters.get('GPU_ID')})
 
     from  . import train
     train(parameters)
@@ -67,7 +69,10 @@ def changes2dict(args):
                     changes[k] = v
                 else:
                     try:
-                        changes[k] = ast.literal_eval(v)
+                        if k == 'GPU_ID':
+                            changes[k] = str(v)
+                        else:
+                            changes[k] = ast.literal_eval(v)
                     except ValueError:
                         changes[k] = v
         except ValueError:
@@ -96,8 +101,6 @@ def main():
     train_parser.add_argument("changes", nargs="*", help="Changes to config. "
                               "Following the syntax Key=Value",
                               default="")
-    train_parser.add_argument("--gpuid", type=str, required=False,
-                            help="One or more integers specifying GPU device IDs (default 0)")
 
     # parser for prediction
     predict_parser = subparsers.add_parser('predict', help='Sample using trained QE models')
