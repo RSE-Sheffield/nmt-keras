@@ -3,10 +3,33 @@ import sys
 
 
 def train(args):
+<<<<<<< HEAD
+=======
+    import yaml
+    if args.config.endswith('.yml'):
+        # FIXME make this a user option (maybe depend on model type and level?)
+        with open('configs/default-config-BiRNN.yml') as file:
+            parameters = yaml.load(file, Loader=yaml.FullLoader)
+        with open(args.config) as file:
+            user_parameters = yaml.load(file, Loader=yaml.FullLoader)
+        parameters.update(user_parameters)
+        del user_parameters
+    elif args.config.endswith('.pkl'):
+        parameters = update_parameters(parameters, pkl2dict(args.config))
+    
+    parameters.update(changes2dict(args))
 
-    if args.gpuid:
-        n_gpus = set_gpu_id(args.gpuid)
-        parameters.update({'N_GPUS': n_gpus, 'GPU_ID': args.gpuid})
+    if parameters.get('SEED') is not None:
+        print('Setting deepQuest seed to', parameters['SEED'])
+        import numpy.random
+        numpy.random.seed(parameters['SEED'])
+        import random
+        random.seed(parameters['SEED'])
+>>>>>>> allow GPU_ID to be set in config file
+
+    if parameters.get('GPU_ID') is not None:
+        n_gpus = set_gpu_id(str(parameters.get('GPU_ID')))
+        parameters.update({'N_GPUS': n_gpus, 'GPU_ID': parameters.get('GPU_ID')})
 
     from  . import train
     train(args.config, args.changes)
@@ -50,7 +73,10 @@ def changes2dict(args):
                     changes[k] = v
                 else:
                     try:
-                        changes[k] = ast.literal_eval(v)
+                        if k == 'GPU_ID':
+                            changes[k] = str(v)
+                        else:
+                            changes[k] = ast.literal_eval(v)
                     except ValueError:
                         changes[k] = v
         except ValueError:
@@ -78,9 +104,12 @@ def main():
     train_parser.add_argument("--changes", nargs="*", help="Changes to config. "
                               "Following the syntax Key=Value",
                               default="")
+<<<<<<< HEAD
     train_parser.add_argument("help", nargs='?', help="Show the help information.")
     train_parser.add_argument("--gpuid", type=str, required=False,
                             help="One or more integers specifying GPU device IDs (default 0)")
+=======
+>>>>>>> allow GPU_ID to be set in config file
 
     # parser for prediction
     predict_parser = subparsers.add_parser('predict', help='Sample using trained QE models')
