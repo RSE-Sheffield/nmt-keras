@@ -3,8 +3,6 @@ import sys
 
 
 def train(args):
-<<<<<<< HEAD
-=======
     import yaml
     if args.config.endswith('.yml'):
         # FIXME make this a user option (maybe depend on model type and level?)
@@ -25,7 +23,6 @@ def train(args):
         numpy.random.seed(parameters['SEED'])
         import random
         random.seed(parameters['SEED'])
->>>>>>> allow GPU_ID to be set in config file
 
     if parameters.get('GPU_ID') is not None:
         n_gpus = set_gpu_id(str(parameters.get('GPU_ID')))
@@ -104,12 +101,7 @@ def main():
     train_parser.add_argument("--changes", nargs="*", help="Changes to config. "
                               "Following the syntax Key=Value",
                               default="")
-<<<<<<< HEAD
     train_parser.add_argument("help", nargs='?', help="Show the help information.")
-    train_parser.add_argument("--gpuid", type=str, required=False,
-                            help="One or more integers specifying GPU device IDs (default 0)")
-=======
->>>>>>> allow GPU_ID to be set in config file
 
     # parser for prediction
     predict_parser = subparsers.add_parser('predict', help='Sample using trained QE models')
