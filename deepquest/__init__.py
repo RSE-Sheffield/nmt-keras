@@ -53,14 +53,11 @@ def set_gpu_id(gpuid):
     :param gpuid: String of comma-separated integers refering to GPU devices.
     """
     import os
+    import re
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    gpuid = gpuid.split(',') if ',' in gpuid else gpuid.split()
-    gpustr = ''
-    gpucount = 0
-    for g in gpuid:
-        gpustr += str(g).strip() + ','
-        gpucount += 1
-    gpustr = gpustr[0:-1]
+    gpu_list = re.split(r"\W+", gpuid)
+    gpustr = ",".join(gpu_list)
+    gpucount = len(gpu_list)
     os.environ["CUDA_VISIBLE_DEVICES"] = gpustr
 
     return gpucount
