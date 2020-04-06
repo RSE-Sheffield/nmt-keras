@@ -16,6 +16,7 @@
 
 from .birnn_doc import encdoc
 from .utils import *
+from .layers import *
 
 
 class encdocatt(encdoc):

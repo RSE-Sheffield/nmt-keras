@@ -16,6 +16,8 @@
 
 from .birnn_word import encword
 from .utils import *
+from .layers import *
+from keras.models import clone_model
 
 
 class encdoc(encword):

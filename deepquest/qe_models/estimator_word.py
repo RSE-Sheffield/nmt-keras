@@ -34,6 +34,7 @@
 
 from .model import QEModel
 from .utils import *
+from .layers import *
 
 
 class estimatorword(QEModel):

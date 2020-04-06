@@ -17,6 +17,7 @@ import logging
 
 from abc import ABCMeta, abstractmethod
 from .utils import *
+from .layers import *
 
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
