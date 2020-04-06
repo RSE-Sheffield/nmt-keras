@@ -14,7 +14,6 @@ from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from nmt_keras.nmt_keras import check_params
 
 import deepquest.qe_models as modFactory
-from deepquest.utils import default_params, add_dependent_params
 from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
 from deepquest.data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 
@@ -347,24 +346,7 @@ def main(parameters):
     :param dataset: Optional path to a previously built pkl dataset.
     :param changes: Optional dictionary of parameters to overwrite config.
     """
-    parameters = default_params() # load the default parameters (BiRNN by default)
-    if isinstance(config, str):
-        if config.endswith('.yml'):
-            with open(config) as file:
-                user_parameters = yaml.load(file, Loader=yaml.FullLoader)
-            parameters.update(user_parameters)
-            del user_parameters
-        elif config.endswith('.pkl'):
-            parameters = parameters.updatepkl2dict(config)
-    elif isinstance(config, dict):
-        parameters.update(config)
-    else:
-        raise Exception(
-            'Expected path string to a config yml or pkl or a parameters dictionary, but received: %s . ', type(config))
-
-    parameters.update(changes) # update with any key=value pair changes
-    parameters = add_dependent_params(parameters) # add some parameters that depend on others
-
+    
     logger.info(parameters)
 
     # check if model already exists
