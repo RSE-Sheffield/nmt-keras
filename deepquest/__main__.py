@@ -29,17 +29,16 @@ def main():
     # parser for training
     train_parser = subparsers.add_parser('train', help='Train QE models')
     train_parser.set_defaults(func=train)
-    train_parser.add_argument("help", nargs='?', help="Show the help information.")
     train_parser.add_argument("-c", "--config",   required=False,
                               help="Config YAML or pkl for loading the model configuration. ")
     train_parser.add_argument("--changes", nargs="*", help="Changes to config. "
                               "Following the syntax Key=Value",
                               default="")
+    train_parser.add_argument("help", nargs='?', help="Show the help information.")
 
     # parser for prediction
     predict_parser = subparsers.add_parser('predict', help='Sample using trained QE models')
     predict_parser.set_defaults(func=predict)
-    predict_parser.add_argument("help", nargs='?', help="Show the help information.")
     predict_parser.add_argument("--model", required=False,
                                 help="model file (.h5) to use")
     predict_parser.add_argument("--dataset", required=False,
@@ -51,6 +50,7 @@ def main():
     predict_parser.add_argument("--changes", nargs="*", help="Changes to config. "
                                 "Following the syntax Key=Value",
                                 default="")
+    predict_parser.add_argument("help", nargs='?', help="Show the help information.")
 
     # parser for scoring
     score_parser = subparsers.add_parser(
