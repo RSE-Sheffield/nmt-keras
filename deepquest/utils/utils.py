@@ -39,10 +39,10 @@ def changes2dict(changes_list):
                     if '_' in v:
                         changes_dict[k] = v
                     else:
-                        try:
+                        if k == 'GPU_ID':
+                            changes_dict[k] = str(v)
+                        else:
                             changes_dict[k] = ast.literal_eval(v)
-                        except ValueError:
-                            changes_dict[k] = v
                 except ValueError:
                     print('Ignoring command line arg: "%s"' % str(arg))
         except ValueError:
