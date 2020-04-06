@@ -84,7 +84,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             else:
                 if 'doc_qe' in params['OUTPUTS_IDS_MODEL']:
                     params = preprocessDoc(params)
-                elif 'EstimatorDoc' in params['MODEL_TYPE']:
+                elif 'estimatordoc' in params['MODEL_TYPE'].lower():
                     raise Exception('Translation_Model model_type "' +
                                     params['MODEL_TYPE'] + '" is not implemented.')
                 dataset = build_dataset(params)
@@ -346,20 +346,7 @@ def main(parameters):
     :param dataset: Optional path to a previously built pkl dataset.
     :param changes: Optional dictionary of parameters to overwrite config.
     """
-    parameters['DATASET_NAME'] = parameters['TASK_NAME']
-    parameters['DATA_ROOT_PATH'] = os.path.join(
-        parameters['DATA_DIR'], parameters['DATASET_NAME'])
-    parameters['MAPPING'] = os.path.join(parameters['DATA_ROOT_PATH'], 'mapping.%s_%s.pkl' % (
-        parameters['SRC_LAN'], parameters['TRG_LAN']))
-    parameters['BPE_CODES_PATH'] = os.path.join(
-        parameters['DATA_ROOT_PATH'], '/training_codes.joint')
-    parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + \
-        parameters['SRC_LAN'] + parameters['TRG_LAN'] + \
-        '_' + parameters['MODEL_TYPE']
-    parameters['STORE_PATH'] = os.path.join(
-        parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
-    parameters['DATASET_STORE_PATH'] = parameters['STORE_PATH']
-
+    
     logger.info(parameters)
 
     # check if model already exists
