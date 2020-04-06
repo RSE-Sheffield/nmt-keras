@@ -3,7 +3,7 @@ import sys
 
 
 def train(args):
-    from . import train
+    from  . import train
     train(args.config, args.changes)
 
 

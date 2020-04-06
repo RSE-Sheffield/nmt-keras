@@ -1,10 +1,6 @@
-import codecs
 import logging
 
 from six import iteritems
-
-from deepquest.utils import add_dependent_params, default_params
-
 
 logging.basicConfig(level=logging.INFO,
                     format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -26,56 +22,3 @@ def update_parameters(params, updates, restrict=False):
             params[new_param_key] = new_param_value
 
     return params
-
-
-def changes2dict(changes_list):
-    import ast
-    if changes_list:
-        changes_dict = {}
-        try:
-            for arg in changes_list:
-                try:
-                    k, v = arg.split('=')
-                    if '_' in v:
-                        changes_dict[k] = v
-                    else:
-                        try:
-                            changes_dict[k] = ast.literal_eval(v)
-                        except ValueError:
-                            changes_dict[k] = v
-                except ValueError:
-                    print('Ignoring command line arg: "%s"' % str(arg))
-        except ValueError:
-            print("Error processing arguments: {!r}".format(arg))
-            exit(2)
-        return changes_dict
-    else:
-        return {}
-
-
-def setparameters(user_config_path):
-    """
-    This function sets the overall parameters to used by the current running instance of dq.
-    """
-    try:
-
-        parameters = default_params() # load the default parameters (BiRNN by default)
-
-        if user_config_path.endswith('.yml'):
-            import yaml
-            with codecs.open(user_config_path, 'r', encoding='utf-8') as fh_user:
-                user_parameters = yaml.load(fh_user, Loader=yaml.FullLoader)
-            parameters.update(user_parameters)
-            del user_parameters
-
-        elif user_config_path.endswith('.pkl'):
-            from keras_wrapper.extra.read_write import pkl2dict
-            parameters = update_parameters(parameters, pkl2dict(user_config_path))
-        
-        parameters = add_dependent_params(parameters) # add some parameters that depend on others
-
-    except Exception as exception:
-        logger.exception("Exception occured: {}".format(exception))
-
-    return parameters
-

@@ -16,6 +16,7 @@ import sys
 import logging
 
 from abc import ABCMeta, abstractmethod
+from keras.utils import multi_gpu_model
 from .utils import *
 from .layers import *
 

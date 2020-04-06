@@ -23,6 +23,7 @@ setuptools.setup(
         "pyyaml",
         "tensorflow<2.0",
         "tensorflow_hub",
+        "tensorflow-gpu<2.0",
         "multimodal_keras_wrapper",
         "keras @ https://github.com/MarcBS/keras/archive/master.zip",
         "nmt_keras @ https://github.com/davidwilby/nmt-keras/archive/setup.zip"

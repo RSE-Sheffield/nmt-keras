@@ -204,4 +204,3 @@ class encword(QEModel):
                 inputs=inputs,
                 outputs=[output_qe_layer]
                 )
-
