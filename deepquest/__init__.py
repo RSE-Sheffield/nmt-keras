@@ -236,6 +236,9 @@ def default_params(model='BiRNN'):
                                                     # Set to 0 for using them all.
         MAX_INPUT_TEXT_LEN = 70                       # Maximum length of the input sequence
 
+        MAX_SRC_INPUT_TEXT_LEN = MAX_INPUT_TEXT_LEN
+        MAX_TRG_INPUT_TEXT_LEN = MAX_INPUT_TEXT_LEN
+
         # Output text parameters
         OUTPUT_VOCABULARY_SIZE = 30000                    # Size of the input vocabulary. Set to 0 for using all,
                                                     # otherwise it will be truncated to these most frequent words.
