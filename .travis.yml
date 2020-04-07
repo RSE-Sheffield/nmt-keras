@@ -2,7 +2,7 @@ dist: xenial
 language: python
 
 python:
-  # - '3.6'
+  - '3.6'
   - '3.7'
   # - '3.8' # Tensorflow currently compatible up to 3.7
 install:
@@ -17,4 +17,4 @@ script:
   - travis-sphinx build
 after_success:
   - codecov
-  - travis-sphinx deploy --branches master,deepquest-dev,newdocs
+  - travis-sphinx deploy --branches master,deepquest-dev
