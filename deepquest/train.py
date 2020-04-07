@@ -134,7 +134,7 @@ def train_model(params, weights_dict=None, load_dataset=None, trainable_pred=Tru
             # from the files containing the model
             from keras.utils import CustomObjectScope
             # includes all layers and everything defined in deepquest.qe_models.utils
-            import deepquest.qe_models.utils as layers
+            import deepquest.qe_models.layers as layers
             with CustomObjectScope(vars(layers)):
                 qe_model = updateModel(
                     qe_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
