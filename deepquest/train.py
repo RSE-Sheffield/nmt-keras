@@ -16,6 +16,7 @@ from nmt_keras.nmt_keras import check_params
 
 import deepquest.qe_models as modFactory
 from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
+from deepquest.utils.utils import compare_params
 from deepquest.data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 
 logging.basicConfig(level=logging.INFO,
@@ -374,48 +375,24 @@ def main(parameters):
         dataset = None
     else:
         # if model already exists check that only RELOAD or RELOAD_EPOCH differ
-        logger.info('Model ' + parameters['STORE_PATH'] + ' already exists. ')
-        prev_config_init = os.path.join(
-            parameters['STORE_PATH'], 'config_init.pkl')
-        logger.info(
-            'Loading trained model config_init.pkl from ' + prev_config_init)
-        parameters_prev = pkl2dict(prev_config_init)
+        logger.info('Model ' + parameters['STORE_PATH'] + ' already exists.\nChecking that parameters match..')
+        prev_config = os.path.join(parameters['STORE_PATH'], 'config.pkl')
+        logger.info('Loading trained model config.pkl from ' + prev_config)
+        parameters_prev = pkl2dict(prev_config)
         if parameters['RELOAD_EPOCH'] != True or parameters['RELOAD'] == 0:
             logger.info(
                 'Specify RELOAD_EPOCH=True and RELOAD>0 in your config to resume training an existing model. ')
             return
-        elif parameters != parameters_prev:
-            reload_keys = ['RELOAD', 'RELOAD_EPOCH']
-            stop_flag = False
-            for key in parameters_prev:
-                if key not in (parameters or reload_keys):
-                    logger.info(
-                        'Previously trained model config does not contain ' + key)
-                    stop_flag = True
-                elif parameters[key] != parameters_prev[key] and key not in reload_keys:
-                    logger.info('Previous model has ' + key + ': ' +
-                                str(parameters[key]) + ' but this model has ' + key + ': ' + str(parameters_prev[key]))
-                    stop_flag = True
-            for key in parameters:
-                if key not in (parameters_prev or reload_keys):
-                    logger.info('New model config does not contain ' + key)
-                    stop_flag = True
-            if stop_flag == True:
-                raise Exception(
-                    'Model parameters not equal, can not resume training. ')
-            else:
-                logger.info('Resuming training from epoch ' +
-                            str(parameters['RELOAD']))
+        compare_params(parameters, parameters_prev,ignore=['RELOAD', 'RELOAD_EPOCH'])
+        
+        logger.info('Resuming training from epoch ' + str(parameters['RELOAD']))
 
-            # if there is a pre-trained model and dataset is not specified earlier, set the path to load the existing dataset
-            dataset = parameters['DATASET_STORE_PATH'] + '/Dataset_' + parameters['DATASET_NAME'] + \
-                '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '.pkl'
-        else:
-            logger.info(
-                'Previously trained config and new config are the same, specify which epoch to resume training from. ')
-            return
+        # if there is a pre-trained model and dataset is not specified earlier, set the path to load the existing dataset
+        dataset = parameters['DATASET_STORE_PATH'] + '/Dataset_' + parameters['DATASET_NAME'] + \
+            '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '.pkl'
 
-    check_params(parameters)
+
+    check_params(parameters) # nmt-keras' check_params function
 
     save_random_states(parameters['STORE_PATH'],
                        user_seed=parameters.get('SEED'))

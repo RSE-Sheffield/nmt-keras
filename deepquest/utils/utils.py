@@ -22,3 +22,31 @@ def update_parameters(params, updates, restrict=False):
             params[new_param_key] = new_param_value
 
     return params
+
+def compare_params(params_new, params_old, ignore=None):
+    """
+    Checks a new params dictionary against one from a previous model for differences.
+    :param params_new: new params dictionary
+    :param params_old: previous params dictionary
+    :param ignore: list of keys to ignore in comparison
+    """
+    stop_flag = False
+    for key in params_old:
+        if key not in (params_new or ignore):
+            logger.info(
+                'New config does not contain ' + key)
+            stop_flag = True
+        elif params_new[key] != params_old[key] and key not in ignore:
+            logger.info('Previous model has ' + key + ': ' +
+                        str(params_new[key]) + ' but this model has ' + key + ': ' + str(params_old[key]))
+            stop_flag = True
+    for key in params_new:
+        if key not in (params_old or ignore):
+            logger.info('Previous config does not contain ' + key)
+            stop_flag = True
+    if stop_flag == True:
+        raise Exception('Model parameters not equal, can not resume training. ')
+    else:
+        logger.info(
+            'Previously trained config and new config are compatible. ')
+        return
