@@ -33,7 +33,7 @@ from .utils import *
 from .layers import *
 
 
-class predictor(QEModel):
+class Predictor(QEModel):
 
     def __init__(self, params):
         # define here attributes that are model specific

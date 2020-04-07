@@ -14,12 +14,12 @@
 #TODO: add a description of the model here.
 """
 
-from .birnn_word import encword
+from .birnn_word import EncWord
 from .utils import *
 from .layers import *
 
 
-class encsent(encword):
+class EncSent(EncWord):
 
     def __init__(self, params):
         # define here attributes that are model specific
