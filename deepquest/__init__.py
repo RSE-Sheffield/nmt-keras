@@ -236,9 +236,6 @@ def default_params(model='BiRNN'):
                                                     # Set to 0 for using them all.
         MAX_INPUT_TEXT_LEN = 70                       # Maximum length of the input sequence
 
-        MAX_SRC_INPUT_TEXT_LEN = MAX_INPUT_TEXT_LEN
-        MAX_TRG_INPUT_TEXT_LEN = MAX_INPUT_TEXT_LEN
-
         # Output text parameters
         OUTPUT_VOCABULARY_SIZE = 30000                    # Size of the input vocabulary. Set to 0 for using all,
                                                     # otherwise it will be truncated to these most frequent words.
@@ -403,5 +400,7 @@ def add_dependent_params(parameters):
     parameters['STORE_PATH'] = os.path.join(
         parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
     parameters['DATASET_STORE_PATH'] = parameters['STORE_PATH']
+    parameters['MAX_SRC_INPUT_TEXT_LEN'] = parameters['MAX_INPUT_TEXT_LEN']
+    parameters['MAX_TRG_INPUT_TEXT_LEN'] = parameters['MAX_INPUT_TEXT_LEN']
 
     return parameters
