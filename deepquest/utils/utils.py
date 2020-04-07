@@ -32,16 +32,17 @@ def compare_params(params_new, params_old, ignore=None):
     """
     stop_flag = False
     for key in params_old:
-        if key not in (params_new or ignore):
-            logger.info(
-                'New config does not contain ' + key)
-            stop_flag = True
-        elif params_new[key] != params_old[key] and key not in ignore:
-            logger.info('Previous model has ' + key + ': ' +
-                        str(params_new[key]) + ' but this model has ' + key + ': ' + str(params_old[key]))
-            stop_flag = True
+        if key not in ignore:
+            if key not in params_new:
+                logger.info(
+                    'New config does not contain ' + key)
+                stop_flag = True
+            elif params_new[key] != params_old[key]:
+                logger.info('New model has ' + key + ': ' +
+                            str(params_new[key]) + ' but previous model has ' + key + ': ' + str(params_old[key]))
+                stop_flag = True
     for key in params_new:
-        if key not in (params_old or ignore):
+        if (key not in params_old) and (key not in ignore):
             logger.info('Previous config does not contain ' + key)
             stop_flag = True
     if stop_flag == True:

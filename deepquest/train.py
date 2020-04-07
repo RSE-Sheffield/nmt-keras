@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 
-def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, trainable_est=True, weights_path=None):
+def train_model(params, weights_dict=None, load_dataset=None, trainable_pred=True, trainable_est=True, weights_path=None):
     """
     Training function. Sets the training parameters from params. Build or loads the model and launches the training.
     :param params: Dictionary of network hyperparameters.
@@ -98,6 +98,10 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
     params['INPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['INPUTS_IDS_DATASET'][0]]
     #params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['OUTPUTS_IDS_DATASET_FULL'][0]]
     params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len['target_text']
+
+    if params['RELOAD_EPOCH'] == True and params['RELOAD'] > 0:
+        compare_params(params, pkl2dict(os.path.join(params['STORE_PATH'], 'config.pkl')), ignore=['RELOAD', 'RELOAD_EPOCH'])
+        logger.info('Resuming training from epoch ' + str(params['RELOAD']))
 
     # Build model
     try:
@@ -370,24 +374,19 @@ def main(parameters):
         # if model doesn't already exist
         # write out initial parameters to pkl
         os.makedirs(parameters['STORE_PATH'])
-        dict2pkl(parameters, os.path.join(
-            parameters['STORE_PATH'], 'config_init.pkl'))
         dataset = None
         parameters['RELOAD'] = 0
         parameters['RELOAD_EPOCH'] = False
     else:
         # if model already exists check that only RELOAD or RELOAD_EPOCH differ
-        logger.info('Model ' + parameters['STORE_PATH'] + ' already exists.\nChecking that parameters match..')
-        prev_config = os.path.join(parameters['STORE_PATH'], 'config.pkl')
-        logger.info('Loading trained model config.pkl from ' + prev_config)
-        parameters_prev = pkl2dict(prev_config)
+        logger.info('Model ' + parameters['STORE_PATH'] + ' already exists.')
+        # logger.info('Loading trained model config.pkl from ' + prev_config)
         if parameters['RELOAD_EPOCH'] != True or parameters['RELOAD'] == 0:
             logger.info(
                 'Specify RELOAD_EPOCH=True and RELOAD>0 in your config to resume training an existing model. ')
             return
-        compare_params(parameters, parameters_prev,ignore=['RELOAD', 'RELOAD_EPOCH'])
-        
-        logger.info('Resuming training from epoch ' + str(parameters['RELOAD']))
+        # compare_params(parameters, pkl2dict(os.path.join(parameters['STORE_PATH'], 'config.pkl')), ignore=['RELOAD', 'RELOAD_EPOCH'])
+        # logger.info('Resuming training from epoch ' + str(parameters['RELOAD']))
 
         # if there is a pre-trained model and dataset is not specified earlier, set the path to load the existing dataset
         dataset = parameters['DATASET_STORE_PATH'] + '/Dataset_' + parameters['DATASET_NAME'] + \
@@ -453,14 +452,14 @@ def main(parameters):
                                  parameters['MODEL_NAME'])
                     parameters['MAX_EPOCH'] = parameters['EPOCH_PER_MODEL']
 
-                    train_model(parameters, weights_dict, dataset, trainable_est=trainable_est,
+                    train_model(parameters, weights_dict, load_dataset=dataset, trainable_est=trainable_est,
                                 trainable_pred=trainable_pred, weights_path=parameters.get('PRED_WEIGHTS', None))
 
                     flag = True
     else:
 
         logging.info('Running training task.')
-        train_model(parameters, dataset, trainable_est=True, trainable_pred=True,
+        train_model(parameters,weights_dict=None, load_dataset=dataset, trainable_est=True, trainable_pred=True,
                     weights_path=parameters.get('PRED_WEIGHTS', None))
 
     logger.info('Done!')
