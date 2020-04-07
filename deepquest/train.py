@@ -373,6 +373,8 @@ def main(parameters):
         dict2pkl(parameters, os.path.join(
             parameters['STORE_PATH'], 'config_init.pkl'))
         dataset = None
+        parameters['RELOAD'] = 0
+        parameters['RELOAD_EPOCH'] = False
     else:
         # if model already exists check that only RELOAD or RELOAD_EPOCH differ
         logger.info('Model ' + parameters['STORE_PATH'] + ' already exists.\nChecking that parameters match..')
