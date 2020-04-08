@@ -122,7 +122,7 @@ def getTestData_BiRNN_sent():
             print('Copying first ' + str(totalLines) + ' lines of ' + file_in + ' to ' + file_out)
             with open(file_in) as file:
                 lines = file.readlines()
-                lines = [l for i, l in enumerate(lines) if i <= totalLines-1]
+                lines = [l for i, l in enumerate(lines) if i < totalLines]
                 with open(file_out, "w") as f1:
                     f1.writelines(lines)
 
