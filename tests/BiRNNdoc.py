@@ -30,7 +30,7 @@ def test_BiRNN_document():
 	dq.train('tests/config-' + level + '-BiRNN.yml')
 	result, epoch = getOutputVal('trained_models/' + model_name + '/val.qe_metrics', metric)
 
-	assert (result - testVal)**2 < 1E-10 # check that output is within 1E-5 of the expected result
+	assert abs(result - testVal) < 1E-5 # check that output is within 1E-5 of the expected result
 
 
 
@@ -44,7 +44,7 @@ def test_BiRNN_document():
 	result = getPredictedVal(save_path + 'test.qe_metrics', metric)
 	testVal = getTestVal(backend, level, 'predict', task_name, metric)
 
-	assert (result - testVal)**2 < 1E-10 # check that output is within 1E-5 of the expected result
+	assert abs(result - testVal) < 1E-5 # check that output is within 1E-5 of the expected result
 
 if __name__ == '__main__':
 	test_BiRNN_document()
