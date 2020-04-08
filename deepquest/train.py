@@ -16,7 +16,7 @@ from nmt_keras.nmt_keras import check_params
 
 import deepquest.qe_models as modFactory
 from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
-from deepquest.utils.utils import compare_params
+from deepquest import compare_params
 from deepquest.data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 
 logging.basicConfig(level=logging.INFO,
