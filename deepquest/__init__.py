@@ -400,7 +400,11 @@ def add_dependent_params(parameters):
     parameters['STORE_PATH'] = os.path.join(
         parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
     parameters['DATASET_STORE_PATH'] = parameters['STORE_PATH']
-    parameters['MAX_SRC_INPUT_TEXT_LEN'] = parameters['MAX_INPUT_TEXT_LEN']
-    parameters['MAX_TRG_INPUT_TEXT_LEN'] = parameters['MAX_INPUT_TEXT_LEN']
+    max_src_in_len=parameters.get('MAX_SRC_INPUT_TEXT_LEN', None)
+    if max_src_in_len == None:
+        parameters['MAX_SRC_INPUT_TEXT_LEN'] = parameters['MAX_INPUT_TEXT_LEN']
+    max_trg_in_len=parameters.get('MAX_TRG_INPUT_TEXT_LEN', None)
+    if max_trg_in_len == None:
+        parameters['MAX_TRG_INPUT_TEXT_LEN'] = parameters['MAX_INPUT_TEXT_LEN']
 
     return parameters
