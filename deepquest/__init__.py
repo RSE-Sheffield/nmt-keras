@@ -7,7 +7,9 @@ def train(config, changes={}):
     """
     parameters = setparameters(user_config_path=config)
 
-    if changes:
+    if isinstance(changes,dict):
+        parameters.update(changes)
+    elif isinstance(changes,list):
         parameters.update(changes2dict(changes))
 
     if parameters.get('SEED') is not None:
