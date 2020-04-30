@@ -10,6 +10,7 @@ import yaml
 from keras.utils import CustomObjectScope
 from keras_wrapper.cnn_model import updateModel
 from keras_wrapper.dataset import loadDataset, saveDataset
+from keras_wrapper.extra.callbacks import EarlyStopping
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from nmt_keras.nmt_keras import check_params
 
@@ -84,7 +85,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             else:
                 if 'doc_qe' in params['OUTPUTS_IDS_MODEL']:
                     params = preprocessDoc(params)
-                elif 'EstimatorDoc' in params['MODEL_TYPE']:
+                elif 'estimatordoc' in params['MODEL_TYPE'].lower():
                     raise Exception('Translation_Model model_type "' +
                                     params['MODEL_TYPE'] + '" is not implemented.')
                 dataset = build_dataset(params)
@@ -177,7 +178,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                        'data_augmentation': params['DATA_AUGMENTATION'],
                        # early stopping parameters
                        'patience': params.get('PATIENCE', 0),
-                       'metric_check': params.get('STOP_METRIC', None) if params.get('EARLY_STOP', False) else None,
+                       'metric_check': None,
                        'eval_on_epochs': params.get('EVAL_EACH_EPOCHS', True),
                        'each_n_epochs': params.get('EVAL_EACH', 1),
                        'start_eval_on_epoch': params.get('START_EVAL_ON_EPOCH', 0),
@@ -313,9 +314,23 @@ def buildCallbacks(params, model, dataset):
                                                                              save_each_evaluation=params[
                                                                                  'SAVE_EACH_EVALUATION'],
                                                                              verbose=params['VERBOSE'],
-                                                                             no_ref=params['NO_REF'])
+                                                                             no_ref=params['NO_REF'],
+                                                                             metric_check=params['STOP_METRIC'],
+                                                                             want_to_minimize=True if params['STOP_METRIC'].lower() in ['rmse','mae'] else False)
 
             callbacks.append(callback_metric)
+
+        # Early stopper
+        if params['EARLY_STOP']:
+            callback_early_stop = EarlyStopping(model,
+                                                patience=params['PATIENCE'],
+                                                metric_check=params['STOP_METRIC'],
+                                                check_split=params['EVAL_ON_SETS'][0],
+                                                want_to_minimize=True if params['STOP_METRIC'].lower() in ['rmse','mae'] else False,
+                                                eval_on_epochs=params['EVAL_EACH_EPOCHS'],
+                                                each_n_epochs=params['EVAL_EACH'],
+                                                start_eval_on_epoch=params['START_EVAL_ON_EPOCH'])
+            callbacks.append(callback_early_stop)
 
     return callbacks
 
@@ -346,20 +361,7 @@ def main(parameters):
     :param dataset: Optional path to a previously built pkl dataset.
     :param changes: Optional dictionary of parameters to overwrite config.
     """
-    parameters['DATASET_NAME'] = parameters['TASK_NAME']
-    parameters['DATA_ROOT_PATH'] = os.path.join(
-        parameters['DATA_DIR'], parameters['DATASET_NAME'])
-    parameters['MAPPING'] = os.path.join(parameters['DATA_ROOT_PATH'], 'mapping.%s_%s.pkl' % (
-        parameters['SRC_LAN'], parameters['TRG_LAN']))
-    parameters['BPE_CODES_PATH'] = os.path.join(
-        parameters['DATA_ROOT_PATH'], '/training_codes.joint')
-    parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + \
-        parameters['SRC_LAN'] + parameters['TRG_LAN'] + \
-        '_' + parameters['MODEL_TYPE']
-    parameters['STORE_PATH'] = os.path.join(
-        parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
-    parameters['DATASET_STORE_PATH'] = parameters['STORE_PATH']
-
+    
     logger.info(parameters)
 
     # check if model already exists

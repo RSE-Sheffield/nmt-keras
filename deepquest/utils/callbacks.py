@@ -91,7 +91,9 @@ class EvalPerformance(KerasCallback):
                  max_plot=1.0,
                  do_plot=True,
                  verbose=1,
-                 no_ref=False):
+                 no_ref=False,
+                 metric_check=None,
+                 want_to_minimize=False):
         """
         Evaluates a model each N epochs or updates
 
@@ -200,6 +202,8 @@ class EvalPerformance(KerasCallback):
         self.do_plot = do_plot
         self.no_ref = no_ref
         create_dir_if_not_exists(self.save_path)
+        self.metric_check = metric_check
+        self.want_to_minimize = want_to_minimize
 
         # Single-output model
         if not self.gt_pos or self.gt_pos == 0:
@@ -472,10 +476,15 @@ class EvalPerformance(KerasCallback):
             if self.metric_name:
                 self.model_to_eval.plot(counter_name, set(all_metrics), self.set_name, upperbound=self.max_plot)
 
-        # Save the model
-        if self.save_each_evaluation:
-            from keras_wrapper.cnn_model import saveModel
-            saveModel(self.model_to_eval, epoch, store_iter=not self.eval_on_epochs)
+        # Update best epoch and score
+        if self.metric_check:
+            current_score = -metrics[self.metric_check] if self.want_to_minimize else metrics[self.metric_check]
+            if current_score > self.best_score:
+                self.best_score = current_score
+                self.best_epoch = epoch
+                best_path = self.save_path + '/' + 'best_' + counter_name
+                from keras_wrapper.cnn_model import saveModel
+                saveModel(self.model_to_eval, epoch, store_iter=False, path=best_path, full_path=True)
 
 
 PrintPerformanceMetricOnEpochEndOrEachNUpdates = EvalPerformance

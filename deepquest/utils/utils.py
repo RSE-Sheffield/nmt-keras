@@ -5,7 +5,6 @@ import pickle
 
 from six import iteritems
 
-
 logging.basicConfig(level=logging.INFO,
                     format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 logger = logging.getLogger(__name__)
@@ -26,7 +25,6 @@ def update_parameters(params, updates, restrict=False):
             params[new_param_key] = new_param_value
 
     return params
-
 
 def changes2dict(changes_list):
     import ast
@@ -92,4 +90,3 @@ def setparameters(user_config_path, default_config_path='configs/default-config-
         logger.exception("Exception occured: {}".format(exception))
 
     return parameters
-

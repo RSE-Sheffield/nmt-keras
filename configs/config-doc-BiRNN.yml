@@ -34,4 +34,4 @@ DOC_DECODER_HIDDEN_SIZE: 50
 STOP_METRIC: 'pearson'                              # Metric for the stop
 
 # Model parameters
-MODEL_TYPE: 'EncSent'                               # Model to train.
+MODEL_TYPE: 'EncDoc'                               # Model to train.

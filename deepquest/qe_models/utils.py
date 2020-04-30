@@ -21,7 +21,6 @@ from keras.layers import *
 # from keras.layers.normalization import BatchNormalization, L2_norm
 # from keras.layers.core import Dropout, Lambda
 from keras.models import model_from_json, Model
-from keras.utils import multi_gpu_model
 from keras.optimizers import *
 from keras.regularizers import l2, AlphaRegularizer
 from keras.regularizers import l2
