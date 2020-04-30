@@ -55,7 +55,7 @@ class encword(QEModel):
                     pooling=self.bert_pooling,
                     trainable=True,
                     fine_tune_n_layers=params.get('BERT_FINE_TUNE_N_LAYER', 3),
-                    tune_embeddings = True,
+                    tune_embeddings = False,
                     verbose=True,
                     name="bert_embedding_layer"
                     )

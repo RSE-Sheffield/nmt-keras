@@ -488,3 +488,390 @@ class EvalPerformance(KerasCallback):
 
 
 PrintPerformanceMetricOnEpochEndOrEachNUpdates = EvalPerformance
+
+###################################################
+# Storing callbacks
+###################################################
+class StoreModel(KerasCallback):
+    def __init__(self, model, fun, epochs_for_save, verbose=0):
+        """
+        In:
+            model - model to save
+            fun - function for saving the model
+            epochs_for_save - number of epochs before the last save
+        """
+        super(StoreModel, self).__init__()
+        self.model_to_save = model
+        self.store_function = fun
+        self.epochs_for_save = epochs_for_save if epochs_for_save > 0 else np.inf
+        self.verbose = verbose
+
+    def on_epoch_end(self, epoch, logs=None):
+        epoch += 1
+        if epoch % self.epochs_for_save == 0:
+            print('')
+            self.store_function(self.model_to_save, epoch)
+
+            # def on_batch_end(self, n_update, logs={}):
+            #    n_update += 1
+            #    if (n_update % self.epochs_for_save == 0):
+            #        print('')
+            #        self.store_function(self.model_to_save, n_update)
+
+
+StoreModelWeightsOnEpochEnd = StoreModel
+
+
+###################################################
+# Sampling callbacks
+###################################################
+
+class Sample(KerasCallback):
+    def __init__(self, model, dataset, gt_id, set_name, n_samples, each_n_updates=10000, extra_vars=None,
+                 is_text=False, index2word_x=None, index2word_y=None, input_text_id=None, print_sources=False,
+                 sampling='max_likelihood', temperature=1.,
+                 beam_search=False, beam_batch_size=None,
+                 batch_size=50, reload_epoch=0, start_sampling_on_epoch=0, is_3DLabel=False,
+                 write_type='list', sampling_type='max_likelihood', out_pred_idx=None, in_pred_idx=None, verbose=1):
+        """
+            :param model: model to evaluate
+            :param dataset: instance of the class Dataset in keras_wrapper.dataset
+            :param gt_id: identifier in the Dataset instance of the output data about to evaluate
+            :param metric_name: name of the performance metric
+            :param set_name: name of the set split that will be evaluated
+            :param n_samples: number of samples predicted during sampling
+            :param each_n_updates: sampling each this number of epochs
+            :param extra_vars: dictionary of extra variables
+            :param is_text: defines if the predicted info is of type text
+                            (in that case the data will be converted from values into a textual representation)
+            :param is_3DLabel: defines if the predicted info is of type 3DLabels
+
+            :param index2word_y: mapping from the indices to words (only needed if is_text==True)
+            :param sampling: sampling mechanism used (only used if is_text==True)
+            :param out_pred_idx: index of the output prediction used for evaluation
+                            (only applicable if model has more than one output, else set to None)
+            :param reload_epoch: number o the epoch reloaded (0 by default)
+            :param start_sampling_on_epoch: only starts evaluating model if a given epoch has been reached
+            :param in_pred_idx: index of the input prediction used for evaluation
+                            (only applicable if model has more than one input, else set to None)
+            :param verbose: verbosity level; by default 1
+        """
+        self.model_to_eval = model
+        self.ds = dataset
+        self.gt_id = gt_id
+        self.index2word_x = index2word_x
+        self.index2word_y = index2word_y
+        self.input_text_id = input_text_id
+        self.is_text = is_text
+        self.sampling = sampling
+        self.beam_search = beam_search
+        self.beam_batch_size = beam_batch_size
+        self.batch_size = batch_size
+        self.set_name = set_name
+        self.n_samples = n_samples
+        self.each_n_updates = each_n_updates
+        self.is_3DLabel = is_3DLabel
+        self.extra_vars = extra_vars
+        self.temperature = temperature
+        self.reload_epoch = reload_epoch
+        self.start_sampling_on_epoch = start_sampling_on_epoch
+        self.write_type = write_type
+        self.sampling_type = sampling_type
+        self.out_pred_idx = out_pred_idx
+        self.in_pred_idx = in_pred_idx
+        self.cum_update = 0
+        self.epoch_count = 0
+        self.print_sources = print_sources
+        self.verbose = verbose
+        super(Sample, self).__init__()
+
+    def on_epoch_end(self, n_epoch, logs={}):
+        self.epoch_count += 1
+
+    def on_batch_end(self, n_update, logs={}):
+        self.cum_update += 1
+        if self.epoch_count + self.reload_epoch < self.start_sampling_on_epoch:
+            return
+        elif self.cum_update % self.each_n_updates != 0:
+            return
+
+        # Evaluate on each set separately
+        for s in self.set_name:
+            if self.beam_search:
+                params_prediction = {'max_batch_size': self.batch_size,
+                                     'n_parallel_loaders': self.extra_vars['n_parallel_loaders'],
+                                     'predict_on_sets': [s],
+                                     'n_samples': self.n_samples,
+                                     'pos_unk': False}
+                params_prediction.update(checkDefaultParamsBeamSearch(self.extra_vars))
+                predictions, truths, sources = self.model_to_eval.predictBeamSearchNet(self.ds, params_prediction)
+            else:
+                params_prediction = {'batch_size': self.batch_size,
+                                     'n_parallel_loaders': self.extra_vars['n_parallel_loaders'],
+                                     'predict_on_sets': [s],
+                                     'n_samples': self.n_samples}
+                # Convert predictions
+                postprocess_fun = None
+                if self.is_3DLabel:
+                    postprocess_fun = [self.ds.convert_3DLabels_to_bboxes, self.extra_vars[s]['references_orig_sizes']]
+                predictions = self.model_to_eval.predictNet(self.ds, params_prediction, postprocess_fun=postprocess_fun)
+
+            if self.print_sources:
+                if self.in_pred_idx is not None:
+                    sources = [srcs[self.in_pred_idx][0] for srcs in sources]
+
+                sources = decode_predictions_beam_search(sources,
+                                                         self.index2word_x,
+                                                         pad_sequences=True,
+                                                         verbose=self.verbose)
+            if s in predictions:
+                if params_prediction['pos_unk']:
+                    samples = predictions[s][0]
+                    alphas = predictions[s][1]
+                    heuristic = self.extra_vars['heuristic']
+                else:
+                    samples = predictions[s]
+                    alphas = None
+                    heuristic = None
+
+                predictions = predictions[s]
+                if self.is_text:
+                    if self.out_pred_idx is not None:
+                        samples = samples[self.out_pred_idx]
+                    # Convert predictions into sentences
+                    if self.beam_search:
+                        predictions = decode_predictions_beam_search(samples,
+                                                                     self.index2word_y,
+                                                                     alphas=alphas,
+                                                                     x_text=sources,
+                                                                     heuristic=heuristic,
+                                                                     mapping=self.extra_vars.get('mapping', None),
+                                                                     verbose=self.verbose)
+                    else:
+                        predictions = decode_predictions(samples,
+                                                         1,
+                                                         self.index2word_y,
+                                                         self.sampling_type,
+                                                         verbose=self.verbose)
+                    truths = decode_predictions_one_hot(truths, self.index2word_y, verbose=self.verbose)
+
+                    # Apply detokenization function if needed
+                    if self.extra_vars.get('apply_detokenization', False):
+                        if self.print_sources:
+                            sources = map(self.extra_vars['detokenize_f'], sources)
+                        predictions = map(self.extra_vars['detokenize_f'], predictions)
+                        truths = map(self.extra_vars['detokenize_f'], truths)
+
+                # Write samples
+                if self.print_sources:
+                    # Write samples
+                    for i, (source, sample, truth) in enumerate(zip(sources, predictions, truths)):
+                        print("Source     (%d): %s" % (i, source))
+                        print("Hypothesis (%d): %s" % (i, sample))
+                        print("Reference  (%d): %s" % (i, truth))
+                        print("")
+                else:
+                    for i, (sample, truth) in enumerate(zip(predictions, truths)):
+                        print("Hypothesis (%d): %s" % (i, sample))
+                        print("Reference  (%d): %s" % (i, truth))
+                        print("")
+
+
+SampleEachNUpdates = Sample
+
+
+###################################################
+# Learning modifiers callbacks
+###################################################
+class EarlyStopping(KerasCallback):
+    """
+    Applies early stopping if performance has not improved for some epochs.
+    """
+
+    def __init__(self,
+                 model,
+                 patience=0,
+                 check_split='val',
+                 metric_check='acc',
+                 want_to_minimize=False,
+                 eval_on_epochs=True,
+                 each_n_epochs=1,
+                 start_eval_on_epoch=0,
+                 verbose=1):
+        """
+        :param model: model to check performance
+        :param patience: number of beginning epochs without reduction; by default 0 (disabled)
+        :param check_split: data split used to check metric value improvement
+        :param metric_check: name of the metric to check
+        :param verbose: verbosity level; by default 1
+        """
+        super(EarlyStopping, self).__init__()
+        self.model_to_eval = model
+        self.patience = patience
+        self.check_split = check_split
+        self.metric_check = metric_check
+        self.eval_on_epochs = eval_on_epochs
+        self.start_eval_on_epoch = start_eval_on_epoch
+        self.each_n_epochs = each_n_epochs
+        self.want_to_minimize = want_to_minimize
+
+        self.verbose = verbose
+        self.cum_update = 0
+        self.epoch = 0
+
+        self.threshold = self.model_to_eval.getLog(self.check_split, 'threshold')
+        # check already stored scores in case we have loaded a pre-trained model
+        all_scores = self.model_to_eval.getLog(self.check_split, self.metric_check)
+        if self.eval_on_epochs:
+            all_epochs = self.model_to_eval.getLog(self.check_split, 'epoch')
+        else:
+            all_epochs = self.model_to_eval.getLog(self.check_split, 'iteration')
+
+        if all_scores[-1] is not None:
+            self.best_score = max(all_scores)
+            best_score_check = str(self.best_score)[:8]
+            all_scores_check = [str(score)[:8] for score in all_scores]
+            self.best_epoch = all_epochs[all_scores_check.index(best_score_check)]
+            self.wait = max(all_epochs) - self.best_epoch
+        else:
+            self.best_score = -1.
+            self.best_epoch = -1
+            self.wait = 0
+
+    def on_epoch_end(self, epoch, logs={}):
+        epoch += 1  # start by index 1
+        self.epoch = epoch
+        if not self.eval_on_epochs:
+            return
+        elif (epoch - self.start_eval_on_epoch) % self.each_n_epochs != 0:
+            return
+        self.evaluate(self.epoch, counter_name='epoch')
+
+    def on_batch_end(self, n_update, logs={}):
+        self.cum_update += 1  # start by index 1
+        if self.eval_on_epochs:
+            return
+        if self.cum_update % self.each_n_epochs != 0:
+            return
+        if self.epoch - self.start_eval_on_epoch < 0:
+            return
+        self.evaluate(self.cum_update, counter_name='update')
+
+    def evaluate(self, epoch, counter_name='epoch'):
+        current_score = self.model_to_eval.getLog(self.check_split, self.metric_check)[-1]
+        threshold = self.model_to_eval.getLog(self.check_split, 'threshold')[-1]
+        # Get last metric value from logs
+        if current_score is None:
+            warnings.warn('The chosen metric ' + str(self.metric_check) +
+                          ' does not exist; the EarlyStopping callback works only with a valid metric.')
+            return
+        if self.want_to_minimize:
+            current_score = -current_score
+        # Check if the best score has been outperformed in the current epoch
+        if current_score > self.best_score:
+            self.best_epoch = epoch
+            self.best_score = current_score
+            self.threshold = threshold
+            self.wait = 0
+            if self.verbose > 0:
+                if self.threshold is not None:
+                    logging.info('---current best %s %s: %.3f threshold %.1f' % (self.check_split, self.metric_check,
+                                                              current_score if not self.want_to_minimize
+                                                              else -current_score, self.threshold))
+                else:
+                    logging.info('---current best %s %s: %.3f' % (self.check_split, self.metric_check,
+                                                              current_score if not self.want_to_minimize
+                                                              else -current_score))
+
+        # Stop training if performance has not improved for self.patience epochs
+        elif self.patience > 0:
+            self.wait += 1
+            logging.info('---bad counter: %d/%d' % (self.wait, self.patience))
+            if self.wait >= self.patience:
+                if self.verbose > 0:
+                    if self.threshold is not None:
+                        logging.info("---%s %d: early stopping. Best %s found at %s %d: %f threshold %.1f" % (
+                             str(counter_name), epoch, self.metric_check, str(counter_name), self.best_epoch,
+                             self.best_score if not self.want_to_minimize else -self.best_score, self.threshold))
+                    else:
+                        logging.info("---%s %d: early stopping. Best %s found at %s %d: %f" % (
+                             str(counter_name), epoch, self.metric_check, str(counter_name), self.best_epoch,
+                             self.best_score if not self.want_to_minimize else -self.best_score))
+
+                self.model.stop_training = True
+                exit(1)
+
+
+class LearningRateReducer(KerasCallback):
+    def __init__(self, reduce_rate=0.99, reduce_each_epochs=True, reduce_frequency=1, start_reduction_on_epoch=0,
+                 exp_base=0.5, half_life=50000, reduction_function='linear', epsilon=1e-11, verbose=1):
+        """
+        Reduces learning rate during the training.
+        Two different decays are implemented:
+            * linear:
+                lr = reduce_rate * lr
+            * exponential:
+                lr = exp_base^{current_step / half_life) * reduce_rate * lr
+
+        :param reduce_rate: Reduction rate.
+        :param reduce_each_epochs: Wether we reduce each epochs or each updates.
+        :param reduce_frequency: Reduce each this number of epochs/updates
+        :param start_reduction_on_epoch: Start reduction at this epoch
+        :param exp_base: Base for exponential reduction.
+        :param half_life: Half-life for exponential reduction.
+        :param reduction_function: Either 'linear' or 'exponential' reduction.
+        :param epsilon: Stop training if LR is below this value
+        :param verbose: Be verbose.
+        """
+
+        super(LearningRateReducer, self).__init__()
+
+        self.reduce_rate = reduce_rate
+        self.reduce_each_epochs = reduce_each_epochs
+        self.reduce_frequency = reduce_frequency
+
+        self.exp_base = exp_base
+        self.half_life = half_life
+        self.reduction_function = reduction_function
+        self.start_reduction_on_epoch = start_reduction_on_epoch
+        self.verbose = verbose
+        self.current_update_nb = 0
+        self.epsilon = epsilon
+        self.epoch = 0
+        self.new_lr = None
+        assert self.reduction_function in ['linear', 'exponential'], 'Reduction function "%s" unimplemented!' % \
+                                                                     str(self.reduction_function)
+
+    def on_epoch_end(self, epoch, logs={}):
+
+        if not self.reduce_each_epochs:
+            return
+        elif (epoch - self.start_reduction_on_epoch) % self.reduce_frequency != 0:
+            return
+        self.reduce_lr(epoch)
+
+        if float(self.new_lr) <= self.epsilon:
+            if self.verbose > 0:
+                logging.info('Learning rate too small, learning stops now')
+            self.model.stop_training = True
+
+    def on_batch_end(self, n_update, logs={}):
+
+        self.current_update_nb += 1
+        if self.reduce_each_epochs:
+            return
+        if self.current_update_nb % self.reduce_frequency != 0:
+            return
+        if self.epoch - self.start_reduction_on_epoch < 0:
+            return
+        self.reduce_lr(self.current_update_nb)
+
+    def reduce_lr(self, current_nb):
+        new_rate = self.reduce_rate if self.reduction_function == 'linear' else \
+            np.power(self.exp_base, current_nb / self.half_life) * self.reduce_rate
+        lr = self.model.optimizer.lr.get_value()
+        self.new_lr = np.float32(lr * new_rate)
+        self.model.optimizer.lr.set_value(self.new_lr)
+
+        if self.reduce_each_epochs and self.verbose > 0:
+            logging.info("LR reduction from {0:0.6f} to {1:0.6f}".format(float(lr), float(self.new_lr)))
