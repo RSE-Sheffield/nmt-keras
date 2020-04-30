@@ -1,6 +1,7 @@
 import argparse
 import sys
 
+
 def train(args):
     import yaml
     if args.config.endswith('.yml'):
@@ -13,7 +14,7 @@ def train(args):
         del user_parameters
     elif args.config.endswith('.pkl'):
         parameters = update_parameters(parameters, pkl2dict(args.config))
-    
+
     parameters.update(changes2dict(args))
 
     if parameters.get('SEED') is not None:
@@ -28,12 +29,12 @@ def train(args):
         parameters.update({'N_GPUS': n_gpus, 'GPU_ID': parameters.get('GPU_ID')})
 
     from  . import train
-    train(parameters)
+    train(args.config, args.changes)
 
 
 def predict(args):
     from . import predict
-    predict(args.model, args.dataset, args.save_path, args.evalset, changes2dict(args))
+    predict(args.model, args.dataset, save_path=args.save_path, evalset=args.evalset, changes=args.changes)
 
 
 def score(args):
@@ -95,17 +96,16 @@ def main():
     # parser for training
     train_parser = subparsers.add_parser('train', help='Train QE models')
     train_parser.set_defaults(func=train)
-    train_parser.add_argument("help", nargs='?', help="Show the help information.")
     train_parser.add_argument("-c", "--config",   required=False,
                               help="Config YAML or pkl for loading the model configuration. ")
-    train_parser.add_argument("changes", nargs="*", help="Changes to config. "
+    train_parser.add_argument("--changes", nargs="*", help="Changes to config. "
                               "Following the syntax Key=Value",
                               default="")
+    train_parser.add_argument("help", nargs='?', help="Show the help information.")
 
     # parser for prediction
     predict_parser = subparsers.add_parser('predict', help='Sample using trained QE models')
     predict_parser.set_defaults(func=predict)
-    predict_parser.add_argument("help", nargs='?', help="Show the help information.")
     predict_parser.add_argument("--model", required=False,
                                 help="model file (.h5) to use")
     predict_parser.add_argument("--dataset", required=False,
@@ -114,9 +114,10 @@ def main():
                                 "If not specified, defaults to STORE_PATH")
     predict_parser.add_argument("--evalset", required=False, help="Set to evaluate on. "
                                 "Defaults to 'test' if not specified. ")
-    predict_parser.add_argument("changes", nargs="*", help="Changes to config. "
+    predict_parser.add_argument("--changes", nargs="*", help="Changes to config. "
                                 "Following the syntax Key=Value",
                                 default="")
+    predict_parser.add_argument("help", nargs='?', help="Show the help information.")
 
     # parser for scoring
     score_parser = subparsers.add_parser(

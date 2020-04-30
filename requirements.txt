@@ -3,6 +3,7 @@ numpy
 scipy
 pyyaml
 tensorflow<2
+tensorflow_hub
 multimodal-keras-wrapper
 git+https://github.com/MarcBS/keras.git#egg=keras
 git+https://github.com/lvapeab/coco-caption.git#egg=coco-caption

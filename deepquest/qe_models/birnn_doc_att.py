@@ -14,11 +14,12 @@
 #TODO: add a description of the model here.
 """
 
-from .birnn_doc import EncDoc
+from .birnn_doc import encdoc
 from .utils import *
+from .layers import *
 
 
-class EncDocAtt(EncDoc):
+class encdocatt(encdoc):
 
     def __init__(self, params):
         # define here attributes that are model specific
