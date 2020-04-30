@@ -482,7 +482,7 @@ class EvalPerformance(KerasCallback):
             if current_score > self.best_score:
                 self.best_score = current_score
                 self.best_epoch = epoch
-                best_path = self.save_path + '/' + 'best_' + counter_name
+                best_path = self.save_path + '/' + 'best_model'
                 from keras_wrapper.cnn_model import saveModel
                 saveModel(self.model_to_eval, epoch, store_iter=False, path=best_path, full_path=True)
 
