@@ -16,6 +16,7 @@ from nmt_keras.nmt_keras import check_params
 
 import deepquest.qe_models as modFactory
 from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
+from deepquest import compare_params
 from deepquest.data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 
 logging.basicConfig(level=logging.INFO,
@@ -24,7 +25,7 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 
-def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, trainable_est=True, weights_path=None):
+def train_model(params, weights_dict=None, load_dataset=None, trainable_pred=True, trainable_est=True, weights_path=None):
     """
     Training function. Sets the training parameters from params. Build or loads the model and launches the training.
     :param params: Dictionary of network hyperparameters.
@@ -98,6 +99,10 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
     #params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['OUTPUTS_IDS_DATASET_FULL'][0]]
     params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len['target_text']
 
+    if params['RELOAD_EPOCH'] == True and params['RELOAD'] > 0:
+        compare_params(params, pkl2dict(os.path.join(params['STORE_PATH'], 'config.pkl')), ignore=['RELOAD', 'RELOAD_EPOCH'])
+        logger.info('Resuming training from epoch ' + str(params['RELOAD']))
+
     # Build model
     try:
         qe_model = modFactory.get(params['MODEL_TYPE'], params)
@@ -129,7 +134,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             # from the files containing the model
             from keras.utils import CustomObjectScope
             # includes all layers and everything defined in deepquest.qe_models.utils
-            import deepquest.qe_models.utils as layers
+            import deepquest.qe_models.layers as layers
             with CustomObjectScope(vars(layers)):
                 qe_model = updateModel(
                     qe_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
@@ -369,53 +374,26 @@ def main(parameters):
         # if model doesn't already exist
         # write out initial parameters to pkl
         os.makedirs(parameters['STORE_PATH'])
-        dict2pkl(parameters, os.path.join(
-            parameters['STORE_PATH'], 'config_init.pkl'))
         dataset = None
+        parameters['RELOAD'] = 0
+        parameters['RELOAD_EPOCH'] = False
     else:
         # if model already exists check that only RELOAD or RELOAD_EPOCH differ
-        logger.info('Model ' + parameters['STORE_PATH'] + ' already exists. ')
-        prev_config_init = os.path.join(
-            parameters['STORE_PATH'], 'config_init.pkl')
-        logger.info(
-            'Loading trained model config_init.pkl from ' + prev_config_init)
-        parameters_prev = pkl2dict(prev_config_init)
+        logger.info('Model ' + parameters['STORE_PATH'] + ' already exists.')
+        # logger.info('Loading trained model config.pkl from ' + prev_config)
         if parameters['RELOAD_EPOCH'] != True or parameters['RELOAD'] == 0:
             logger.info(
                 'Specify RELOAD_EPOCH=True and RELOAD>0 in your config to resume training an existing model. ')
             return
-        elif parameters != parameters_prev:
-            reload_keys = ['RELOAD', 'RELOAD_EPOCH']
-            stop_flag = False
-            for key in parameters_prev:
-                if key not in (parameters or reload_keys):
-                    logger.info(
-                        'Previously trained model config does not contain ' + key)
-                    stop_flag = True
-                elif parameters[key] != parameters_prev[key] and key not in reload_keys:
-                    logger.info('Previous model has ' + key + ': ' +
-                                str(parameters[key]) + ' but this model has ' + key + ': ' + str(parameters_prev[key]))
-                    stop_flag = True
-            for key in parameters:
-                if key not in (parameters_prev or reload_keys):
-                    logger.info('New model config does not contain ' + key)
-                    stop_flag = True
-            if stop_flag == True:
-                raise Exception(
-                    'Model parameters not equal, can not resume training. ')
-            else:
-                logger.info('Resuming training from epoch ' +
-                            str(parameters['RELOAD']))
+        # compare_params(parameters, pkl2dict(os.path.join(parameters['STORE_PATH'], 'config.pkl')), ignore=['RELOAD', 'RELOAD_EPOCH'])
+        # logger.info('Resuming training from epoch ' + str(parameters['RELOAD']))
 
-            # if there is a pre-trained model and dataset is not specified earlier, set the path to load the existing dataset
-            dataset = parameters['DATASET_STORE_PATH'] + '/Dataset_' + parameters['DATASET_NAME'] + \
-                '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '.pkl'
-        else:
-            logger.info(
-                'Previously trained config and new config are the same, specify which epoch to resume training from. ')
-            return
+        # if there is a pre-trained model and dataset is not specified earlier, set the path to load the existing dataset
+        dataset = parameters['DATASET_STORE_PATH'] + '/Dataset_' + parameters['DATASET_NAME'] + \
+            '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '.pkl'
 
-    check_params(parameters)
+
+    check_params(parameters) # nmt-keras' check_params function
 
     save_random_states(parameters['STORE_PATH'],
                        user_seed=parameters.get('SEED'))
@@ -474,14 +452,14 @@ def main(parameters):
                                  parameters['MODEL_NAME'])
                     parameters['MAX_EPOCH'] = parameters['EPOCH_PER_MODEL']
 
-                    train_model(parameters, weights_dict, dataset, trainable_est=trainable_est,
+                    train_model(parameters, weights_dict, load_dataset=dataset, trainable_est=trainable_est,
                                 trainable_pred=trainable_pred, weights_path=parameters.get('PRED_WEIGHTS', None))
 
                     flag = True
     else:
 
         logging.info('Running training task.')
-        train_model(parameters, dataset, trainable_est=True, trainable_pred=True,
+        train_model(parameters,weights_dict=None, load_dataset=dataset, trainable_est=True, trainable_pred=True,
                     weights_path=parameters.get('PRED_WEIGHTS', None))
 
     logger.info('Done!')

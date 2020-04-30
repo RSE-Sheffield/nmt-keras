@@ -392,16 +392,6 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
                                     type='file-name',
                                     id='raw_' + params['OUTPUTS_IDS_DATASET'][0])
 
-        # INPUT DATA
-        # We must ensure that the 'train' split is the first (for building the vocabulary)
-        max_src_in_len=params.get('MAX_SRC_INPUT_TEXT_LEN', None)
-        if max_src_in_len == None:
-            params['MAX_SRC_INPUT_TEXT_LEN'] = params['MAX_INPUT_TEXT_LEN']
-
-        max_trg_in_len=params.get('MAX_TRG_INPUT_TEXT_LEN', None)
-        if max_trg_in_len == None:
-            params['MAX_TRG_INPUT_TEXT_LEN'] = params['MAX_INPUT_TEXT_LEN']
-
         data_type_src = params.get('INPUTS_TYPES_DATASET', ['text', 'text'])[0]
         data_type_trg = data_type_src
 

@@ -113,5 +113,15 @@ Or for the python module, use the numpy and random module seed functions before 
   import random
   random.seed(seed)
 
+Resuming a previously trained model
+***********************************
+There are two ways to resume training a model which has already been fully or partially trained:
+1. Specify a pickled config and use the changes option to set `RELOAD_EPOCH=True` and `RELOAD>0` e.g.
+
+.. code:: shell
+
+  dq train -c trained_models/model/config.pkl --changes RELOAD_EPOCH=True RELOAD=3
+
+2. Specify a new config file with the same parameters as the previously trained model and, as above, specify `RELOAD_EPOCH=True` and `RELOAD>0`.
 
 .. _Tutorial: tutorials.html
