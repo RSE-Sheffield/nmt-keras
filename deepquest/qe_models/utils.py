@@ -21,7 +21,6 @@ from keras.layers import *
 # from keras.layers.normalization import BatchNormalization, L2_norm
 # from keras.layers.core import Dropout, Lambda
 from keras.models import model_from_json, Model
-from keras.utils import multi_gpu_model
 from keras.optimizers import *
 from keras.regularizers import l2, AlphaRegularizer
 from keras.regularizers import l2
@@ -91,42 +90,6 @@ def Regularize(layer, params,
         return result, shared_layers_list
     return result
 
-class NonMasking(Layer):
-    def __init__(self, **kwargs):
-        self.supports_masking = True
-        super(NonMasking, self).__init__(**kwargs)
-
-    def build(self, input_shape):
-        input_shape = input_shape
-
-    def compute_mask(self, input, input_mask=None):
-        # do not pass the mask to the next layers
-        return None
-
-    def call(self, x, mask=None):
-        return x
-
-    def compute_output_shape(self, input_shape):
-        return input_shape
-
-
-class DenseTranspose(Layer):
-
-  def __init__(self, output_dim, other_layer, other_layer_name, **kwargs):
-      self.output_dim = output_dim
-      self.other_layer=other_layer
-      self.other_layer_name = other_layer_name
-      super(DenseTranspose, self).__init__(**kwargs)
-
-  def call(self, x):
-      # w = self.other_layer.get_layer(self.other_layer_name).layer.kernel
-      w = self.other_layer.layer.kernel
-      w_trans = K.transpose(w)
-      return K.dot(x, w_trans)
-
-  def compute_output_shape(self, input_shape):
-      return (input_shape[0], input_shape[1], self.output_dim)
-
 
 def attention_3d_block(inputs, params, ext):
     '''
@@ -147,47 +110,6 @@ def attention_3d_block(inputs, params, ext):
     output = sum(output_attention_mul)
 
     return output
-
-
-class Reverse(Layer):
-
-    def __init__(self, output_dim, axes, **kwargs):
-        self.output_dim = output_dim
-        self.axes = axes
-        self.supports_masking = True
-        super(Reverse, self).__init__(**kwargs)
-
-    def call(self, x):
-        return K.reverse(x, axes=self.axes)
-
-    def compute_output_shape(self, input_shape):
-        return (input_shape[0],input_shape[1],self.output_dim)
-
-    def compute_mask(self, inputs, mask):
-        if isinstance(mask, list):
-            mask = mask[0]
-        else:
-            mask= None
-        return mask
-
-
-class GeneralReshape(Layer):
-
-    def __init__(self, output_dim, params, **kwargs):
-        self.output_dim = output_dim
-        self.params = params
-        super(GeneralReshape, self).__init__(**kwargs)
-
-    def call(self, x):
-        if len(self.output_dim)==2:
-            return K.reshape(x, (-1, self.params['MAX_INPUT_TEXT_LEN']))
-        if len(self.output_dim)==3:
-            return K.reshape(x, (-1, self.output_dim[1], self.output_dim[2]))
-        if len(self.output_dim)==4:
-            return K.reshape(x, (-1, self.output_dim[1], self.output_dim[2], self.output_dim[3]))
-
-    def compute_output_shape(self, input_shape):
-        return self.output_dim
 
 
 def mask_aware_mean(x):

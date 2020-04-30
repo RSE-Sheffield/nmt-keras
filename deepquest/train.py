@@ -9,18 +9,19 @@ import yaml
 from keras.utils import CustomObjectScope
 from keras_wrapper.cnn_model import updateModel
 from keras_wrapper.dataset import loadDataset, saveDataset
+from keras_wrapper.extra.callbacks import EarlyStopping
 from keras_wrapper.extra.read_write import pkl2dict, dict2pkl
 from nmt_keras.nmt_keras import check_params
-from nmt_keras.utils.utils import update_parameters
 
 import deepquest.qe_models as modFactory
 from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
-from deepquest.utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 from deepquest.utils.logs import logger_setup
+from deepquest import compare_params
+from deepquest.data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 
 logger, logging = logger_setup('train')
 
-def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, trainable_est=True, weights_path=None):
+def train_model(params, weights_dict=None, load_dataset=None, trainable_pred=True, trainable_est=True, weights_path=None):
     """
     Training function. Sets the training parameters from params. Build or loads the model and launches the training.
     :param params: Dictionary of network hyperparameters.
@@ -81,7 +82,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             else:
                 if 'doc_qe' in params['OUTPUTS_IDS_MODEL']:
                     params = preprocessDoc(params)
-                elif 'EstimatorDoc' in params['MODEL_TYPE']:
+                elif 'estimatordoc' in params['MODEL_TYPE'].lower():
                     raise Exception('Translation_Model model_type "' +
                                     params['MODEL_TYPE'] + '" is not implemented.')
                 dataset = build_dataset(params)
@@ -90,30 +91,20 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                                     set_names=params['EVAL_ON_SETS'])
         else:
             dataset = loadDataset(load_dataset)
-
     params['INPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['INPUTS_IDS_DATASET'][0]]
     #params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['OUTPUTS_IDS_DATASET_FULL'][0]]
     params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len['target_text']
 
+    if params['RELOAD_EPOCH'] == True and params['RELOAD'] > 0:
+        compare_params(params, pkl2dict(os.path.join(params['STORE_PATH'], 'config.pkl')), ignore=['RELOAD', 'RELOAD_EPOCH'])
+        logger.info('Resuming training from epoch ' + str(params['RELOAD']))
+
     # Build model
     try:
-        # mf = QEModelFactory()
-        # qe_model = QEModelFactory(params['MODEL_TYPE'], 'sentence'))
-        # FIXME: change 'nmt_keras' for 'quest'
-        # model_obj = getattr(importlib.import_module("nmt_keras.models.{}".format(params['MODEL_TYPE'].lower())))
-
-        # qe_model = model_obj(params,
-        #         model_type=params['MODEL_TYPE'],
-        #         verbose=params['VERBOSE'],
-        #         model_name=params['MODEL_NAME'],
-        #         vocabularies=dataset.vocabulary,
-        #         store_path=params['STORE_PATH'],
-        #         clear_dirs=True,
-        #         weights_path=weights_path)
-        # model_obj = getattr(importlib.import_module("nmt_keras.models.{}".format(params['MODEL_TYPE'].lower())))
         qe_model = modFactory.get(params['MODEL_TYPE'], params)
 
         # Define the inputs and outputs mapping from our Dataset instance to our model
+        params['INPUTS_IDS_DATASET'] = qe_model.ids_inputs
         inputMapping = dict()
         for i, id_in in enumerate(params['INPUTS_IDS_DATASET']):
             pos_source = dataset.ids_inputs.index(id_in)
@@ -121,6 +112,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             inputMapping[id_dest] = pos_source
         qe_model.setInputsMapping(inputMapping)
 
+        params['OUTPUTS_IDS_DATASET'] = qe_model.ids_outputs
         outputMapping = dict()
         for i, id_out in enumerate(params['OUTPUTS_IDS_DATASET']):
             pos_target = dataset.ids_outputs.index(id_out)
@@ -138,7 +130,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
             # from the files containing the model
             from keras.utils import CustomObjectScope
             # includes all layers and everything defined in deepquest.qe_models.utils
-            import deepquest.qe_models.utils as layers
+            import deepquest.qe_models.layers as layers
             with CustomObjectScope(vars(layers)):
                 qe_model = updateModel(
                     qe_model, params['STORE_PATH'], params['RELOAD'], reload_epoch=params['RELOAD_EPOCH'])
@@ -149,10 +141,10 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                     params['BATCH_SIZE'] / dataset.len_train)
 
     except AttributeError as error:
-        logging.error(error)
+        logging.error("Error occured: {}".format(error))
 
     except Exception as exception:
-        logging.exception(exception)
+        logging.exception("Exception occured: {}".format(exception))
 
     # Store configuration as pkl
     dict2pkl(params, params['STORE_PATH'] + '/config')
@@ -187,7 +179,7 @@ def train_model(params, weights_dict, load_dataset=None, trainable_pred=True, tr
                        'data_augmentation': params['DATA_AUGMENTATION'],
                        # early stopping parameters
                        'patience': params.get('PATIENCE', 0),
-                       'metric_check': params.get('STOP_METRIC', None) if params.get('EARLY_STOP', False) else None,
+                       'metric_check': None,
                        'eval_on_epochs': params.get('EVAL_EACH_EPOCHS', True),
                        'each_n_epochs': params.get('EVAL_EACH', 1),
                        'start_eval_on_epoch': params.get('START_EVAL_ON_EPOCH', 0),
@@ -323,9 +315,23 @@ def buildCallbacks(params, model, dataset):
                                                                              save_each_evaluation=params[
                                                                                  'SAVE_EACH_EVALUATION'],
                                                                              verbose=params['VERBOSE'],
-                                                                             no_ref=params['NO_REF'])
+                                                                             no_ref=params['NO_REF'],
+                                                                             metric_check=params['STOP_METRIC'],
+                                                                             want_to_minimize=True if params['STOP_METRIC'].lower() in ['rmse','mae'] else False)
 
             callbacks.append(callback_metric)
+
+        # Early stopper
+        if params['EARLY_STOP']:
+            callback_early_stop = EarlyStopping(model,
+                                                patience=params['PATIENCE'],
+                                                metric_check=params['STOP_METRIC'],
+                                                check_split=params['EVAL_ON_SETS'][0],
+                                                want_to_minimize=True if params['STOP_METRIC'].lower() in ['rmse','mae'] else False,
+                                                eval_on_epochs=params['EVAL_EACH_EPOCHS'],
+                                                each_n_epochs=params['EVAL_EACH'],
+                                                start_eval_on_epoch=params['START_EVAL_ON_EPOCH'])
+            callbacks.append(callback_early_stop)
 
     return callbacks
 
@@ -349,46 +355,14 @@ def save_random_states(write_path, user_seed=None):
         json.dump(data, outfile)
 
 
-def main(config=None, changes={}):
+def main(parameters):
     """
     Handles QE model training.
     :param config: Either a path to a YAML or pkl config file or a dictionary of parameters.
     :param dataset: Optional path to a previously built pkl dataset.
     :param changes: Optional dictionary of parameters to overwrite config.
     """
-    if isinstance(config, str):
-        if config.endswith('.yml'):
-            # FIXME make this a user option (maybe depend on model type and level?)
-            with open('configs/default-config-BiRNN.yml') as file:
-                parameters = yaml.load(file, Loader=yaml.FullLoader)
-            with open(config) as file:
-                user_parameters = yaml.load(file, Loader=yaml.FullLoader)
-            parameters.update(user_parameters)
-            del user_parameters
-        elif config.endswith('.pkl'):
-            parameters = update_parameters(parameters, pkl2dict(config))
-    elif isinstance(config, dict):
-        parameters = config
-    else:
-        raise Exception(
-            'Expected path string to a config yml or pkl or a parameters dictionary, but received: %s . ', type(config))
-
-    parameters.update(changes)
-    parameters['DATASET_NAME'] = parameters['TASK_NAME']
-    parameters['DATA_ROOT_PATH'] = os.path.join(
-        parameters['DATA_DIR'], parameters['DATASET_NAME'])
-    parameters['MAPPING'] = os.path.join(parameters['DATA_ROOT_PATH'], 'mapping.%s_%s.pkl' % (
-        parameters['SRC_LAN'], parameters['TRG_LAN']))
-    parameters['BPE_CODES_PATH'] = os.path.join(
-        parameters['DATA_ROOT_PATH'], '/training_codes.joint')
-    parameters['MODEL_NAME'] = parameters['TASK_NAME'] + '_' + \
-        parameters['SRC_LAN'] + parameters['TRG_LAN'] + \
-        '_' + parameters['MODEL_TYPE']
-    parameters['STORE_PATH'] = os.path.join(
-        parameters['MODEL_DIRECTORY'], parameters['MODEL_NAME'])
-    parameters['DATASET_STORE_PATH'] = parameters['STORE_PATH']
-
-    print(parameters)
+    
     logger.info(parameters)
 
     # check if model already exists
@@ -396,53 +370,26 @@ def main(config=None, changes={}):
         # if model doesn't already exist
         # write out initial parameters to pkl
         os.makedirs(parameters['STORE_PATH'])
-        dict2pkl(parameters, os.path.join(
-            parameters['STORE_PATH'], 'config_init.pkl'))
         dataset = None
+        parameters['RELOAD'] = 0
+        parameters['RELOAD_EPOCH'] = False
     else:
         # if model already exists check that only RELOAD or RELOAD_EPOCH differ
-        logger.info('Model ' + parameters['STORE_PATH'] + ' already exists. ')
-        prev_config_init = os.path.join(
-            parameters['STORE_PATH'], 'config_init.pkl')
-        logger.info(
-            'Loading trained model config_init.pkl from ' + prev_config_init)
-        parameters_prev = pkl2dict(prev_config_init)
+        logger.info('Model ' + parameters['STORE_PATH'] + ' already exists.')
+        # logger.info('Loading trained model config.pkl from ' + prev_config)
         if parameters['RELOAD_EPOCH'] != True or parameters['RELOAD'] == 0:
             logger.info(
                 'Specify RELOAD_EPOCH=True and RELOAD>0 in your config to resume training an existing model. ')
             return
-        elif parameters != parameters_prev:
-            reload_keys = ['RELOAD', 'RELOAD_EPOCH']
-            stop_flag = False
-            for key in parameters_prev:
-                if key not in (parameters or reload_keys):
-                    logger.info(
-                        'Previously trained model config does not contain ' + key)
-                    stop_flag = True
-                elif parameters[key] != parameters_prev[key] and key not in reload_keys:
-                    logger.info('Previous model has ' + key + ': ' +
-                                str(parameters[key]) + ' but this model has ' + key + ': ' + str(parameters_prev[key]))
-                    stop_flag = True
-            for key in parameters:
-                if key not in (parameters_prev or reload_keys):
-                    logger.info('New model config does not contain ' + key)
-                    stop_flag = True
-            if stop_flag == True:
-                raise Exception(
-                    'Model parameters not equal, can not resume training. ')
-            else:
-                logger.info('Resuming training from epoch ' +
-                            str(parameters['RELOAD']))
+        # compare_params(parameters, pkl2dict(os.path.join(parameters['STORE_PATH'], 'config.pkl')), ignore=['RELOAD', 'RELOAD_EPOCH'])
+        # logger.info('Resuming training from epoch ' + str(parameters['RELOAD']))
 
-            # if there is a pre-trained model and dataset is not specified earlier, set the path to load the existing dataset
-            dataset = parameters['DATASET_STORE_PATH'] + '/Dataset_' + parameters['DATASET_NAME'] + \
-                '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '.pkl'
-        else:
-            logger.info(
-                'Previously trained config and new config are the same, specify which epoch to resume training from. ')
-            return
+        # if there is a pre-trained model and dataset is not specified earlier, set the path to load the existing dataset
+        dataset = parameters['DATASET_STORE_PATH'] + '/Dataset_' + parameters['DATASET_NAME'] + \
+            '_' + parameters['SRC_LAN'] + parameters['TRG_LAN'] + '.pkl'
 
-    check_params(parameters)
+
+    check_params(parameters) # nmt-keras' check_params function
 
     save_random_states(parameters['STORE_PATH'],
                        user_seed=parameters.get('SEED'))
@@ -501,14 +448,14 @@ def main(config=None, changes={}):
                                  parameters['MODEL_NAME'])
                     parameters['MAX_EPOCH'] = parameters['EPOCH_PER_MODEL']
 
-                    train_model(parameters, weights_dict, dataset, trainable_est=trainable_est,
+                    train_model(parameters, weights_dict, load_dataset=dataset, trainable_est=trainable_est,
                                 trainable_pred=trainable_pred, weights_path=parameters.get('PRED_WEIGHTS', None))
 
                     flag = True
     else:
 
         logging.info('Running training task.')
-        train_model(parameters, dataset, trainable_est=True, trainable_pred=True,
+        train_model(parameters,weights_dict=None, load_dataset=dataset, trainable_est=True, trainable_pred=True,
                     weights_path=parameters.get('PRED_WEIGHTS', None))
 
     logger.info('Done!')

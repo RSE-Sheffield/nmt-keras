@@ -9,245 +9,276 @@ from keras_wrapper.cnn_model import loadModel
 from keras_wrapper.dataset import loadDataset
 
 import deepquest.qe_models as modFactory
-from deepquest.utils.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
-from deepquest.utils import evaluation
+from deepquest.data_engine.dataset import Dataset
+from deepquest.data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
+# from deepquest.utils import evaluation
 from deepquest.utils.callbacks import *
 from deepquest.utils.logs import logger_setup
 
 logger, logging = logger_setup('predict')
 
 
-def apply_NMT_model(params, dataset, model, save_path):
+
+def apply_QE_model(model, dataset, predict_parameters):
+
     """
-    Sample from a previously trained model.
+    Apply the QE model on the test set of the dataset.
+    (We previously place the data for which we want predictions in the test set of the dataset.)
 
-    :param params: Dictionary of network hyperparameters.
-    :return: None
+    :param model: QE model to produce the predictions with
+    :param dataset: Dataset instance on which the predictions will be produced
+    :param predict_parameters: parameters used by predictNet() to predict
+
+    :return: predictions
     """
-    params['PRED_VOCAB'] = dataset
-    dataset = loadDataset(params['PRED_VOCAB'])
-    # dataset = build_dataset(params, dataset_voc.vocabulary, dataset_voc.vocabulary_len)
-    if 'test' in params['EVAL_ON_SETS'] and len(dataset.ids_inputs) != len(dataset.types_inputs['test']):
-        dataset.ids_inputs = dataset.ids_inputs[1:4]
+    predictions = ()
 
-    params['INPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len[params['INPUTS_IDS_DATASET'][0]]
-    params['OUTPUT_VOCABULARY_SIZE'] = dataset.vocabulary_len['target_text']
+    try:
+        # input_list = []
+        # for input_name, pos in model.inputsMapping.items():
+        #     ds_input_pos = dataset.ids_inputs.index(input_name)
+        #     input_list.append(
+        #             np.array(dataset.getX('test', 0, dataset.len_test)[ds_input_pos])
+        #             )
+        #
+        # if len(input_list) != len(model.model.input_names):
+        #     raise Exception('The number of inputs in input_list does not match \
+        #             the number of inputs of the model!')
 
-    # Load model
-    nmt_model = loadModel(model, -1, full_path=True)
+        # predictions = model.predict(inputs)
+        raw_predictions = model.predictNet(dataset, predict_parameters)
+        # raw_predictions = model.model.predict(input_list)
+        if predict_parameters['word-level']:
+            # we retrieve the threshold to determine whether a token is OK or BAD
+            # fom the evaluation during training of the model
+            # (see evaluate() in callbacks.py)
+            threshold = model.getLog('val', 'threshold')[-1]
+            # print("threshold is {}".format(threshold))
+            predictions = {}
+            target_text = dataset.X_test['target_text']
+            # print(raw_predictions[predict_parameters['predict_on_sets'][0]])
+            for i in range(len(target_text)):
+                pred = []
+                # we use the length of the target sent to retrieve the number
+                # of labels that we need to produce, otherwise padding to 70...
+                mt_sent = target_text[i].split(' ')
+                # logging.info('y_init[i]: %s' % y_init[i])
+                for j in range(len(mt_sent)):
+                    # pred_word = raw_predictions[i][j]
+                    pred_word = raw_predictions[predict_parameters['predict_on_sets'][0]][i][j]
+                    # print(pred_word)
+                    if pred_word[dataset.vocabulary['word_qe']['words2idx']['OK']] >= threshold:
+                        pred.append('OK')
+                    else:
+                        pred.append('BAD')
+            # logging.info('y_pred: %s' % y_pred)
+                predictions[i] = np.array(pred)
 
-    nmt_model.model_path = save_path
-
-    inputMapping = dict()
-    for i, id_in in enumerate(params['INPUTS_IDS_DATASET']):
-        pos_source = dataset.ids_inputs.index(id_in)
-        id_dest = nmt_model.ids_inputs[i]
-        inputMapping[id_dest] = pos_source
-    nmt_model.setInputsMapping(inputMapping)
-
-    outputMapping = dict()
-    for i, id_out in enumerate(params['OUTPUTS_IDS_DATASET']):
-        pos_target = dataset.ids_outputs.index(id_out)
-        id_dest = nmt_model.ids_outputs[i]
-        outputMapping[id_dest] = pos_target
-    nmt_model.setOutputsMapping(outputMapping)
-    nmt_model.setOptimizer()
-
-    for s in params['EVAL_ON_SETS']:
-        # Evaluate training
-        extra_vars = {'language': params.get('TRG_LAN', 'en'),
-                      'n_parallel_loaders': params['PARALLEL_LOADERS'],
-                      'tokenize_f': eval('dataset.' + params['TOKENIZATION_METHOD']),
-                      'detokenize_f': eval('dataset.' + params['DETOKENIZATION_METHOD']),
-                      'apply_detokenization': params['APPLY_DETOKENIZATION'],
-                      'tokenize_hypotheses': params['TOKENIZE_HYPOTHESES'],
-                      'tokenize_references': params['TOKENIZE_REFERENCES']}
-
-        extra_vars[s] = dict()
-        # True when we should score against a reference
-
-        # add the test split reference to the dataset
-        path_list = os.path.join(params['DATA_ROOT_PATH'], s + '.' + params['PRED_SCORE'])
-        if dataset.ids_outputs[0] == 'word_qe':
-            out_type = 'text'
         else:
-            out_type = 'real'
+            predictions = raw_predictions[predict_parameters['predict_on_sets'][0]].reshape(
+                    raw_predictions[predict_parameters['predict_on_sets'][0]].shape[0]
+                    )
 
-        if not params.get('NO_REF', False):
-            if not dataset.loaded_raw_test[1] and s == 'test':
-                dataset.setRawOutput(path_list, set_name=s, type='file-name', id='raw_'+id_out, overwrite_split=False,
-                                     add_additional=False)
-            if not dataset.loaded_test[1] and s == 'test':
-                dataset.setOutput(path_list, set_name=s, type=out_type, id=id_out, repeat_set=1, overwrite_split=False,
-                                  add_additional=False, sample_weights=False, label_smoothing=0.,
-                                  tokenization='tokenize_none', max_text_len=0, offset=0, fill='end', min_occ=0,  # 'text'
-                                  pad_on_batch=True, words_so_far=False, build_vocabulary=False, max_words=0,  # 'text'
-                                  bpe_codes=None, separator='@@', use_unk_class=False,  # 'text'
-                                  associated_id_in=None, num_poolings=None,  # '3DLabel' or '3DSemanticLabel'
-                                  sparse=False,  # 'binary'
-                                  )
-            keep_n_captions(dataset, repeat=1, n=1, set_names=params['EVAL_ON_SETS'])
+            if len(predictions) != dataset.len_test:
+                raise Exception('The number of predictions ({}) does not match the size \
+                        of the test set ({})!'.format(len(predictions, dataset.len_test)))
 
-        input_text_id = params['INPUTS_IDS_DATASET'][0]
-        vocab_x = dataset.vocabulary[input_text_id]['idx2words']
-        vocab_y = dataset.vocabulary[params['INPUTS_IDS_DATASET'][1]]['idx2words']
+    except ValueError as e:
+        logger.error("ValueError exception occurred: {}".format(e))
+        sys.exit(1)
 
-        callbacks = buildCallbacks(params, nmt_model, dataset)
-        metrics = callbacks.evaluate(
-            params['RELOAD'], counter_name='epoch' if params['EVAL_EACH_EPOCHS'] else 'update')
+    except Exception as e:
+        logger.error("Exception occurred: {}".format(e))
+        sys.exit(1)
+
+    return predictions
 
 
-def buildCallbacks(params, model, dataset):
+def main(parameters):
     """
-    Builds the selected set of callbacks run during the training of the model.
-
-    :param params: Dictionary of network hyperparameters.
-    :param model: Model instance on which to apply the callback.
-    :param dataset: Dataset instance on which to apply the callback.
-    :return:
+    Predict on unseen data
     """
+    try:
+        model_path = parameters.get('LOAD_MODEL', None)
+        src_file2predict = parameters.get('TEST_SRC_FILE', None)
+        trg_file2predict = parameters.get('TEST_TRG_FILE', None)
+        feature_file = parameters.get('FEAT_FILE', None)
 
-    callbacks = []
+        if not model_path:
+            raise ValueError('Model to load not specificied, can\'t predict without it!')
+        if not src_file2predict:
+            raise ValueError('Sentences in source language are missing, can\'t predict without them!')
+        if not trg_file2predict:
+            raise ValueError('Sentences in target language are missing, can\'t predict without them!')
 
-    if params['METRICS'] or params['SAMPLE_ON_SETS']:
-        # Evaluate training
-        extra_vars = {'language': params.get('TRG_LAN', 'en'),
-                      'n_parallel_loaders': params['PARALLEL_LOADERS'],
-                      'tokenize_f': eval('dataset.' + params.get('TOKENIZATION_METHOD', 'tokenize_none')),
-                      'detokenize_f': eval('dataset.' + params.get('DETOKENIZATION_METHOD', 'detokenize_none')),
-                      'apply_detokenization': params.get('APPLY_DETOKENIZATION', False),
-                      'tokenize_hypotheses': params.get('TOKENIZE_HYPOTHESES', True),
-                      'tokenize_references': params.get('TOKENIZE_REFERENCES', True)
-                      }
+    except ValueError as e:
+        print('Error occurred: {}'.format(e))
+        sys.exit(1)
 
-        input_text_id = params['INPUTS_IDS_DATASET'][0]
-        vocab_x = dataset.vocabulary[input_text_id]['idx2words']
-        vocab_y = dataset.vocabulary[params['INPUTS_IDS_DATASET'][1]]['idx2words']
-        if params['BEAM_SEARCH']:
-            extra_vars['beam_size'] = params.get('BEAM_SIZE', 6)
-            extra_vars['state_below_index'] = params.get('BEAM_SEARCH_COND_INPUT', -1)
-            extra_vars['maxlen'] = params.get('MAX_OUTPUT_TEXT_LEN_TEST', 30)
-            extra_vars['optimized_search'] = params.get('OPTIMIZED_SEARCH', True)
-            extra_vars['model_inputs'] = params['INPUTS_IDS_MODEL']
-            extra_vars['model_outputs'] = params['OUTPUTS_IDS_MODEL']
-            extra_vars['dataset_inputs'] = params['INPUTS_IDS_DATASET']
-            extra_vars['dataset_outputs'] = params['OUTPUTS_IDS_DATASET']
-            extra_vars['search_pruning'] = params.get('SEARCH_PRUNING', False)
-            extra_vars['normalize_probs'] = params.get('NORMALIZE_SAMPLING', False)
-            extra_vars['alpha_factor'] = params.get('ALPHA_FACTOR', 1.)
-            extra_vars['coverage_penalty'] = params.get('COVERAGE_PENALTY', False)
-            extra_vars['length_penalty'] = params.get('LENGTH_PENALTY', False)
-            extra_vars['length_norm_factor'] = params.get('LENGTH_NORM_FACTOR', 0.0)
-            extra_vars['coverage_norm_factor'] = params.get('COVERAGE_NORM_FACTOR', 0.0)
-            extra_vars['pos_unk'] = params['POS_UNK']
-            extra_vars['output_max_length_depending_on_x'] = params.get('MAXLEN_GIVEN_X', True)
-            extra_vars['output_max_length_depending_on_x_factor'] = params.get(
-                'MAXLEN_GIVEN_X_FACTOR', 3)
-            extra_vars['output_min_length_depending_on_x'] = params.get('MINLEN_GIVEN_X', True)
-            extra_vars['output_min_length_depending_on_x_factor'] = params.get(
-                'MINLEN_GIVEN_X_FACTOR', 2)
-
-            if params['POS_UNK']:
-                extra_vars['heuristic'] = params['HEURISTIC']
-                if params['HEURISTIC'] > 0:
-                    extra_vars['mapping'] = dataset.mapping
-
-        if params['METRICS']:
-            for s in params['EVAL_ON_SETS']:
-                extra_vars[s] = dict()
-                if not params.get('NO_REF', False):
-                    extra_vars[s]['references'] = dataset.extra_variables[s][params['OUTPUTS_IDS_DATASET'][0]]
-            callback_metric = EvalPerformance(model,
-                                              dataset,
-                                              gt_id=[params['OUTPUTS_IDS_DATASET'][0]],
-                                              metric_name=params['METRICS'],
-                                              set_name=params['EVAL_ON_SETS'],
-                                              batch_size=params['BATCH_SIZE'],
-                                              each_n_epochs=params['EVAL_EACH'],
-                                              extra_vars=extra_vars,
-                                              reload_epoch=params['RELOAD'],
-                                              is_text=True,
-                                              input_text_id=input_text_id,
-                                              index2word_y=vocab_y,
-                                              # index2word_y=dataset.vocabulary[params['OUTPUTS_IDS_DATASET'][0]]['idx2words'],
-                                              index2word_x=vocab_x,
-                                              sampling_type=params['SAMPLING'],
-                                              beam_search=params['BEAM_SEARCH'],
-                                              save_path=model.model_path,
-                                              start_eval_on_epoch=params[
-                                                  'START_EVAL_ON_EPOCH'],
-                                              write_samples=True,
-                                              write_type=params['SAMPLING_SAVE_MODE'],
-                                              eval_on_epochs=params['EVAL_EACH_EPOCHS'],
-                                              save_each_evaluation=params[
-                                                  'SAVE_EACH_EVALUATION'],
-                                              verbose=params['VERBOSE'],
-                                              no_ref=params['NO_REF'])
-
-            callbacks = callback_metric
-
-    return callbacks
-
-
-def check_params(params):
-    """
-    Checks some typical parameters and warns if something wrong was specified.
-    :param params: Model instance on which to apply the callback.
-    :return: None
-    """
-    if params['POS_UNK']:
-        assert params['OPTIMIZED_SEARCH'], 'Unknown words replacement requires ' \
-                                           'to use the optimized search ("OPTIMIZED_SEARCH" parameter).'
-    if params['COVERAGE_PENALTY']:
-        assert params['OPTIMIZED_SEARCH'], 'The application of "COVERAGE_PENALTY" requires ' \
-                                           'to use the optimized search ("OPTIMIZED_SEARCH" parameter).'
-    if params['SRC_PRETRAINED_VECTORS'] and params['SRC_PRETRAINED_VECTORS'][:-1] != '.npy':
-        warnings.warn('It seems that the pretrained word vectors provided for the target text are not in npy format.'
-                      'You should preprocess the word embeddings with the "utils/preprocess_*_word_vectors.py script.')
-
-    if params['TRG_PRETRAINED_VECTORS'] and params['TRG_PRETRAINED_VECTORS'][:-1] != '.npy':
-        warnings.warn('It seems that the pretrained word vectors provided for the target text are not in npy format.'
-                      'You should preprocess the word embeddings with the "utils/preprocess_*_word_vectors.py script.')
-
-
-def main(model, dataset, save_path=None, evalset=None, changes={}):
-    """
-    Predicts QE scores on a dataset using a pre-trained model.
-    :param model: Model file (.h5) to use.
-    :param dataset: Dataset file (.pkl) to use.
-    :param save_path: Optinal directory path to save predictions to. Default = STORE_PATH
-    :param evalset: Optional set to evaluate on. Default = 'test'
-    :param changes: Optional dictionary of parameters to overwrite config.
-    """
-    parameters = pickle.load(open(os.path.join(os.path.split(model)[0], 'config.pkl'), 'rb'))
-
-    parameters.update(changes)
-
-    if evalset is None:
-        parameters['EVAL_ON_SETS'] = ['test']
-    else:
-        parameters['EVAL_ON_SETS'] = [evalset]
-
+    save_path = parameters.get('PRED_PATH', None)
     if save_path is None:
-        save_path = parameters['STORE_PATH']
+        save_path = os.path.join(parameters['STORE_PATH'], 'predictions')
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    save_file = os.path.join(save_path, 'predictions.txt')
 
-    logging.info('Running prediction.')
+    logger.info('Loading pre-trained QE model...')
 
-    # NMT Keras expects model path to appear without the .h5
-    if model.endswith(".h5"):
-        model = model[:-3]
-    # Directory containing model
-    model_dir, file_name = os.path.split(model)
-    _, parameters["MODEL_NAME"] = os.path.split(model_dir)
-    parameters["STORE_PATH"] = "trained_models/" + parameters["MODEL_NAME"]
-    del parameters["TASK_NAME"]
-    assert file_name.startswith("epoch_")
-    parameters["RELOAD"] = file_name.replace("epoch_", "")
+    try:
+        # includes all layers and everything defined in deepquest.qe_models.utils
+        import deepquest.qe_models.layers as layers
+        with CustomObjectScope(vars(layers)):
+            print(model_path)
+            qe_model = loadModel(model_path, -1, full_path=True)
 
-    # from nmt_keras import model_zoo
-    from keras.utils import CustomObjectScope
-    import deepquest.qe_models.utils as layers  # includes all layers and everything defined in deepquest.qe_models.utils
-    with CustomObjectScope(vars(layers)):
-        apply_NMT_model(parameters, dataset, model, save_path)
+    except Exception as e:
+        logger.error('Exception occurred while loading pre-trained QE model: {}'.format(e))
+        sys.exit(1)
 
-    logging.info('Done.')
+    logger.info('QE model loaded...')
+    logger.info('Processing dataset...')
+
+    try:
+        # Loading the dataset/vocab used to train the pre-trained model
+        # information is given from the config.pkl file used as default params
+        training_ds = pickle.load(open(os.path.join(
+            parameters['DATASET_STORE_PATH'],
+            'Dataset_{}_{}{}.pkl'.format(
+                parameters['DATASET_NAME'],
+                parameters['SRC_LAN'], parameters['TRG_LAN'])
+            ),
+            'rb')
+            )
+
+        # We create a Dataset object with the (unseen) data we wish to
+        # predict the quality for 
+        # note: no need to save it
+        # name = params['DATASET_NAME'] + '_' + params['SRC_LAN'] + params['TRG_LAN']
+        predict_ds = Dataset('prediction_tmp', '/', silence=False)
+        predict_ds.vocabulary = training_ds.vocabulary
+        predict_ds.vocabulary_len = training_ds.vocabulary_len
+
+        # We check whether we are doing word-level QE as the predictions would require
+        # a little extra post-processing
+        word_level = False
+        if 'word' in qe_model.params['MODEL_TYPE'].lower():
+            word_level = True
+
+        # Getting informatiom from both the pre-trained model and
+        # the used dataset, to know how to process the unseen data
+        use_bert = False
+        if 'bert' in parameters['TOKENIZATION_METHOD'].lower():
+            use_bert = True
+
+        inputs_offsets = {}
+        for input_name in qe_model.model.input_names:
+            # if BERT is used, we skip those entries as they are processed 
+            # automatically whitin the preprocessText() function of the Dataset class
+            if use_bert and 'mask' in input_name or 'segids' in input_name:
+                continue
+            # retrieving offset information from the used dataset 
+            # (offset is used e.g. by Predictor model)
+            inputs_offsets[input_name] = training_ds.text_offset[input_name]
+
+        # Addint RAW input (similarly to build_dataset()
+        # ds.setRawInput(src_file2predict,
+        #         'test',
+        #         type='file-name',
+        #         id='raw_source_text')
+
+        # Adding the input source sentences
+        predict_ds.setInput(src_file2predict,
+                'test',
+                type=parameters.get('INPUTS_TYPES_DATASET', ['text', 'text'])[0],
+                id='source_text',
+                tokenization=parameters.get('TOKENIZATION_METHOD', 'tokenize_none'),
+                build_vocabulary=False,
+                pad_on_batch=parameters.get('PAD_ON_BATCH', True),
+                offset=inputs_offsets['source_text'],
+                fill=parameters.get('FILL', 'end'),
+                max_text_len=parameters.get('MAX_INPUT_TEXT_LEN', 100),
+                max_words=parameters.get('INPUT_VOCABULARY_SIZE', 0),
+                min_occ=parameters.get('MIN_OCCURRENCES_INPUT_VOCAB', 0),
+                bpe_codes=parameters.get('BPE_CODES_PATH', None),
+                overwrite_split=True)
+
+        # Adding the input target sentences
+        predict_ds.setInput(trg_file2predict,
+                'test',
+                type=parameters.get('INPUTS_TYPES_DATASET', ['text', 'text'])[0],
+                id='target_text',
+                tokenization=parameters.get('TOKENIZATION_METHOD', 'tokenize_none'),
+                build_vocabulary=False,
+                pad_on_batch=parameters.get('PAD_ON_BATCH', True),
+                offset=inputs_offsets['target_text'],
+                fill=parameters.get('FILL', 'end'),
+                max_text_len=parameters.get('MAX_INPUT_TEXT_LEN', 100),
+                max_words=parameters.get('INPUT_VOCABULARY_SIZE', 0),
+                min_occ=parameters.get('MIN_OCCURRENCES_INPUT_VOCAB', 0),
+                bpe_codes=parameters.get('BPE_CODES_PATH', None),
+                overwrite_split=True)
+
+        # TODO: considering when the QE model as more than 2 inputs (e.g. Predictor-Estimator)
+
+        # TODO: considering extra input, such as visual/text features (e.g. multimodalQE)
+        # Adding extra features (if any)
+        # if feature_file:
+        #     predict_ds.setInput(src_file2predict,
+        #             'test',
+        #             type=parameters.get('INPUTS_TYPES_DATASET', ['text', 'text'])[0],
+        #             id='source_text',
+        #             tokenization=parameters.get('TOKENIZATION_METHOD', 'tokenize_none'),
+        #             build_vocabulary=False,
+        #             pad_on_batch=parameters.get('PAD_ON_BATCH', True),
+        #             fill=parameters.get('FILL', 'end'),
+        #             max_text_len=parameters.get('MAX_INPUT_TEXT_LEN', 100),
+        #             max_words=parameters.get('INPUT_VOCABULARY_SIZE', 0),
+        #             min_occ=parameters.get('MIN_OCCURRENCES_INPUT_VOCAB', 0),
+        #             bpe_codes=parameters.get('BPE_CODES_PATH', None),
+        #             overwrite_split=True)
+
+        # Note: no need to set an output!
+        # We pretend that there is no ref and
+        # we leave evaluation to the scoring pipeline
+
+        # We make sure to associate the inputs IDs of the model to
+        # the right inputs IDs of the new dataset (unseen data)
+        parameters['INPUTS_IDS_DATASET'] = qe_model.ids_inputs
+        inputMapping = dict()
+        for i, id_in in enumerate(parameters['INPUTS_IDS_DATASET']):
+            pos_source = predict_ds.ids_inputs.index(id_in)
+            id_dest = qe_model.ids_inputs[i]
+            inputMapping[id_dest] = pos_source
+        qe_model.setInputsMapping(inputMapping)
+
+    except Exception as e:
+        logger.error('Exception occurred when processing dataset: {}'.format(e))
+        sys.exit(1)
+
+    logger.info('Processing dataset done.')
+    logger.info('Predicting estimates on data.')
+
+    predict_parameters = {
+            'predict_on_sets': ['test'],
+            'batch_size': parameters.get('BATCH_SIZE', 50),
+            'verbose': parameters.get('VERBOSE', 0),
+            'word-level': word_level,
+            # 'model_name': 'model' # name of the attribute where the model for prediction is stored
+            }
+
+    predictions = apply_QE_model(qe_model, predict_ds, predict_parameters)
+
+    logger.info('Predicting estimates DONE.')
+    logger.info('Saving predictions in {}'.format(save_file))
+
+    with codecs.open(save_file, 'w+', encoding='utf-8') as fh_pred:
+        if word_level:
+            for i in range(len(predictions)):
+                fh_pred.write(' '.join(predictions[i]) + '\n')
+        else:
+            for pred in predictions:
+                fh_pred.write(str(pred) + '\n')
+
+
+    logger.info('Predictions saved.')
+

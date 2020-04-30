@@ -16,6 +16,7 @@
 
 from .birnn_word import EncWord
 from .utils import *
+from .layers import *
 
 
 class EncSent(EncWord):

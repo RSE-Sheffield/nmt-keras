@@ -35,9 +35,10 @@
 
 from .estimator_word import EstimatorWord
 from .utils import *
+from .layers import *
 
 
-class EstimatorSent(EstimatorWord):
+class EstimatorSent(estimatorWord):
 
     def __init__(self, params, model_type='EstimatorSent',
             verbose=1, structure_path=None, weights_path=None,
