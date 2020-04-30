@@ -49,13 +49,40 @@ def apply_QE_model(model, dataset, predict_parameters):
         # predictions = model.predict(inputs)
         raw_predictions = model.predictNet(dataset, predict_parameters)
         # raw_predictions = model.model.predict(input_list)
-        predictions = raw_predictions[predict_parameters['predict_on_sets'][0]].reshape(
-                        raw_predictions[predict_parameters['predict_on_sets'][0]].shape[0]
-                        )
+        if predict_parameters['word-level']:
+            # we retrieve the threshold to determine whether a token is OK or BAD
+            # fom the evaluation during training of the model
+            # (see evaluate() in callbacks.py)
+            threshold = model.getLog('val', 'threshold')[-1]
+            # print("threshold is {}".format(threshold))
+            predictions = {}
+            target_text = dataset.X_test['target_text']
+            # print(raw_predictions[predict_parameters['predict_on_sets'][0]])
+            for i in range(len(target_text)):
+                pred = []
+                # we use the length of the target sent to retrieve the number
+                # of labels that we need to produce, otherwise padding to 70...
+                mt_sent = target_text[i].split(' ')
+                # logging.info('y_init[i]: %s' % y_init[i])
+                for j in range(len(mt_sent)):
+                    # pred_word = raw_predictions[i][j]
+                    pred_word = raw_predictions[predict_parameters['predict_on_sets'][0]][i][j]
+                    # print(pred_word)
+                    if pred_word[dataset.vocabulary['word_qe']['words2idx']['OK']] >= threshold:
+                        pred.append('OK')
+                    else:
+                        pred.append('BAD')
+            # logging.info('y_pred: %s' % y_pred)
+                predictions[i] = np.array(pred)
 
-        if len(predictions) != dataset.len_test:
-            raise Exception('The number of predictions ({}) does not match the size \
-                    of the test set ({})!'.format(len(predictions, dataset.len_test)))
+        else:
+            predictions = raw_predictions[predict_parameters['predict_on_sets'][0]].reshape(
+                    raw_predictions[predict_parameters['predict_on_sets'][0]].shape[0]
+                    )
+
+            if len(predictions) != dataset.len_test:
+                raise Exception('The number of predictions ({}) does not match the size \
+                        of the test set ({})!'.format(len(predictions, dataset.len_test)))
 
     except ValueError as e:
         logger.error("ValueError exception occurred: {}".format(e))
@@ -131,6 +158,12 @@ def main(parameters):
         predict_ds = Dataset('prediction_tmp', '/', silence=False)
         predict_ds.vocabulary = training_ds.vocabulary
         predict_ds.vocabulary_len = training_ds.vocabulary_len
+
+        # We check whether we are doing word-level QE as the predictions would require
+        # a little extra post-processing
+        word_level = False
+        if 'word' in qe_model.params['MODEL_TYPE'].lower():
+            word_level = True
 
         # Getting informatiom from both the pre-trained model and
         # the used dataset, to know how to process the unseen data
@@ -230,6 +263,7 @@ def main(parameters):
             'predict_on_sets': ['test'],
             'batch_size': parameters.get('BATCH_SIZE', 50),
             'verbose': parameters.get('VERBOSE', 0),
+            'word-level': word_level,
             # 'model_name': 'model' # name of the attribute where the model for prediction is stored
             }
 
@@ -239,8 +273,13 @@ def main(parameters):
     logger.info('Saving predictions in {}'.format(save_file))
 
     with codecs.open(save_file, 'w+', encoding='utf-8') as fh_pred:
-        for pred in predictions:
-            fh_pred.write(str(pred) + '\n')
+        if word_level:
+            for i in range(len(predictions)):
+                fh_pred.write(' '.join(predictions[i]) + '\n')
+        else:
+            for pred in predictions:
+                fh_pred.write(str(pred) + '\n')
+
 
     logger.info('Predictions saved.')
 
