@@ -18,7 +18,7 @@ from .model import QEModel
 from .utils import *
 from .layers import *
 
-class encword(QEModel):
+class EncWord(QEModel):
 
     def __init__(self, params):
         # define here attributes that are model specific

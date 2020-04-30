@@ -27,13 +27,25 @@ QE_MODELS = {
 'estimatordoc':     'estimator_doc',
 }
 
+# maps lower-cased model names to model class names
+model_map = {
+'encword':          'EncWord',
+'encsent':          'EncSent',
+'encdoc':           'EncDoc',
+'encdocatt':        'EncDocAtt',
+'Predictor':        'Predictor',
+'estimatorword':    'EtimatorWord',
+'estimatorsent':    'EstimatorSent',
+'estimatordoc':     'EstimatorDoc',
+}
+
 
 import importlib
 
 # QE MODEL FACTORY-like
 def get(model_name, params):
     try:
-        qe_model = getattr(importlib.import_module('deepquest.qe_models.{}'.format(QE_MODELS[model_name.lower()])), model_name.lower())
+        qe_model = getattr(importlib.import_module('deepquest.qe_models.{}'.format(QE_MODELS[model_name.lower()])), model_map[model_name.lower()])
         return qe_model(params)
 
     except ValueError as e:

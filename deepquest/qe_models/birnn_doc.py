@@ -14,13 +14,13 @@
 #TODO: add a description of the model here.
 """
 
-from .birnn_word import encword
+from .birnn_word import EncWord
 from .utils import *
 from .layers import *
 from keras.models import clone_model
 
 
-class encdoc(encword):
+class EncDoc(EncWord):
 
     def __init__(self, params):
         # define here attributes that are model specific
