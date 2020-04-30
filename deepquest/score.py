@@ -4,10 +4,9 @@ import sys
 import scipy.stats
 import sklearn.metrics
 from math import sqrt
+from deepquest.utils.logs import logger_setup
 
-logging.basicConfig(level=logging.INFO,
-                    format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
-logger = logging.getLogger(__name__)
+logger, logging = logger_setup('score')
 
 
 def read_file_to_list(file_in, logger):

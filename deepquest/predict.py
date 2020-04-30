@@ -13,10 +13,9 @@ from deepquest.data_engine.dataset import Dataset
 from deepquest.data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
 # from deepquest.utils import evaluation
 from deepquest.utils.callbacks import *
+from deepquest.utils.logs import logger_setup
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
-logger = logging.getLogger(__name__)
+logger, logging = logger_setup('predict')
 
 
 

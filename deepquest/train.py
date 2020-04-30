@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 import ast
-import logging
 import os
 
 from timeit import default_timer as timer
@@ -16,14 +15,11 @@ from nmt_keras.nmt_keras import check_params
 
 import deepquest.qe_models as modFactory
 from deepquest.utils.callbacks import PrintPerformanceMetricOnEpochEndOrEachNUpdates
+from deepquest.utils.logs import logger_setup
 from deepquest import compare_params
 from deepquest.data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions, preprocessDoc
 
-logging.basicConfig(level=logging.INFO,
-                    format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
-
-logger = logging.getLogger(__name__)
-
+logger, logging = logger_setup('train')
 
 def train_model(params, weights_dict=None, load_dataset=None, trainable_pred=True, trainable_est=True, weights_path=None):
     """
