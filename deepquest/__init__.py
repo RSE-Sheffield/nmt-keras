@@ -113,24 +113,40 @@ def setparameters(user_config_path):
     """
     import codecs
     import logging
+
     logging.basicConfig(level=logging.INFO,
                     format='[%(asctime)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
     logger = logging.getLogger(__name__)
-    try:
 
-        parameters = default_params() # load the default parameters (BiRNN by default)
+    try:
+        import yaml
 
         if user_config_path.endswith('.yml'):
-            import yaml
             with codecs.open(user_config_path, 'r', encoding='utf-8') as fh_user:
                 user_parameters = yaml.load(fh_user, Loader=yaml.FullLoader)
+
+            # 'LOAD_MODEL' means we are predicting, so we load the config
+            # from the pre-trained model as the default one.
+            pretrained_model = user_parameters.get('LOAD_MODEL', None)
+            if pretrained_model:
+                import os
+                import pickle
+                parameters = pickle.load(
+                        codecs.open(os.path.join(os.path.split(pretrained_model)[0],
+                            'config.pkl'), 'rb'))
+            else:
+                parameters = default_params() # load the default parameters (BiRNN by default)
+
             parameters.update(user_parameters)
             del user_parameters
 
         elif user_config_path.endswith('.pkl'):
+            import pickle
+            parameters = default_params() # load the default parameters (BiRNN by default)
+
             from keras_wrapper.extra.read_write import pkl2dict
             parameters = update_parameters(parameters, pkl2dict(user_config_path))
-        
+
         parameters = add_dependent_params(parameters) # add some parameters that depend on others
 
     except Exception as exception:
