@@ -6,12 +6,9 @@ import pickle
 
 from keras.utils import CustomObjectScope
 from keras_wrapper.cnn_model import loadModel
-from keras_wrapper.dataset import loadDataset
 
 import deepquest.qe_models as modFactory
 from deepquest.data_engine.dataset import Dataset
-from deepquest.data_engine.prepare_data import build_dataset, update_dataset_from_file, keep_n_captions
-# from deepquest.utils import evaluation
 from deepquest.utils.callbacks import *
 from deepquest.utils.logs import logger_setup
 
@@ -126,10 +123,10 @@ def main(parameters):
 
     try:
         # includes all layers and everything defined in deepquest.qe_models.utils
+        model2load = os.path.join(model_path, 'best_model')
         import deepquest.qe_models.layers as layers
         with CustomObjectScope(vars(layers)):
-            print(model_path)
-            qe_model = loadModel(model_path, -1, full_path=True)
+            qe_model = loadModel(model2load, -1, full_path=True)
 
     except Exception as e:
         logger.error('Exception occurred while loading pre-trained QE model: {}'.format(e))
@@ -142,7 +139,7 @@ def main(parameters):
         # Loading the dataset/vocab used to train the pre-trained model
         # information is given from the config.pkl file used as default params
         training_ds = pickle.load(open(os.path.join(
-            parameters['DATASET_STORE_PATH'],
+            parameters['LOAD_MODEL'],
             'Dataset_{}_{}{}.pkl'.format(
                 parameters['DATASET_NAME'],
                 parameters['SRC_LAN'], parameters['TRG_LAN'])
