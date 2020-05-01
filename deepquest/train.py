@@ -337,22 +337,35 @@ def buildCallbacks(params, model, dataset):
 
 
 def save_random_states(write_path, user_seed=None):
-    import numpy.random
+    import codecs
+    import numpy as np
     import random
-    import json
+    # import json
+    import pickle
 
-    n = list(numpy.random.get_state())
-    n[1] = n[1].tolist()
+    write_path = os.path.join(write_path, 'assets')
 
-    p = list(random.getstate())
+    if not os.path.exists(write_path):
+        os.makedirs(write_path)
 
-    data = {'user_seed': user_seed,
-            'numpy_rand_state': n,
-            'python_rand_state': p
-            }
+    with codecs.open(os.path.join(write_path, 'np_states.pkl'), 'wb') as fh:
+        pickle.dump(np.random.get_state(), fh)
 
-    with open(os.path.join(write_path, 'random_states.json'), 'w') as outfile:
-        json.dump(data, outfile)
+    with codecs.open(os.path.join(write_path, 'random_states.pkl'), 'wb') as fh:
+        pickle.dump(random.getstate(), fh)
+
+    # n = list(numpy.random.get_state())
+    # n[1] = n[1].tolist()
+    #
+    # p = list(random.getstate())
+    #
+    # data = {'user_seed': user_seed,
+    #         'numpy_rand_state': n,
+    #         'python_rand_state': p
+    #         }
+    #
+    # with open(os.path.join(write_path, 'random_states.json'), 'w') as outfile:
+    #     json.dump(data, outfile)
 
 
 def main(parameters):
@@ -391,8 +404,7 @@ def main(parameters):
 
     check_params(parameters) # nmt-keras' check_params function
 
-    save_random_states(parameters['STORE_PATH'],
-                       user_seed=parameters.get('SEED'))
+    save_random_states(parameters['STORE_PATH'], user_seed=parameters.get('SEED'))
 
     if parameters['MULTI_TASK']:
 
