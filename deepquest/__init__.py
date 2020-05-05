@@ -132,8 +132,7 @@ def setparameters(user_config_path):
                 import os
                 import pickle
                 parameters = pickle.load(
-                        codecs.open(os.path.join(os.path.split(pretrained_model)[0],
-                            'config.pkl'), 'rb'))
+                        codecs.open(os.path.join(pretrained_model, 'config.pkl'), 'rb'))
             else:
                 parameters = default_params() # load the default parameters (BiRNN by default)
 
