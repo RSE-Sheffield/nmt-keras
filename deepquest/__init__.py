@@ -149,7 +149,7 @@ def setparameters(user_config_path):
         parameters = add_dependent_params(parameters) # add some parameters that depend on others
 
     except Exception as exception:
-        logger.exception("Exception occured: {}".format(exception))
+        logger.exception("Exception occured in setparameters(): {}".format(exception))
 
     return parameters
 
