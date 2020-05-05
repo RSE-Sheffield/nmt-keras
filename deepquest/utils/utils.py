@@ -86,6 +86,6 @@ def setparameters(user_config_path, default_config_path='configs/default-config-
             parameters = update_parameters(parameters, pkl2dict(user_config_path))
 
     except Exception as exception:
-        logger.exception("Exception occured: {}".format(exception))
+        logger.exception("Exception occured in setparameters(): {}".format(exception))
 
     return parameters
