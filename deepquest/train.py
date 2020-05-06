@@ -376,6 +376,7 @@ def main(parameters):
     :param dataset: Optional path to a previously built pkl dataset.
     :param changes: Optional dictionary of parameters to overwrite config.
     """
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
     logger.info(parameters)
 
