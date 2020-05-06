@@ -170,7 +170,8 @@ class FullTokenizer(object):
 
   def tokenize(self, text):
     split_tokens = []
-    for token in self.basic_tokenizer.tokenize(text):
+    # for token in self.basic_tokenizer.tokenize(text):
+    for token in whitespace_tokenize(text):
       for sub_token in self.wordpiece_tokenizer.tokenize(token):
         split_tokens.append(sub_token)
 
