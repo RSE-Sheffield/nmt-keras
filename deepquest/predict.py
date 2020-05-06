@@ -15,6 +15,8 @@ from deepquest.utils.logs import logger_setup
 logger, logging = logger_setup('predict')
 
 
+use_bert = False
+
 
 def apply_QE_model(model, dataset, predict_parameters):
 
@@ -52,17 +54,30 @@ def apply_QE_model(model, dataset, predict_parameters):
             threshold = model.getLog('val', 'threshold')[-1]
             # print("threshold is {}".format(threshold))
             predictions = {}
-            target_text = dataset.X_test['target_text']
+            if use_bert:
+                target_text = dataset.X_test['target_text_tok']
+            else:
+                target_text = dataset.X_test['target_text']
             # print(raw_predictions[predict_parameters['predict_on_sets'][0]])
             for i in range(len(target_text)):
                 pred = []
                 # we use the length of the target sent to retrieve the number
-                # of labels that we need to produce, otherwise padding to 70...
-                mt_sent = target_text[i].split(' ')
+                # of labels that we need to produce, otherwise padding to 100...
+                if use_bert:
+                    # we do not consider '[CLS]' nor '[SEP]'
+                    mt_sent = target_text[i].split(' ')[1:-1]
+                else:
+                    mt_sent = target_text[i].split(' ')
                 # logging.info('y_init[i]: %s' % y_init[i])
                 for j in range(len(mt_sent)):
                     # pred_word = raw_predictions[i][j]
-                    pred_word = raw_predictions[predict_parameters['predict_on_sets'][0]][i][j]
+                    if use_bert:
+                        if mt_sent[j].startswith('##'):
+                            continue
+                        # we do not consider '[CLS]' nor '[SEP]' and beyond
+                        pred_word = raw_predictions[predict_parameters['predict_on_sets'][0]][i][1:len(mt_sent)+1][j]
+                    else:
+                        pred_word = raw_predictions[predict_parameters['predict_on_sets'][0]][i][j]
                     # print(pred_word)
                     if pred_word[dataset.vocabulary['word_qe']['words2idx']['OK']] >= threshold:
                         pred.append('OK')
@@ -122,11 +137,13 @@ def main(parameters):
     logger.info('Loading pre-trained QE model...')
 
     try:
-        # includes all layers and everything defined in deepquest.qe_models.utils
+        # includes all layers and everything defined in deepqlogger.infoqe_models.utils
         model2load = os.path.join(model_path, 'best_model')
         import deepquest.qe_models.layers as layers
         with CustomObjectScope(vars(layers)):
-            qe_model = loadModel(model2load, -1, full_path=True)
+            qe_model = loadModel(model2load, -1, full_path=True, compile_model=False)
+            for layer in qe_model.model.layers: layer.trainable = False
+            print(qe_model.model.summary())
 
     except Exception as e:
         logger.error('Exception occurred while loading pre-trained QE model: {}'.format(e))
@@ -163,7 +180,7 @@ def main(parameters):
 
         # Getting informatiom from both the pre-trained model and
         # the used dataset, to know how to process the unseen data
-        use_bert = False
+        global use_bert
         if 'bert' in parameters['TOKENIZATION_METHOD'].lower():
             use_bert = True
 
