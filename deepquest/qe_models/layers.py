@@ -151,7 +151,13 @@ class BertLayer(Layer):
 
     def compute_output_shape(self, input_shape):
         if self.pooling == None:
-            return (None, self.max_seq_len, 768)
+            # commented out as it would fails to initialise
+            # the output shape properly when reloading the model
+            # with BertLayer as a CustomObject (i.e. would use the
+            # default value given as positional argument to the init()
+            # function).
+            # return (None, self.max_seq_len, 768)
+            return (None, input_shape[0][1], 768)
         else: #'mean' and 'cls'
             return (None, 768)
 
