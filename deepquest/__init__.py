@@ -18,7 +18,7 @@ def train(config, changes={}):
         numpy.random.seed(parameters['SEED'])
         import random
         random.seed(parameters['SEED'])
-    
+
     if parameters.get('GPU_ID') is not None:
         n_gpus = set_gpu_id(str(parameters.get('GPU_ID')))
         parameters.update({'N_GPUS': n_gpus, 'GPU_ID': parameters.get('GPU_ID')})
@@ -49,6 +49,10 @@ def predict(config, changes={}):
         numpy.random.seed(parameters['SEED'])
         import random
         random.seed(parameters['SEED'])
+
+    if parameters.get('GPU_ID') is not None:
+        n_gpus = set_gpu_id(str(parameters.get('GPU_ID')))
+        parameters.update({'N_GPUS': n_gpus, 'GPU_ID': parameters.get('GPU_ID')})
 
     import deepquest.predict
     predict.main(parameters)
