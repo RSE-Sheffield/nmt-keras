@@ -252,7 +252,8 @@ def buildCallbacks(params, model, dataset):
             extra_vars['beam_size'] = params.get('BEAM_SIZE', 6)
             extra_vars['state_below_index'] = params.get(
                 'BEAM_SEARCH_COND_INPUT', -1)
-            extra_vars['maxlen'] = params.get('MAX_OUTPUT_TEXT_LEN_TEST', 30)
+            # extra_vars['maxlen'] = params.get('MAX_OUTPUT_TEXT_LEN_TEST', 30)
+            extra_vars['maxlen'] = params.get('MAX_OUTPUT_TEXT_LEN')
             extra_vars['optimized_search'] = params.get(
                 'OPTIMIZED_SEARCH', True)
             extra_vars['model_inputs'] = params['INPUTS_IDS_MODEL']
@@ -375,7 +376,7 @@ def main(parameters):
     :param dataset: Optional path to a previously built pkl dataset.
     :param changes: Optional dictionary of parameters to overwrite config.
     """
-    
+
     logger.info(parameters)
 
     # check if model already exists
