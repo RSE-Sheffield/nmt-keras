@@ -77,7 +77,7 @@ class Dataset(Keras_dataset):
     def tokenize_bert(self, sentence, max_text_len):
         """
         This function is similar to `convert_sentences_to_features`
-        :param sentence: sentence to tokenieize
+        :param sentence: sentence to tokenize
         :param tokenizer: BERT Tokenizer object
         :param max_text_len: max length of sentence *once* tokenized
         :return: tokens, BERT token IDs, mask and segment IDs
@@ -103,12 +103,12 @@ class Dataset(Keras_dataset):
         segment_ids.extend(zero_mask)
 
         # loadText in keras_wrapper requires string, not list
-        # tokens = ' '.join(tokens)
         input_ids =  ' '.join(str(x) for x in input_ids)
         input_mask =  ' '.join(str(x) for x in input_mask)
         segment_ids =  ' '.join(str(x) for x in segment_ids)
+        tokens = ' '.join(tokens)
 
-        return input_ids, input_mask, segment_ids
+        return input_ids, input_mask, segment_ids, tokens
 
 
     def setInput(self, path_list, set_name, type='raw-image', id='image', repeat_set=1, required=True,
@@ -277,8 +277,160 @@ class Dataset(Keras_dataset):
             # if not required and (id + '_segids') not in self.optional_inputs:
             self.optional_inputs.append(id + '_segids')
 
+            # We keep a tokenised version of original sentences
+            # as we neeed to produce labels for each token for word-level
+            self.__setInput(data[3], set_name, type, id + '_tok', overwrite_split, add_additional)
+            # if id + '_tok' not in self.ids_inputs:
+            #     self.ids_inputs.append(id + '_tok')
+            # self.types_inputs[set_name].append(type)
+            # if not required and (id + '_segids') not in self.optional_inputs:
+            self.optional_inputs.append(id + '_tok')
+
         else:
             self.__setInput(data, set_name, type, id, overwrite_split, add_additional)
+
+
+    def setOutput(self, path_list, set_name, type='categorical', id='label', repeat_set=1, overwrite_split=False,
+                  add_additional=False, sample_weights=False, label_smoothing=0.,
+                  tokenization='tokenize_none', max_text_len=0, offset=0, fill='end', min_occ=0,  # 'text'
+                  pad_on_batch=True, words_so_far=False, build_vocabulary=False, max_words=0,  # 'text'
+                  bpe_codes=None, separator='@@', use_unk_class=False,  # 'text'
+                  associated_id_in=None, num_poolings=None,  # '3DLabel' or '3DSemanticLabel'
+                  sparse=False,  # 'binary'
+                  ):
+        """
+        Loads a set of output data.
+
+        # General parameters
+
+        :param path_list: can either be a path to a text file containing the labels or a python list of labels.
+        :param set_name: identifier of the set split loaded ('train', 'val' or 'test').
+        :param type: identifier of the type of input we are loading
+                     (accepted types can be seen in self.__accepted_types_outputs).
+        :param id: identifier of the input data loaded.
+        :param repeat_set: repeats the outputs given
+                           (useful when we have more inputs than outputs). Int or array of ints.
+        :param overwrite_split: indicates that we want to overwrite
+                                the data with id that was already declared in the dataset
+        :param add_additional: adds additional data to an already existent output ID
+        :param sample_weights: switch on/off sample weights usage for the current output
+        :param label_smoothing: epsilon value for label smoothing. See arxiv.org/abs/1512.00567.
+            # 'text'-related parameters
+
+        :param tokenization: type of tokenization applied (must be declared as a method of this class)
+                             (only applicable when type=='text').
+        :param build_vocabulary: whether a new vocabulary will be built from the loaded data or not
+                                (only applicable when type=='text').
+        :param max_text_len: maximum text length, the rest of the data will be padded with 0s
+                            (only applicable if the output data is of type 'text').
+                             Set to 0 if the whole sentence will be used as an output class.
+        :param max_words: a maximum of 'max_words' words from the whole vocabulary will
+                          be chosen by number or occurrences
+        :param offset: number of timesteps that the text is shifted to the right
+                       (for sequential conditional models, which take as input the previous output)
+        :param fill: select whether padding before or after the sequence
+        :param min_occ: minimum number of occurrences allowed for the words in the vocabulary. (default = 0)
+        :param pad_on_batch: the batch timesteps size will be set to the length of the largest sample +1
+                             if True, max_len will be used as the fixed length otherwise
+        :param words_so_far: if True, each sample will be represented as the complete set of words until the point
+                             defined by the timestep dimension (e.g. t=0 'a', t=1 'a dog', t=2 'a dog is', etc.)
+        :param bpe_codes: Codes used for applying BPE encoding.
+        :param separator: BPE encoding separator.
+
+            # '3DLabel' or '3DSemanticLabel'-related parameters
+
+        :param associated_id_in: id of the input 'raw-image' associated to the inputted 3DLabels or 3DSemanticLabel
+        :param num_poolings: number of pooling layers used in the model (used for calculating output dimensions)
+
+            # 'binary'-related parameters
+
+        :param sparse: indicates if the data is stored as a list of lists with class indices,
+                       e.g. [[4, 234],[87, 222, 4568],[3],...]
+
+        """
+        self.__checkSetName(set_name)
+
+        # Insert type and id of output data
+        keys_Y_set = list(getattr(self, 'Y_' + set_name))
+        if id not in self.ids_outputs:
+            self.ids_outputs.append(id)
+        elif id in keys_Y_set and not overwrite_split and not add_additional:
+            raise Exception('An output with id "' + id + '" is already loaded into the Database.')
+
+        if type not in self.__accepted_types_outputs:
+            raise NotImplementedError('The output type "' + type +
+                                      '" is not implemented. '
+                                      'The list of valid types are the following: ' + str(self.__accepted_types_outputs))
+        if self.types_outputs.get(set_name) is None:
+            self.types_outputs[set_name] = [type]
+        else:
+            self.types_outputs[set_name].append(type)
+
+        if hasattr(self, 'label_smoothing'):
+            if self.label_smoothing.get(id) is None:
+                self.label_smoothing[id] = dict()
+            self.label_smoothing[id][set_name] = label_smoothing
+
+        # Preprocess the output data depending on its type
+        if type == 'categorical':
+            if build_vocabulary:
+                self.setClasses(path_list, id)
+            data = self.preprocessCategorical(path_list, id,
+                                              sample_weights=True if sample_weights and set_name == 'train' else False)
+        elif type == 'text' or type == 'dense-text':
+            if self.max_text_len.get(id) is None:
+                self.max_text_len[id] = dict()
+            if 'bert' in tokenization.lower() and eval('self.X_' + set_name)['target_text_tok']:
+                sentences = []
+                with codecs.open(path_list, 'r', encoding='utf-8') as list_:
+                    for line in list_:
+                        sentences.append(line.rstrip('\n').split())
+                new_path_list = []
+                for tokens_id, tokens in enumerate(eval('self.X_' + set_name)['target_text_tok']):
+                    labels_list = []
+                    tokens_list = tokens.split()
+                    offset = 0
+                    for i, tok in enumerate(tokens_list):
+                        if tok == '[CLS]' or tok == '[SEP]':
+                            labels_list.append('OK')
+                            offset -= 1
+                        elif tok.startswith('##'):
+                            labels_list.append(labels_list[-1])
+                            offset -= 1
+                        else:
+                            labels_list.append(sentences[tokens_id][i + offset])
+                    new_path_list.append(" ".join(labels_list))
+                path_list = new_path_list
+                tokenization = 'tokenize_none'
+
+            data = self.preprocessText(path_list, id, set_name, tokenization, build_vocabulary, max_text_len,
+                                       max_words, offset, fill, min_occ, pad_on_batch, words_so_far,
+                                       bpe_codes=bpe_codes, separator=separator, use_unk_class=use_unk_class)
+        elif type == 'text-features':
+            if self.max_text_len.get(id) is None:
+                self.max_text_len[id] = dict()
+            data = self.preprocessTextFeatures(path_list, id, set_name, tokenization, build_vocabulary, max_text_len,
+                                               max_words, offset, fill, min_occ, pad_on_batch, words_so_far,
+                                               bpe_codes=bpe_codes, separator=separator, use_unk_class=use_unk_class)
+        elif type == 'binary':
+            data = self.preprocessBinary(path_list, id, sparse)
+        elif type == 'real':
+            data = self.preprocessReal(path_list)
+        elif type == 'id':
+            data = self.preprocessIDs(path_list, id, set_name)
+        elif type == '3DLabel':
+            data = self.preprocess3DLabel(path_list, id, associated_id_in, num_poolings)
+        elif type == '3DSemanticLabel':
+            data = self.preprocess3DSemanticLabel(path_list, id, associated_id_in, num_poolings)
+
+        if isinstance(repeat_set, (np.ndarray, np.generic, list)) or repeat_set > 1:
+            data = list(np.repeat(data, repeat_set))
+        if self.sample_weights.get(id) is None:
+            self.sample_weights[id] = dict()
+        self.sample_weights[id][set_name] = sample_weights
+        self.__setOutput(data, set_name, type, id, overwrite_split, add_additional)
+
+
 
 
     def preprocessText(self, annotations_list, data_id, set_name, tokenization, build_vocabulary, max_text_len,
@@ -340,13 +492,15 @@ class Dataset(Keras_dataset):
 
             if 'bert' in tokenization.lower():
                 # the next two are for BERT
+                sentences_tok =  [None] * len(sentences)
                 sentences_mask =  [None] * len(sentences)
                 sentences_segids = [None] * len(sentences)
                 for i, sentence in enumerate(sentences):
-                    input_ids, input_mask, segment_ids = tokfun(sentence, max_text_len)
+                    input_ids, input_mask, segment_ids, tokens = tokfun(sentence, max_text_len)
                     sentences[i] = input_ids
                     sentences_mask[i] = input_mask
                     sentences_segids[i] = segment_ids
+                    sentences_tok[i] = tokens
 
                 # free memory from the BERT tokenizer
                 del self.bert_tokenizer
@@ -441,7 +595,7 @@ class Dataset(Keras_dataset):
             self.pad_on_batch[data_id + '_segids'] = pad_on_batch
             self.words_so_far[data_id + '_segids'] = words_so_far
 
-            return (sentences, sentences_mask, sentences_segids)
+            return (sentences, sentences_mask, sentences_segids, sentences_tok)
         else:
             return sentences
 
