@@ -54,10 +54,10 @@ def qe_metrics(pred_list, verbose, extra_vars, split, ds, set, no_ref=False):
     elif set=='word_qe':
         target_text = eval("ds.X_"+split+"['target_text']")
         if no_ref:
-            final_scores = eval_word_qe(target_text, [], pred_list, ds.vocabulary['word_qe'], 'Word')
+            final_scores = eval_word_qe(target_text, [], pred_list, ds.vocabulary['word_qe'], 'Word', ds.bert_tokenizer_built)
         else:
             ref = eval("ds.Y_"+split+"['word_qe']")
-            final_scores = eval_word_qe(target_text, ref, pred_list, ds.vocabulary['word_qe'], 'Word')
+            final_scores = eval_word_qe(target_text, ref, pred_list, ds.vocabulary['word_qe'], 'Word', ds.bert_tokenizer_built)
 
     elif set=='phrase_qe':
         ref = eval("ds.Y_"+split+"['phrase_qe']")
@@ -79,7 +79,7 @@ def qe_metrics(pred_list, verbose, extra_vars, split, ds, set, no_ref=False):
     return final_scores
 
 
-def eval_word_qe(target_text, gt_list, pred_list, vocab, qe_type):
+def eval_word_qe(target_text, gt_list, pred_list, vocab, qe_type, bert_tokenizer=False):
 
     from sklearn.metrics import precision_recall_fscore_support
     from collections import defaultdict
@@ -101,12 +101,21 @@ def eval_word_qe(target_text, gt_list, pred_list, vocab, qe_type):
 
             for i in range(len(gt_list)):
 
-                line_ar = gt_list[i].split(' ')
+                if bert_tokenizer:
+                    # we do not consider '[CLS]' nor '[SEP]'
+                    line_ar = gt_list[i].split(' ')[1:-1]
+                else:
+                    line_ar = gt_list[i].split(' ')
                 ref_list.extend(line_ar)
 
                 for j in range(len(line_ar)):
 
-                    pred_word = y_init[i][j]
+                    if bert_tokenizer:
+                        # we do not consider '[CLS]' nor '[SEP]' and beyond
+                        pred_word = y_init[i][1:len(line_ar)+1][j]
+                    else:
+                        pred_word = y_init[i][j]
+
                     if pred_word[vocab['words2idx']['OK']] >= p:
                         y_pred.append('OK')
                     else:
