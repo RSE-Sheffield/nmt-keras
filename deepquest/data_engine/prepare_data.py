@@ -144,7 +144,7 @@ def update_dataset_from_file(ds,
                     build_vocabulary=False,
                     pad_on_batch=params.get('PAD_ON_BATCH', True),
                     fill=params.get('FILL', 'end'),
-                    max_text_len=params.get('MAX_INPUT_TEXT_LEN', 100),
+                    max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 100),
                     max_words=params.get('INPUT_VOCABULARY_SIZE', 0),
                     min_occ=params.get('MIN_OCCURRENCES_INPUT_VOCAB', 0),
                     bpe_codes=params.get('BPE_CODES_PATH', None),
@@ -258,140 +258,8 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
         ds.vocabulary = vocabulary
         ds.vocabulary_len = vocabulary_len
 
-        # OUTPUT DATA
-        # Load the train, val and test splits of the target language sentences (outputs). The files include a sentence per line.
 
-        if params['MODEL_TYPE'].lower()=='predictor':
-            if 'PRED_VOCAB' in params:
-                ds.setOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['TRG_LAN'],
-                         'train',
-                         type=params.get('OUTPUTS_TYPES_DATASET', ['dense-text'] if 'sparse' in params['LOSS'] else ['text'])[0],
-                         id=params['OUTPUTS_IDS_DATASET'][0],
-                         tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
-                         # if you want new vocabulary set build_vocabulary to True
-                         build_vocabulary=params['OUTPUTS_IDS_DATASET'][0],
-                         pad_on_batch=params.get('PAD_ON_BATCH', True),
-                         sample_weights=params.get('SAMPLE_WEIGHTS', True),
-                         fill=params.get('FILL', 'end'),
-                         max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
-                         max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
-                         min_occ=params.get('MIN_OCCURRENCES_OUTPUT_VOCAB', 0),
-                         bpe_codes=params.get('BPE_CODES_PATH', None),
-                         label_smoothing=params.get('LABEL_SMOOTHING', 0.))
-            else:
-                ds.setOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['TRG_LAN'],
-                         'train',
-                         type=params.get('OUTPUTS_TYPES_DATASET', ['dense-text'] if 'sparse' in params['LOSS'] else ['text'])[0],
-                         id=params['OUTPUTS_IDS_DATASET'][0],
-                         tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
-                         # if you want new vocabulary set build_vocabulary to True
-                         build_vocabulary=True,
-                         pad_on_batch=params.get('PAD_ON_BATCH', True),
-                         sample_weights=params.get('SAMPLE_WEIGHTS', True),
-                         fill=params.get('FILL', 'end'),
-                         max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
-                         max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
-                         min_occ=params.get('MIN_OCCURRENCES_OUTPUT_VOCAB', 0),
-                         bpe_codes=params.get('BPE_CODES_PATH', None),
-                         label_smoothing=params.get('LABEL_SMOOTHING', 0.))
-
-
-        elif params['MODEL_TYPE'].lower()=='estimatorsent' or params['MODEL_TYPE'].lower()=='encsent' or 'estimatordoc' in params['MODEL_TYPE'].lower() or 'encdoc' in params['MODEL_TYPE'].lower():
-
-            ds.setOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['PRED_SCORE'],
-                         'train',
-                         type='real',
-                         id=params['OUTPUTS_IDS_DATASET'][0],
-                         tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
-                         build_vocabulary=False,
-                         pad_on_batch=params.get('PAD_ON_BATCH', False),
-                         sample_weights=params.get('SAMPLE_WEIGHTS', False),
-                         fill=params.get('FILL', 'end'),
-                         max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
-                         max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
-                         min_occ=params.get('MIN_OCCURRENCES_OUTPUT_VOCAB', 0),
-                         bpe_codes=params.get('BPE_CODES_PATH', None),
-                         label_smoothing=params.get('LABEL_SMOOTHING', 0.))
-
-        elif params['MODEL_TYPE'].lower() == 'estimatorword' or params['MODEL_TYPE'].lower() == 'encword' or params['MODEL_TYPE'].lower() == 'encwordatt' or params['MODEL_TYPE'].lower() == 'encphraseatt' or params['MODEL_TYPE'].lower() == 'estimatorphrase':
-
-            ds.setOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['PRED_SCORE'],
-                         'train',
-                         type='text',
-                         id=params['OUTPUTS_IDS_DATASET'][0],
-                         tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
-                         build_vocabulary=True,
-                         pad_on_batch=params.get('PAD_ON_BATCH', True),
-                         sample_weights=params.get('SAMPLE_WEIGHTS', False),
-                         fill=params.get('FILL', 'end'),
-                         max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
-                         max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
-                         min_occ=params.get('MIN_OCCURRENCES_OUTPUT_VOCAB', 0),
-                         bpe_codes=params.get('BPE_CODES_PATH', None),
-                         label_smoothing=params.get('LABEL_SMOOTHING', 0.))
-
-
-        if params.get('ALIGN_FROM_RAW', True) and not params.get('HOMOGENEOUS_BATCHES', False):
-            ds.setRawOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['TRG_LAN'],
-                            'train',
-                            type='file-name',
-                            id='raw_' + params['OUTPUTS_IDS_DATASET'][0])
-
-        val_test_list = params.get('EVAL_ON_SETS', ['val'])
-        no_ref = params.get('NO_REF', False)
-        # if no_ref:                              # removed as this seems to cause a bug in training ig no_ref=true
-        #     val_test_list = []
-        for split in val_test_list:
-            if params['TEXT_FILES'].get(split) is not None:
-                if params['MODEL_TYPE'].lower() == 'predictor':
-
-                    ds.setOutput(base_path + '/' + params['TEXT_FILES'][split] + params['TRG_LAN'],
-                                 split,
-                                 type='text',
-                                 id=params['OUTPUTS_IDS_DATASET'][0],
-                                 pad_on_batch=params.get('PAD_ON_BATCH', True),
-                                 tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
-                                 sample_weights=params.get('SAMPLE_WEIGHTS', True),
-                                 max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
-                                 max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
-                                 bpe_codes=params.get('BPE_CODES_PATH', None),
-                                 label_smoothing=0.)
-
-                elif params['MODEL_TYPE'].lower() == 'estimatorsent' or params['MODEL_TYPE'].lower() == 'encsent' or 'estimatordoc' in params['MODEL_TYPE'].lower() or 'encdoc' in params['MODEL_TYPE'].lower():
-
-                    ds.setOutput(base_path + '/' + params['TEXT_FILES'][split] + params['PRED_SCORE'],
-                                 split,
-                                 type='real',
-                                 id=params['OUTPUTS_IDS_DATASET'][0],
-                                 pad_on_batch=params.get('PAD_ON_BATCH', True),
-                                 tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
-                                 sample_weights=params.get('SAMPLE_WEIGHTS', False),
-                                 max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
-                                 max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
-                                 bpe_codes=params.get('BPE_CODES_PATH', None),
-                                 label_smoothing=0.)
-
-                elif params['MODEL_TYPE'].lower() == 'estimatorword' or params['MODEL_TYPE'].lower() == 'encword' or params['MODEL_TYPE'].lower() == 'encwordatt' or params['MODEL_TYPE'].lower() == 'encphraseatt' or params['MODEL_TYPE'].lower() == 'estimatorphrase':
-
-                    ds.setOutput(base_path + '/' + params['TEXT_FILES'][split] + params['PRED_SCORE'],
-                                 split,
-                                 type='text',
-                                 id=params['OUTPUTS_IDS_DATASET'][0],
-                                 pad_on_batch=params.get('PAD_ON_BATCH', True),
-                                 tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
-                                 sample_weights=params.get('SAMPLE_WEIGHTS', False),
-                                 max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
-                                 max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
-                                 bpe_codes=params.get('BPE_CODES_PATH', None),
-                                 label_smoothing=0.)
-
-
-                if params.get('ALIGN_FROM_RAW', True) and not params.get('HOMOGENEOUS_BATCHES', False):
-                    ds.setRawOutput(base_path + '/' + params['TEXT_FILES'][split] + params['TRG_LAN'],
-                                    split,
-                                    type='file-name',
-                                    id='raw_' + params['OUTPUTS_IDS_DATASET'][0])
-
+        # INPUT DATA
         data_type_src = params.get('INPUTS_TYPES_DATASET', ['text', 'text'])[0]
         data_type_trg = data_type_src
 
@@ -428,7 +296,7 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
                             tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
                             build_vocabulary=params['INPUTS_IDS_DATASET'][0],
                             fill=params.get('FILL', 'end'),
-                            max_text_len=params.get('MAX_SRC_INPUT_TEXT_LEN', 70),
+                            max_text_len=params.get('MAX_INPUT_TEXT_LEN', 70),
                             max_words=params.get('INPUT_VOCABULARY_SIZE', 0),
                             min_occ=params.get('MIN_OCCURRENCES_INPUT_VOCAB', 0),
                             bpe_codes=params.get('BPE_CODES_PATH', None))
@@ -442,7 +310,7 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
                             tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
                             build_vocabulary=build_vocabulary,
                             fill=params.get('FILL', 'end'),
-                            max_text_len=params.get('MAX_SRC_INPUT_TEXT_LEN', 70),
+                            max_text_len=params.get('MAX_INPUT_TEXT_LEN', 70),
                             max_words=params.get('INPUT_VOCABULARY_SIZE', 0),
                             min_occ=params.get('MIN_OCCURRENCES_INPUT_VOCAB', 0),
                             bpe_codes=params.get('BPE_CODES_PATH', None))
@@ -588,6 +456,149 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
                                    split,
                                    type='file-name',
                                    id='raw_' + params['INPUTS_IDS_DATASET'][0])
+
+
+        # OUTPUT DATA
+        # Load the train, val and test splits of the target language sentences (outputs). The files include a sentence per line.
+
+        if params['MODEL_TYPE'].lower()=='predictor':
+            if 'PRED_VOCAB' in params:
+                ds.setOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['TRG_LAN'],
+                         'train',
+                         type=params.get('OUTPUTS_TYPES_DATASET', ['dense-text'] if 'sparse' in params['LOSS'] else ['text'])[0],
+                         id=params['OUTPUTS_IDS_DATASET'][0],
+                         tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
+                         # if you want new vocabulary set build_vocabulary to True
+                         build_vocabulary=params['OUTPUTS_IDS_DATASET'][0],
+                         pad_on_batch=params.get('PAD_ON_BATCH', True),
+                         sample_weights=params.get('SAMPLE_WEIGHTS', True),
+                         fill=params.get('FILL', 'end'),
+                         max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
+                         max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
+                         min_occ=params.get('MIN_OCCURRENCES_OUTPUT_VOCAB', 0),
+                         bpe_codes=params.get('BPE_CODES_PATH', None),
+                         label_smoothing=params.get('LABEL_SMOOTHING', 0.))
+            else:
+                ds.setOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['TRG_LAN'],
+                         'train',
+                         type=params.get('OUTPUTS_TYPES_DATASET', ['dense-text'] if 'sparse' in params['LOSS'] else ['text'])[0],
+                         id=params['OUTPUTS_IDS_DATASET'][0],
+                         tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
+                         # if you want new vocabulary set build_vocabulary to True
+                         build_vocabulary=True,
+                         pad_on_batch=params.get('PAD_ON_BATCH', True),
+                         sample_weights=params.get('SAMPLE_WEIGHTS', True),
+                         fill=params.get('FILL', 'end'),
+                         max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
+                         max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
+                         min_occ=params.get('MIN_OCCURRENCES_OUTPUT_VOCAB', 0),
+                         bpe_codes=params.get('BPE_CODES_PATH', None),
+                         label_smoothing=params.get('LABEL_SMOOTHING', 0.))
+
+
+        elif params['MODEL_TYPE'].lower()=='estimatorsent' or params['MODEL_TYPE'].lower()=='encsent' or 'estimatordoc' in params['MODEL_TYPE'].lower() or 'encdoc' in params['MODEL_TYPE'].lower():
+
+            ds.setOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['PRED_SCORE'],
+                         'train',
+                         type='real',
+                         id=params['OUTPUTS_IDS_DATASET'][0],
+                         tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
+                         build_vocabulary=False,
+                         pad_on_batch=params.get('PAD_ON_BATCH', False),
+                         sample_weights=params.get('SAMPLE_WEIGHTS', False),
+                         fill=params.get('FILL', 'end'),
+                         max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
+                         max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
+                         min_occ=params.get('MIN_OCCURRENCES_OUTPUT_VOCAB', 0),
+                         bpe_codes=params.get('BPE_CODES_PATH', None),
+                         label_smoothing=params.get('LABEL_SMOOTHING', 0.))
+
+        elif params['MODEL_TYPE'].lower() == 'estimatorword' or params['MODEL_TYPE'].lower() == 'encword' or params['MODEL_TYPE'].lower() == 'encwordatt' or params['MODEL_TYPE'].lower() == 'encphraseatt' or params['MODEL_TYPE'].lower() == 'estimatorphrase':
+            # tok_method = params.get('TOKENIZATION_METHOD', 'tokenize_none'),
+            # if 'bert' in params['TOKENIZATION_METHOD'].lower():
+            #     tok_method = 'tokenize_none'
+
+            ds.setOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['PRED_SCORE'],
+                         'train',
+                         type='text',
+                         id=params['OUTPUTS_IDS_DATASET'][0],
+                         tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
+                         build_vocabulary=True,
+                         pad_on_batch=params.get('PAD_ON_BATCH', True),
+                         sample_weights=params.get('SAMPLE_WEIGHTS', False),
+                         fill=params.get('FILL', 'end'),
+                         max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
+                         max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
+                         min_occ=params.get('MIN_OCCURRENCES_OUTPUT_VOCAB', 0),
+                         bpe_codes=params.get('BPE_CODES_PATH', None),
+                         label_smoothing=params.get('LABEL_SMOOTHING', 0.))
+
+
+        if params.get('ALIGN_FROM_RAW', True) and not params.get('HOMOGENEOUS_BATCHES', False):
+            ds.setRawOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['TRG_LAN'],
+                            'train',
+                            type='file-name',
+                            id='raw_' + params['OUTPUTS_IDS_DATASET'][0])
+
+        val_test_list = params.get('EVAL_ON_SETS', ['val'])
+        no_ref = params.get('NO_REF', False)
+        # if no_ref:                              # removed as this seems to cause a bug in training ig no_ref=true
+        #     val_test_list = []
+        for split in val_test_list:
+            if params['TEXT_FILES'].get(split) is not None:
+                if params['MODEL_TYPE'].lower() == 'predictor':
+
+                    ds.setOutput(base_path + '/' + params['TEXT_FILES'][split] + params['TRG_LAN'],
+                                 split,
+                                 type='text',
+                                 id=params['OUTPUTS_IDS_DATASET'][0],
+                                 pad_on_batch=params.get('PAD_ON_BATCH', True),
+                                 tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
+                                 sample_weights=params.get('SAMPLE_WEIGHTS', True),
+                                 max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
+                                 max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
+                                 bpe_codes=params.get('BPE_CODES_PATH', None),
+                                 label_smoothing=0.)
+
+                elif params['MODEL_TYPE'].lower() == 'estimatorsent' or params['MODEL_TYPE'].lower() == 'encsent' or 'estimatordoc' in params['MODEL_TYPE'].lower() or 'encdoc' in params['MODEL_TYPE'].lower():
+
+                    ds.setOutput(base_path + '/' + params['TEXT_FILES'][split] + params['PRED_SCORE'],
+                                 split,
+                                 type='real',
+                                 id=params['OUTPUTS_IDS_DATASET'][0],
+                                 pad_on_batch=params.get('PAD_ON_BATCH', True),
+                                 tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),                                 sample_weights=params.get('SAMPLE_WEIGHTS', False),
+                                 max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
+             max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
+                                 bpe_codes=params.get('BPE_CODES_PATH', None),
+                                 label_smoothing=0.)
+
+                elif params['MODEL_TYPE'].lower() == 'estimatorword' or params['MODEL_TYPE'].lower() == 'encword' or params['MODEL_TYPE'].lower() == 'encwordatt' or params['MODEL_TYPE'].lower() == 'encphraseatt' or params['MODEL_TYPE'].lower() == 'estimatorphrase':
+                    # tok_method = params.get('TOKENIZATION_METHOD', 'tokenize_none'),
+                    # if 'bert' in params['TOKENIZATION_METHOD'].lower():
+                    #     tok_method = 'tokenize_none'
+
+                    ds.setOutput(base_path + '/' + params['TEXT_FILES'][split] + params['PRED_SCORE'],
+                                 split,
+                                 type='text',
+                                 id=params['OUTPUTS_IDS_DATASET'][0],
+                                 pad_on_batch=params.get('PAD_ON_BATCH', True),
+                                 tokenization=params.get('TOKENIZATION_METHOD', 'tokenize_none'),
+                                 sample_weights=params.get('SAMPLE_WEIGHTS', False),
+                                 max_text_len=params.get('MAX_OUTPUT_TEXT_LEN', 70),
+                                 max_words=params.get('OUTPUT_VOCABULARY_SIZE', 0),
+                                 bpe_codes=params.get('BPE_CODES_PATH', None),
+                                 label_smoothing=0.)
+
+
+                if params.get('ALIGN_FROM_RAW', True) and not params.get('HOMOGENEOUS_BATCHES', False):
+                    ds.setRawOutput(base_path + '/' + params['TEXT_FILES'][split] + params['TRG_LAN'],
+                                    split,
+                                    type='file-name',
+                                    id='raw_' + params['OUTPUTS_IDS_DATASET'][0])
+
+
+
         if params.get('POS_UNK', False):
             if params.get('HEURISTIC', 0) > 0:
                 ds.loadMapping(params['MAPPING'])
