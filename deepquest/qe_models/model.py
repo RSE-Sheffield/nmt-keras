@@ -100,7 +100,8 @@ class QEModel(Model_Wrapper, metaclass=ABCMeta):
         self.trainable = trainable
         self.use_CuDNN = 'CuDNN' if K.backend() == 'tensorflow' and params.get('USE_CUDNN', True) else ''
         # self.__toprint = ['_model_type', 'name', 'model_path', 'verbose']
-        self.__toprint = ['name', 'net_type', 'model_path', 'vocabularies', 'verbose']
+        # self.__toprint = ['name', 'net_type', 'model_path', 'vocabularies', 'verbose']
+        self.__toprint = []
 
         # Prepare source word embedding
         if params['SRC_PRETRAINED_VECTORS'] is not None:

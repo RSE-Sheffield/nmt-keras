@@ -496,7 +496,7 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
                          label_smoothing=params.get('LABEL_SMOOTHING', 0.))
 
 
-        elif params['MODEL_TYPE'].lower()=='estimatorsent' or params['MODEL_TYPE'].lower()=='encsent' or 'estimatordoc' in params['MODEL_TYPE'].lower() or 'encdoc' in params['MODEL_TYPE'].lower():
+        elif params['MODEL_TYPE'].lower()=='estimatorsent' or params['MODEL_TYPE'].lower()=='encsent' or 'bert' or 'estimatordoc' in params['MODEL_TYPE'].lower() or 'encdoc' in params['MODEL_TYPE'].lower():
 
             ds.setOutput(base_path + '/' + params['TEXT_FILES']['train'] + params['PRED_SCORE'],
                          'train',
@@ -560,7 +560,7 @@ def build_dataset(params, vocabulary=dict(), vocabulary_len=dict()):
                                  bpe_codes=params.get('BPE_CODES_PATH', None),
                                  label_smoothing=0.)
 
-                elif params['MODEL_TYPE'].lower() == 'estimatorsent' or params['MODEL_TYPE'].lower() == 'encsent' or 'estimatordoc' in params['MODEL_TYPE'].lower() or 'encdoc' in params['MODEL_TYPE'].lower():
+                elif params['MODEL_TYPE'].lower() == 'estimatorsent' or params['MODEL_TYPE'].lower() == 'encsent' or 'bert' or 'estimatordoc' in params['MODEL_TYPE'].lower() or 'encdoc' in params['MODEL_TYPE'].lower():
 
                     ds.setOutput(base_path + '/' + params['TEXT_FILES'][split] + params['PRED_SCORE'],
                                  split,

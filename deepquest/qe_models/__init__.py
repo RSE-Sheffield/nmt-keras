@@ -17,6 +17,7 @@
 ## /!\ keep the name of the model in lowercase
 
 QE_MODELS = {
+'bert':          'bert',
 'encword':          'birnn_word',
 'encsent':          'birnn_sent',
 'encdoc':           'birnn_doc',
@@ -29,6 +30,7 @@ QE_MODELS = {
 
 # maps lower-cased model names to model class names
 model_map = {
+'bert':          'BERTModel',
 'encword':          'EncWord',
 'encsent':          'EncSent',
 'encdoc':           'EncDoc',
